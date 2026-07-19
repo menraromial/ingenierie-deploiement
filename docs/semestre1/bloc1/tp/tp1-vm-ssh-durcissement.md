@@ -58,13 +58,16 @@ Dans VirtualBox, créez une machine avec ces paramètres :
 !!! danger "Cochez « Skip unattended installation »"
     VirtualBox 7 propose une installation automatique de l'OS. **Refusez-la** : d'une part elle crée des comptes par défaut que nous ne voulons pas, d'autre part... installer un OS serveur à la main est précisément un objectif de ce TP. (Vous automatiserez tout cela au bloc 3 avec Vagrant, en connaissance de cause.)
 
-Configurez tout de suite la **redirection de port SSH** : Configuration → Réseau → Carte 1 → Avancé → Redirection de ports, et ajoutez :
+Configurez tout de suite la **redirection de port SSH** : Configuration → Réseau → Carte 1 → Avancé → Redirection de ports, puis cliquez sur l'icône « + » et renseignez **exactement** cette règle (les six colonnes) :
 
-| Nom | IP hôte | Port hôte | IP invité | Port invité |
-|---|---|---|---|---|
-| ssh | 127.0.0.1 | 2222 | (vide) | 22 |
+| Nom | Protocole | IP hôte | Port hôte | IP invité | Port invité |
+|---|---|---|---|---|---|
+| ssh | TCP | 127.0.0.1 | 2222 | *(laisser vide)* | 22 |
 
 L'IP hôte `127.0.0.1` restreint la redirection à votre propre poste : personne d'autre sur le réseau de la salle ne pourra tenter de se connecter à votre VM.
+
+!!! danger "Sans cette règle, l'étape 3 échouera avec « Connection refused »"
+    C'est la traduction d'adresse qui rend la VM (en NAT) joignable depuis l'hôte : votre `ssh -p 2222 deploy@127.0.0.1` de l'étape 3 **dépend** entièrement de cette redirection. Les erreurs les plus fréquentes, toutes donnant « Connection refused » : oublier la règle, mettre le **Protocole** sur UDP au lieu de **TCP**, écrire **2222** dans « Port invité » (il doit valoir **22**, le port de sshd dans la VM), ou renseigner l'« IP invité » alors qu'elle doit rester **vide**. Vous pouvez vérifier la règle depuis l'hôte : `VBoxManage showvminfo listify-s1 | grep -i "NIC.*Rule"`.
 
 ## Étape 2 : installer Ubuntu Server 24.04 (30 min)
 

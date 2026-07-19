@@ -64,10 +64,10 @@ sudo ufw status verbose
 
 Côté VirtualBox, ajoutez les redirections NAT (Configuration → Réseau → Redirection de ports) :
 
-| Nom | IP hôte | Port hôte | Port invité |
-|---|---|---|---|
-| http | 127.0.0.1 | 8080 | 80 |
-| https | 127.0.0.1 | 8443 | 443 |
+| Nom | Protocole | IP hôte | Port hôte | IP invité | Port invité |
+|---|---|---|---|---|---|
+| http | TCP | 127.0.0.1 | 8080 | *(laisser vide)* | 80 |
+| https | TCP | 127.0.0.1 | 8443 | *(laisser vide)* | 443 |
 
 ??? question "Point de contrôle n° 1"
     Depuis le **poste hôte** : `curl -s http://127.0.0.1:8080 | head -5` affiche la page d'accueil Nginx. Décrivez au runbook le trajet complet du paquet (hôte:8080 → NAT → VM:80 → ufw → nginx), couche par couche : c'est l'exercice de la méthode ascendante du chapitre 3.
