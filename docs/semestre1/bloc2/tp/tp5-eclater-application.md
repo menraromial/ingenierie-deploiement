@@ -244,6 +244,8 @@ Host listify-lb
     HostName 192.168.56.10
 Host listify-app1
     HostName 192.168.56.21
+Host listify-app2
+    HostName 192.168.56.22
 Host listify-db
     HostName 192.168.56.31
 Host listify-lb listify-app1 listify-app2 listify-db
