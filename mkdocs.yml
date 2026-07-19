@@ -93,6 +93,17 @@ nav:
           - "Ch. 9 : Le problème de la configuration distribuée": semestre1/bloc2/cours/09-configuration-distribuee.md
           - "TP 5 : Éclater l'application sur trois machines": semestre1/bloc2/tp/tp5-eclater-application.md
           - "TP 6 : Deuxième backend et répartiteur de charge": semestre1/bloc2/tp/tp6-load-balancer.md
+      - "Bloc 3 : Infrastructure as Code":
+          - Présentation du bloc: semestre1/bloc3/index.md
+          - "Ch. 10 : L'Infrastructure as Code, problèmes et concepts": semestre1/bloc3/cours/10-infrastructure-as-code.md
+          - "Ch. 11 : Vagrant, décrire des machines": semestre1/bloc3/cours/11-vagrant.md
+          - "Ch. 12 : Ansible, configurer par l'état désiré": semestre1/bloc3/cours/12-ansible.md
+          - "Ch. 13 : Terraform, provisionner par l'état": semestre1/bloc3/cours/13-terraform.md
+          - "TP 7 : Le socle multi-machines en une commande": semestre1/bloc3/tp/tp7-vagrant.md
+          - "TP 8 : Configurer avec Ansible, les quatre rôles": semestre1/bloc3/tp/tp8-ansible.md
+          - "TP 9 : La chaîne complète et la revanche du défi": semestre1/bloc3/tp/tp9-chaine-complete.md
+          - "TP 10 : Terraform en découverte": semestre1/bloc3/tp/tp10-terraform.md
+      - "Évaluation du Semestre 1": semestre1/evaluation.md
   - Semestre 2:
       - Vue d'ensemble: semestre2/index.md
   - Semestre 3:

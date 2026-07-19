@@ -28,7 +28,7 @@ Le semestre suit une trajectoire en trois temps, chacun se terminant par une pri
 
 1. **[Bloc 1](bloc1/index.md) (semaines 1 à 5) : le déploiement « à l'ancienne », tout sur une machine.** Vous installez et exploitez l'application fil rouge à la main sur une VM Ubuntu Server : système, réseau, reverse proxy, TLS, sauvegardes. Le bloc se clôt par un défi chronométré... conçu pour être perdu.
 2. **[Bloc 2](bloc2/index.md) (semaines 6 à 8) : architecture multi-machines.** Un service par VM, réseau privé, pare-feu inter-machines, répartition de charge. La douleur du bloc 1, multipliée par quatre machines : le *configuration drift* devient tangible.
-3. **Bloc 3 (semaines 9 à 13) : Infrastructure as Code.** Vagrant décrit les machines, Ansible les configure de façon idempotente, Terraform introduit l'état désiré. L'application entière se déploie en une commande depuis un dépôt Git ; on rejoue le défi du bloc 1 et on chronomètre.
+3. **[Bloc 3](bloc3/index.md) (semaines 9 à 13) : Infrastructure as Code.** Vagrant décrit les machines, Ansible les configure de façon idempotente, Terraform introduit l'état désiré. L'application entière se déploie en une commande depuis un dépôt Git ; on rejoue le défi du bloc 1 et on chronomètre.
 
 ## Concepts évalués à l'examen
 
@@ -48,6 +48,8 @@ Ce semestre introduit des concepts qui reviendront pendant tout le parcours. À 
 | Contrôle continu | 30 % | Comptes rendus de TP tenus en « journal de bord » (runbook) : commandes, erreurs, diagnostics |
 | Projet | 40 % | Par binôme : déployer une application 3-tiers *différente de celle du cours* de manière 100 % automatisée (Vagrant + Ansible), README permettant à l'enseignant de tout reconstruire en une commande. Soutenance avec injection d'une panne en direct, diagnostic commenté |
 | Examen théorique | 30 % | Questions de concepts (idempotence, drift, déclaratif/impératif, TLS, systemd...) et étude de cas d'architecture sur papier |
+
+Le détail des attendus, la grille de notation du projet et le programme de l'examen sont sur la page [Évaluation du Semestre 1](evaluation.md).
 
 ## Environnement de travail
 
