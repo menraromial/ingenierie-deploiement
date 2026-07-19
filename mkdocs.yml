@@ -3,7 +3,7 @@ site_description: >
   Parcours en 3 semestres pour élèves ingénieurs : du serveur unique
   à l'Infrastructure as Code, des conteneurs à Kubernetes, du CI/CD au MLOps.
 site_author: Romial Menra
-site_url: https://menraromial.github.io/ingenierie-deploiement/
+site_url: https://menraromial.com/ingenierie-deploiement/
 repo_url: https://github.com/menraromial/ingenierie-deploiement
 repo_name: menraromial/ingenierie-deploiement
 docs_dir: docs

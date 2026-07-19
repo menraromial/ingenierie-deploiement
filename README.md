@@ -2,7 +2,7 @@
 
 Site de cours (3 semestres, élèves ingénieurs M1-M2) : du serveur unique à l'Infrastructure as Code, des conteneurs à Kubernetes, du CI/CD au MLOps.
 
-**Site publié :** https://menraromial.github.io/ingenierie-deploiement/
+**Site publié :** https://menraromial.com/ingenierie-deploiement/
 
 ## Construire le site en local
 
