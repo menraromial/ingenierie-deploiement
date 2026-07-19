@@ -20,10 +20,72 @@ La version 1.1 de Listify ajoute la fonctionnalité « tâche terminée ». Elle
 ALTER TABLE tasks ADD COLUMN IF NOT EXISTS done BOOLEAN NOT NULL DEFAULT FALSE;
 ```
 
-**Backend** : dans `app.py`, la requête de `list_tasks` devient `SELECT id, title, done, created_at ...`, et une route apparaît :
+**Backend** : `list_tasks` renvoie désormais la colonne `done`, et une route `PATCH` bascule l'état d'une tâche. Pour éviter toute erreur d'insertion d'un fragment, **remplacez tout le fichier** `backend/app.py` par cette version v1.1 complète (les nouveautés sont commentées) :
 
-```python title="backend/app.py (ajout v1.1)"
-@app.patch("/api/tasks/<int:task_id>")
+```python title="backend/app.py (v1.1 complète)"
+"""Listify : API REST minimale de gestion de tâches (v1.1 : tâches terminées)."""
+import os
+
+import psycopg2
+import psycopg2.extras
+from flask import Flask, jsonify, request
+
+app = Flask(__name__)
+
+
+def get_conn():
+    """Ouvre une connexion à PostgreSQL à partir de l'environnement."""
+    return psycopg2.connect(
+        host=os.environ.get("DB_HOST", "localhost"),
+        port=int(os.environ.get("DB_PORT", "5432")),
+        dbname=os.environ.get("DB_NAME", "listify"),
+        user=os.environ.get("DB_USER", "listify"),
+        password=os.environ["DB_PASSWORD"],
+        connect_timeout=3,
+    )
+
+
+@app.get("/api/health")
+def health():
+    status = {"api": "ok", "database": "ok"}
+    code = 200
+    try:
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute("SELECT 1")
+    except Exception as exc:  # noqa: BLE001
+        status["database"] = f"error: {exc.__class__.__name__}"
+        code = 503
+    return jsonify(status), code
+
+
+@app.get("/api/tasks")
+def list_tasks():
+    with get_conn() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            # v1.1 : on renvoie aussi la colonne "done"
+            cur.execute(
+                "SELECT id, title, done, created_at FROM tasks ORDER BY id"
+            )
+            return jsonify(cur.fetchall())
+
+
+@app.post("/api/tasks")
+def create_task():
+    payload = request.get_json(silent=True) or {}
+    title = (payload.get("title") or "").strip()
+    if not title:
+        return jsonify({"error": "title is required"}), 400
+    with get_conn() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                "INSERT INTO tasks (title) VALUES (%s) "
+                "RETURNING id, title, done, created_at",
+                (title,),
+            )
+            return jsonify(cur.fetchone()), 201
+
+
+@app.patch("/api/tasks/<int:task_id>")   # v1.1 : bascule "terminée"
 def toggle_task(task_id: int):
     with get_conn() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -36,20 +98,86 @@ def toggle_task(task_id: int):
             if row is None:
                 return jsonify({"error": "not found"}), 404
             return jsonify(row)
+
+
+@app.delete("/api/tasks/<int:task_id>")
+def delete_task(task_id: int):
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM tasks WHERE id = %s", (task_id,))
+            if cur.rowcount == 0:
+                return jsonify({"error": "not found"}), 404
+    return "", 204
 ```
 
-**Frontend** : dans `app.js`, la boucle d'affichage ajoute une case à cocher avant le titre :
+**Frontend** : la boucle d'affichage ajoute une case à cocher avant le titre, et **barre les tâches terminées**. Là encore, **remplacez tout le fichier** `frontend/app.js` :
 
-```javascript title="frontend/app.js (ajout v1.1, dans la boucle for)"
-const box = document.createElement("input");
-box.type = "checkbox";
-box.checked = task.done;
-box.onchange = async () => {
-  await fetch(`${API}/tasks/${task.id}`, { method: "PATCH" });
+```javascript title="frontend/app.js (v1.1 complète)"
+const API = "/api";
+
+const statusEl = document.getElementById("status");
+const listEl = document.getElementById("task-list");
+const formEl = document.getElementById("new-task-form");
+const inputEl = document.getElementById("new-task-title");
+
+async function refresh() {
+  try {
+    const res = await fetch(`${API}/tasks`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const tasks = await res.json();
+    statusEl.textContent = `${tasks.length} tâche(s)`;
+    listEl.innerHTML = "";
+    for (const task of tasks) {
+      const li = document.createElement("li");
+      li.textContent = task.title + " ";
+
+      const del = document.createElement("button");
+      del.textContent = "✕";
+      del.onclick = async () => {
+        await fetch(`${API}/tasks/${task.id}`, { method: "DELETE" });
+        refresh();
+      };
+      li.appendChild(del);
+
+      // v1.1 : case "terminée" + effet visuel (texte barré et estompé)
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.checked = task.done;
+      box.onchange = async () => {
+        await fetch(`${API}/tasks/${task.id}`, { method: "PATCH" });
+        refresh();
+      };
+      li.prepend(box);
+      if (task.done) {
+        li.style.textDecoration = "line-through";
+        li.style.opacity = "0.55";
+      }
+
+      listEl.appendChild(li);
+    }
+  } catch (err) {
+    // Ce catch attrape TOUTE erreur du rendu, y compris une erreur JavaScript :
+    // un message "API injoignable : ..." peut donc masquer un simple bug de code.
+    statusEl.textContent = `API injoignable : ${err.message}`;
+  }
+}
+
+formEl.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await fetch(`${API}/tasks`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title: inputEl.value }),
+  });
+  inputEl.value = "";
   refresh();
-};
-li.prepend(box);
+});
+
+refresh();
 ```
+
+!!! note "« API injoignable : ... » ne veut pas toujours dire que l'API est en panne"
+    Le `catch` de `refresh()` intercepte **toute** exception du bloc `try`, y compris une **erreur JavaScript** (par exemple une variable mal placée). Vous pouvez donc lire « API injoignable : box is not defined » alors que l'API répond parfaitement : le vrai coupable est le code de rendu. Réflexe de diagnostic : ouvrez les **outils de développement du navigateur** (onglet Console pour l'erreur JS, onglet Réseau pour voir si les requêtes partent et avec quel code HTTP). C'est la version « frontend » de la méthode ascendante du chapitre 3.
 
 Appliquez ces changements dans votre dépôt Git local, committez (`git commit -m "v1.1 : tâches terminées"`), et taguez : `git tag v1.1`.
 
