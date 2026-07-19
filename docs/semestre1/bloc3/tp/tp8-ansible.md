@@ -176,11 +176,35 @@ Lisez le `PLAY RECAP` : des `changed` partout (on installe), `failed=0`. **Relan
 
 ## Étape 2 : le rôle `database` (1 h 30)
 
-La traduction de l'étape 3 du TP 5. Les secrets d'abord : créez le vault avec le mot de passe de la base.
+La traduction de l'étape 3 du TP 5. Les secrets d'abord.
+
+**Étape préalable : une phrase de passe de vault, dans un fichier.** Plutôt que de retaper la phrase de passe à chaque commande (`--ask-vault-pass`), on la met **une fois** dans un fichier local (jamais versionné) et on déclare ce fichier dans `ansible.cfg`. Dès lors, toutes les commandes Ansible déchiffrent le vault automatiquement.
+
+```bash
+# 1. Le fichier qui contient la phrase de passe du vault (une ligne, à votre choix)
+echo "ma-phrase-de-passe-de-vault" > .vault-pass
+chmod 600 .vault-pass
+echo "deploy/ansible/.vault-pass" >> ../../.gitignore   # JAMAIS dans Git
+
+# 2. (Ré)écrire ansible.cfg COMPLET, avec vault_password_file sous [defaults].
+#    On réécrit tout le fichier pour être sûr que l'option est bien sous la section :
+#    une option hors de [defaults] est silencieusement ignorée.
+cat > ansible.cfg <<'EOF'
+[defaults]
+inventory = inventories/vagrant/hosts.ini
+host_key_checking = False
+roles_path = roles
+vault_password_file = .vault-pass
+EOF
+
+# Vérifier qu'Ansible lit bien CE fichier :
+ansible --version | grep "config file"   # -> .../deploy/ansible/ansible.cfg
+```
+
+**Créer le vault** (comme `vault_password_file` est déclaré, aucune phrase de passe ne vous est demandée : le fichier est utilisé) :
 
 ```bash
 ansible-vault create group_vars/all/vault.yml
-# (une phrase de passe vous est demandée ; NOTEZ-LA, elle protège le secret)
 ```
 
 Dans l'éditeur qui s'ouvre :
@@ -266,7 +290,32 @@ mkdir -p roles/database/tasks roles/database/handlers
 
 Le moment fort du TP est la double boucle `loop: "{{ groups['backend'] }}"` : les autorisations pg_hba **et** ufw sont générées **une par backend, depuis l'inventaire**. Ajoutez app3 à l'inventaire un jour, et les deux entrées apparaissent toutes seules. Le « coût de app3 » que vous aviez chiffré au TP 6 (éditer pg_hba, éditer ufw, sur la bonne machine, sans oubli) vient de tomber à zéro. Relisez la synthèse du TP 6 : c'est ici, concrètement, que sa promesse est tenue.
 
-Ajoutez le play `database` au `site.yml` (`hosts: database`), exécutez, vérifiez, relancez pour l'idempotence.
+Ajoutez maintenant le play `database` à la suite de votre `site.yml` (qui ne contenait que `common`) :
+
+```yaml title="deploy/ansible/site.yml (on ajoute le 2ᵉ play)"
+- name: Socle commun à toutes les machines
+  hosts: listify
+  become: true
+  roles:
+    - common
+
+- name: Tier données
+  hosts: database
+  become: true
+  roles:
+    - database
+```
+
+Puis déroulez le cycle habituel, désormais avec le vault (le rôle lit le mot de passe chiffré) :
+
+```bash
+ansible-playbook site.yml          # exécuter
+ansible database -m command -a "systemctl is-active postgresql" --become   # vérifier : active
+ansible-playbook site.yml          # relancer : PLAY RECAP doit montrer changed=0
+```
+
+!!! note "Le cycle « exécuter, vérifier, relancer » se répète à chaque rôle"
+    Pour les rôles suivants (`backend`, `loadbalancer`), on résumera par « ajoutez le play, exécutez, vérifiez, relancez pour l'idempotence » : c'est exactement les trois commandes ci-dessus, avec le nouveau play ajouté au `site.yml`. Le `changed=0` au rejeu est à chaque fois la preuve que le rôle est idempotent.
 
 ## Étape 3 : le rôle `backend` (1 h 30)
 
@@ -395,7 +444,23 @@ WantedBy=multi-user.target
 
 Notez la décision du TP 6 (`--bind 0.0.0.0:8000`) devenue permanente dans le template : le rôle est **identique** sur app1 et app2, l'unité n'est plus une identité mais un rôle. Et la chaîne handler `template listify.service → notify: Recharger systemd + Redémarrer listify` code exactement votre réflexe manuel « après avoir modifié l'unité : daemon-reload puis restart », désormais déclenché **seulement si le fichier change**.
 
-Ajoutez le play `backend` (`hosts: backend`), exécutez, vérifiez que les deux backends répondent, relancez pour l'idempotence.
+Ajoutez le play `backend` à la suite du `site.yml` (après `common` et `database`) :
+
+```yaml title="deploy/ansible/site.yml (on ajoute le 3ᵉ play)"
+- name: Tier applicatif
+  hosts: backend
+  become: true
+  roles:
+    - backend
+```
+
+Puis le cycle habituel, en vérifiant cette fois que les **deux** backends répondent :
+
+```bash
+ansible-playbook site.yml
+ansible backend -m uri -a "url=http://localhost:8000/api/health validate_certs=no"   # les 2 : status 200
+ansible-playbook site.yml          # relancer : changed=0
+```
 
 ## Étape 4 : le rôle `loadbalancer` (1 h)
 
@@ -545,7 +610,7 @@ Complétez le `site.yml` avec le play `loadbalancer` (`hosts: loadbalancer`). Le
 ## Étape 5 : la preuve d'idempotence et la validation (45 min)
 
 ```bash
-ansible-playbook site.yml --ask-vault-pass          # 1ʳᵉ exécution complète
+ansible-playbook site.yml          # 1ʳᵉ exécution complète
 ```
 
 L'entrée `listify.local` de votre **poste** a normalement été posée par hostmanager au TP 7 (`grep listify.local /etc/hosts` pour vérifier ; si elle manque, `cd deploy && vagrant hostmanager`). Validez ensuite de bout en bout :
@@ -560,13 +625,13 @@ done                                                 # alternance app1/app2
 Puis **la preuve reine**, à mettre en évidence au runbook :
 
 ```bash
-ansible-playbook site.yml --ask-vault-pass          # 2ᵉ exécution, sans rien changer
+ansible-playbook site.yml          # 2ᵉ exécution, sans rien changer
 ```
 
 Le `PLAY RECAP` doit afficher **`changed=0`** sur les quatre machines. C'est la démonstration formelle que votre infrastructure est décrite par un état désiré idempotent (ch. 10). Si une tâche passe `changed` au 2ᵉ tour, c'est un défaut à corriger : le suspect n° 1 est la tâche `command`/`openssl` (vérifiez que la garde `creates:` fait son travail).
 
-!!! tip "Le mot de passe du vault, sans le retaper"
-    Pour les nombreuses exécutions du TP : mettez la phrase de passe dans un fichier `deploy/ansible/.vault-pass` (ajouté au `.gitignore` !), et `ansible-playbook site.yml --vault-password-file .vault-pass`. En production, ce fichier viendrait d'un gestionnaire de secrets, jamais du disque.
+!!! note "Aucun `--ask-vault-pass` nécessaire"
+    Grâce au `vault_password_file = .vault-pass` déclaré dans `ansible.cfg` à l'étape 2, toutes ces commandes (playbooks **et** commandes ad-hoc `ansible`) déchiffrent le vault automatiquement. Rappel : `.vault-pass` est dans le `.gitignore` et ne quitte jamais votre poste ; en production, il viendrait d'un gestionnaire de secrets, pas du disque.
 
 ## Point de contrôle final
 
