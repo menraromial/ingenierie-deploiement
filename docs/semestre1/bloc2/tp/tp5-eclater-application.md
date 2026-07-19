@@ -70,6 +70,23 @@ ssh-copy-id -i ~/.ssh/id_ed25519.pub \
 ssh -p 2222 -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 deploy@127.0.0.1
 ```
 
+!!! danger "« REMOTE HOST IDENTIFICATION HAS CHANGED! » : attendu ici, et instructif"
+    Vous avez utilisé `127.0.0.1:2222` au bloc 1 pour joindre `listify-s1`. Ce même guichet mène désormais à `listify-base`, une **autre machine**, avec d'autres clés d'hôte : SSH refuse la connexion, exactement comme il le doit (ch. 5, §1.3). À cause du NAT, `127.0.0.1:2222` ne désigne pas une machine mais une **redirection**, qui a changé d'occupant : l'adresse ne fait pas l'identité. Le réseau host-only de ce bloc supprimera ce piège en donnant à chaque VM sa propre adresse.
+
+    Ne supprimez pas l'entrée à l'aveugle : prenez le réflexe de **vérifier l'empreinte**. Dans la console VirtualBox de la VM, affichez la sienne et comparez-la à celle qu'annonce le message d'erreur :
+
+    ```bash
+    sudo ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
+    ```
+
+    Si elle correspond, supprimez l'ancienne entrée depuis l'hôte, puis relancez la commande (SSH proposera d'accepter la nouvelle empreinte) :
+
+    ```bash
+    ssh-keygen -f ~/.ssh/known_hosts -R '[127.0.0.1]:2222'
+    ```
+
+    Vous rejouerez ce geste à l'étape 2.2, après la régénération volontaire des clés des clones : ce sera alors la preuve que chaque machine a bien reçu sa propre identité.
+
 ```bash
 # Sur la VM : le socle du TP 1, en accéléré (votre runbook du bloc 1 sert enfin !)
 sudo tee /etc/ssh/sshd_config.d/00-hardening.conf > /dev/null <<'EOF'
@@ -116,8 +133,16 @@ Un clone est une **copie parfaite**, y compris de tout ce qui devrait être uniq
 !!! tip "Comment coller du texte dans la console VirtualBox ?"
     Le presse-papiers partagé (Périphériques → Presse-papiers partagé) **ne fonctionne pas** ici : il exige les Additions invité **et une session graphique**, que notre serveur n'a pas. Trois façons de s'en sortir, du plus confortable au plus rapide :
 
-    1. **Éviter la console** : donnez à chaque clone une redirection NAT temporaire sur un port hôte **distinct** (`listify-lb` → 2210, `listify-app1` → 2221, `listify-db` → 2231), faites l'individualisation en SSH avec copier-coller (`ssh -p 2221 deploy@127.0.0.1`), puis supprimez ces redirections une fois les adresses privées en place. C'est la méthode recommandée si vous avez beaucoup à coller.
-    2. **Faire taper VirtualBox** depuis l'hôte, VM allumée : `VBoxManage controlvm listify-app1 keyboardputstring "sudo hostnamectl set-hostname listify-app1"`. Attention : les frappes suivent la disposition clavier de **l'invité** ; en clavier français, relisez la ligne avant d'appuyer sur Entrée.
+    1. **La méthode recommandée : éviter la console.** Le clone a toujours sa carte NAT, son sshd et votre clé (héritée de la base). VM éteinte, donnez-lui une redirection NAT temporaire sur un port hôte **distinct** (`listify-lb` → 2210, `listify-app1` → 2221, `listify-db` → 2231), démarrez-la, puis connectez-vous et collez le bloc d'un seul coup :
+
+        ```bash
+        ssh -p 2221 -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 deploy@127.0.0.1
+        ```
+
+        Après la régénération des clés d'hôte (étape 3 du bloc), votre PC signalera un changement d'empreinte sur ce port : c'est **attendu**, c'est même la preuve que l'opération a réussi ; nettoyez avec `ssh-keygen -f ~/.ssh/known_hosts -R '[127.0.0.1]:2221'`. Supprimez la redirection une fois l'adresse privée en place.
+
+    2. **Faire taper VirtualBox**, uniquement pour **une commande courte à la fois** : `VBoxManage controlvm listify-app1 keyboardputstring "sudo hostnamectl set-hostname listify-app1"`. Deux limites à connaître : la touche Entrée n'est **pas** envoyée (tapez-la vous-même), et les frappes suivent la disposition clavier de l'invité, donc relisez la ligne avant de valider. N'essayez **pas** d'y coller un bloc multi-lignes contenant des apostrophes ou un heredoc (`<<'EOF'`) : le guillemet ouvrant ne se refermerait jamais et votre shell resterait bloqué sur une invite `dquote>` (sortez par ++ctrl+c++).
+
     3. **Taper à la main** : les commandes ci-dessous sont courtes, et les saisir une fois n'est pas du temps perdu (vous verrez au bloc 3 ce que ce geste répétitif deviendra).
 
 ```bash
