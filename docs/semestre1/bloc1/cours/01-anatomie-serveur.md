@@ -112,14 +112,23 @@ Gardez cette phrase en tête, elle structurera le débat VM vs conteneurs au sem
 Où met-on physiquement le serveur ? La réponse a changé quatre fois en trente ans, et chaque étape est une leçon d'architecture. Ce panorama est à connaître : l'examen comporte régulièrement une question de choix d'hébergement justifié (compétence C1).
 
 ```mermaid
-flowchart LR
-    A["<b>1995</b><br/>On-premise :<br/>le serveur dans le placard<br/>de l'entreprise"]
-    B["<b>2000</b><br/>Hébergement mutualisé :<br/>un serveur,<br/>des dizaines de sites"]
-    C["<b>2003</b><br/>Serveur dédié :<br/>une machine louée<br/>en datacenter"]
-    D["<b>2006</b><br/>Cloud IaaS :<br/>AWS EC2,<br/>la VM à l'heure"]
-    E["<b>2013</b><br/>Conteneurs et PaaS<br/>généralisés"]
-    F["<b>2015</b><br/>Serverless :<br/>AWS Lambda, la fonction<br/>à la milliseconde"]
-    A --> B --> C --> D --> E --> F
+%%{init: {'theme': 'base', 'themeVariables': {
+  'cScale0': '#1a237e', 'cScaleLabel0': '#ffffff',
+  'cScale1': '#283593', 'cScaleLabel1': '#ffffff',
+  'cScale2': '#303f9f', 'cScaleLabel2': '#ffffff',
+  'cScale3': '#3949ab', 'cScaleLabel3': '#ffffff',
+  'cScale4': '#3f51b5', 'cScaleLabel4': '#ffffff',
+  'cScale5': '#5c6bc0', 'cScaleLabel5': '#ffffff',
+  'textColor': '#5c6bc0', 'titleColor': '#5c6bc0'
+}}}%%
+timeline
+    title Évolution des modes d'hébergement
+    1995 : On-premise : le serveur dans le placard de l'entreprise
+    2000 : Hébergement mutualisé : un serveur, des dizaines de sites
+    2003 : Serveur dédié : une machine louée en datacenter
+    2006 : Cloud IaaS : AWS EC2, la VM à l'heure
+    2013 : Conteneurs et PaaS généralisés
+    2015 : Serverless : AWS Lambda, la fonction à la milliseconde
 ```
 
 ### 3.1 On-premise : le serveur chez soi
