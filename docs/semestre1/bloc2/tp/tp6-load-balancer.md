@@ -38,6 +38,10 @@ Sur app2, vérifiez le service... qui doit être **en échec** :
 
 ```bash
 ssh listify-app2
+```
+
+```bash
+# Sur listify-app2 :
 systemctl status listify        # failed (ou activating/auto-restart)
 journalctl -u listify -n 20
 ```
@@ -83,6 +87,10 @@ La base ne connaît pas app2 : ni `pg_hba.conf`, ni le pare-feu de db. Ajouter u
 
 ```bash
 ssh listify-db
+```
+
+```bash
+# Sur listify-db :
 echo 'host    listify    listify    192.168.56.22/32    scram-sha-256' | \
   sudo tee -a /etc/postgresql/16/main/pg_hba.conf
 sudo systemctl reload postgresql
@@ -103,6 +111,10 @@ Sur `listify-lb`, remplacez le bloc `location /api/` et ajoutez l'upstream (c'es
 
 ```bash
 ssh listify-lb
+```
+
+```bash
+# Sur listify-lb :
 sudo tee /etc/nginx/sites-available/listify > /dev/null <<'EOF'
 upstream listify_backend {
     server listify-app1:8000 max_fails=3 fail_timeout=10s;

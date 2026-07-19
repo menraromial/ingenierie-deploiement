@@ -26,6 +26,11 @@ flowchart TB
 
 Chaque VM garde sa carte NAT (Internet pour APT) ; tout le trafic applicatif passe par le réseau privé.
 
+!!! danger "Règle de manipulation : connectez-vous d'abord, collez ensuite"
+    Dans tout ce TP, les blocs qui commencent par une ligne `ssh listify-xxx` se déroulent **en deux temps** : lancez la connexion **seule**, attendez l'invite `deploy@listify-xxx`, et **seulement alors** collez la suite des commandes. Si vous collez le bloc entier d'un coup, la connexion s'ouvre pendant que le reste du texte arrive encore : des lignes se perdent ou fusionnent (vous verrez des commandes hybrides absurdes, du type `...443/tcpetc/nginx/...`), et vous passerez du temps à diagnostiquer un problème qui n'existe pas.
+
+    Réflexe associé, avant chaque bloc : `hostname`. Une commande juste sur la mauvaise machine reste une commande fausse, et c'est l'erreur la plus fréquente d'un TP multi-machines.
+
 ## Étape 0 : le réseau host-only, côté hôte (15 min)
 
 Dans VirtualBox : **Fichier → Outils → Gestionnaire de réseau** (Network Manager), onglet « Réseaux hôte uniquement » :
@@ -298,7 +303,12 @@ Sur `listify-db` (rituel d'inventaire du TP 2 compris, il va vite désormais) :
 
 ```bash
 ssh listify-db
-sudo apt install -y postgresql
+```
+
+```bash
+# Sur listify-db :
+hostname                         # vérifier la machine AVANT toute chose
+sudo apt update && sudo apt install -y postgresql
 sudo ss -tlnp | grep 5432        # 127.0.0.1 uniquement : il faut ouvrir au privé
 ```
 
@@ -343,6 +353,10 @@ ssh listify-db 'psql "postgresql://listify@127.0.0.1:5432/listify" \
 
 ```bash
 ssh listify-db
+```
+
+```bash
+# Sur listify-db :
 sudo ufw allow from 192.168.56.21 to any port 5432 proto tcp
 sudo ufw status verbose
 ```
@@ -364,8 +378,13 @@ Sur `listify-app1`, rejouez l'installation du TP 2, avec **trois différences** 
 
 ```bash
 ssh listify-app1
+```
+
+```bash
+# Sur listify-app1 :
+hostname                         # vérifier la machine AVANT toute chose
 sudo adduser --system --group --home /opt/listify --shell /usr/sbin/nologin listify
-sudo apt install -y python3 python3-venv
+sudo apt update && sudo apt install -y python3 python3-venv
 ```
 
 ```bash
@@ -433,9 +452,17 @@ Les trois différences avec le TP 2, à expliquer dans le runbook :
 
 Sur `listify-lb` : Nginx, les statiques, le TLS, et le proxy qui pointe désormais vers une **autre machine** :
 
+Connectez-vous d'abord (commande seule), puis collez le bloc suivant une fois l'invite affichée :
+
 ```bash
 ssh listify-lb
-sudo apt install -y nginx
+```
+
+```bash
+# Sur listify-lb :
+hostname                         # vérifier la machine AVANT toute chose
+sudo apt update && sudo apt install -y nginx
+nginx -v                         # confirme l'installation : /etc/nginx existe désormais
 sudo mkdir -p /opt/listify
 ```
 
