@@ -49,32 +49,33 @@ cd ansible
 Le point délicat : les machines Vagrant s'atteignent par l'utilisateur `vagrant` et une clé **par machine** rangée dans `.vagrant/`. On déclare tout cela dans l'inventaire :
 
 ```ini title="deploy/ansible/inventories/vagrant/hosts.ini"
-[lb]
+[loadbalancer]
 lb ansible_host=192.168.56.10
 
-[app]
+[backend]
 app1 ansible_host=192.168.56.21
 app2 ansible_host=192.168.56.22
 
-[db]
+[database]
 db ansible_host=192.168.56.31
 
 [listify:children]
-lb
-app
-db
+loadbalancer
+backend
+database
 
 [listify:vars]
 ansible_user=vagrant
-ansible_ssh_private_key_file=../../.vagrant/machines/{{ inventory_hostname }}/virtualbox/private_key
-ansible_ssh_common_args=-o StrictHostKeyChecking=accept-new
+ansible_ssh_private_key_file={{ inventory_dir }}/../../../.vagrant/machines/{{ inventory_hostname }}/virtualbox/private_key
+ansible_ssh_common_args=-o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes
 ```
 
-Trois points à comprendre (et à noter) :
+Quatre points à comprendre (et à noter) :
 
-- Le groupe **`listify:children`** rassemble tous les tiers : c'est notre équivalent du groupe `all`, mais nommé, pour appliquer des variables communes.
-- La clé privée est **calculée par machine** via `{{ inventory_hostname }}` : Vagrant range une clé distincte par VM, l'inventaire suit.
-- `StrictHostKeyChecking=accept-new` accepte automatiquement la clé d'hôte à la première connexion (les VM viennent d'être créées, leurs clés sont neuves et de confiance) sans jamais accepter un **changement** de clé : le juste milieu pour de l'automatisation.
+- **Les groupes portent le nom des rôles** (`loadbalancer`, `backend`, `database`), pas celui des machines. C'est volontaire : un groupe nommé comme son unique hôte (`[db]` contenant `db`) déclenche l'avertissement `Found both group and host with same name` et brouille les patterns `hosts:`. Groupe = rôle, hôte = machine : deux espaces de noms distincts.
+- Le groupe **`listify:children`** rassemble tous les tiers : notre équivalent du groupe `all`, mais nommé, pour appliquer des variables communes.
+- La clé privée est **calculée par machine** via `{{ inventory_hostname }}` (Vagrant range une clé distincte par VM), et ancrée sur **`{{ inventory_dir }}`** : le chemin devient absolu, indépendant du dossier depuis lequel vous lancez Ansible (une source de bugs classique avec les chemins relatifs).
+- **`IdentitiesOnly=yes`** est indispensable : sans lui, si vous avez plusieurs clés dans votre agent SSH, elles sont proposées **avant** la clé Vagrant et saturent `MaxAuthTries` (`Too many authentication failures`), exactement le piège du TP 1. Cette option force SSH à ne présenter que la clé désignée. `StrictHostKeyChecking=accept-new` accepte la clé d'hôte neuve d'une VM fraîche sans jamais accepter un **changement** de clé.
 
 Vérifiez la connexion **avant** d'écrire le moindre rôle, c'est le geste qui évite des heures de confusion :
 
@@ -239,7 +240,7 @@ mkdir -p roles/database/tasks roles/database/handlers
     users: "{{ db_user }}"
     source: "{{ hostvars[item]['ansible_host'] }}/32"
     method: scram-sha-256
-  loop: "{{ groups['app'] }}"
+  loop: "{{ groups['backend'] }}"
   notify: Recharger PostgreSQL
 
 - name: Le port PostgreSQL est ouvert à chaque backend
@@ -248,7 +249,7 @@ mkdir -p roles/database/tasks roles/database/handlers
     from_ip: "{{ hostvars[item]['ansible_host'] }}"
     to_port: "5432"
     proto: tcp
-  loop: "{{ groups['app'] }}"
+  loop: "{{ groups['backend'] }}"
 ```
 
 ```yaml title="deploy/ansible/roles/database/handlers/main.yml"
@@ -263,9 +264,9 @@ mkdir -p roles/database/tasks roles/database/handlers
     state: reloaded
 ```
 
-Le moment fort du TP est la double boucle `loop: "{{ groups['app'] }}"` : les autorisations pg_hba **et** ufw sont générées **une par backend, depuis l'inventaire**. Ajoutez app3 à l'inventaire un jour, et les deux entrées apparaissent toutes seules. Le « coût de app3 » que vous aviez chiffré au TP 6 (éditer pg_hba, éditer ufw, sur la bonne machine, sans oubli) vient de tomber à zéro. Relisez la synthèse du TP 6 : c'est ici, concrètement, que sa promesse est tenue.
+Le moment fort du TP est la double boucle `loop: "{{ groups['backend'] }}"` : les autorisations pg_hba **et** ufw sont générées **une par backend, depuis l'inventaire**. Ajoutez app3 à l'inventaire un jour, et les deux entrées apparaissent toutes seules. Le « coût de app3 » que vous aviez chiffré au TP 6 (éditer pg_hba, éditer ufw, sur la bonne machine, sans oubli) vient de tomber à zéro. Relisez la synthèse du TP 6 : c'est ici, concrètement, que sa promesse est tenue.
 
-Ajoutez le play `database` au `site.yml` (`hosts: db`), exécutez, vérifiez, relancez pour l'idempotence.
+Ajoutez le play `database` au `site.yml` (`hosts: database`), exécutez, vérifiez, relancez pour l'idempotence.
 
 ## Étape 3 : le rôle `backend` (1 h 30)
 
@@ -347,7 +348,7 @@ mkdir -p roles/backend/tasks roles/backend/templates roles/backend/handlers
 - name: Le port 8000 est ouvert au load balancer seulement
   community.general.ufw:
     rule: allow
-    from_ip: "{{ hostvars[groups['lb'][0]]['ansible_host'] }}"
+    from_ip: "{{ hostvars[groups['loadbalancer'][0]]['ansible_host'] }}"
     to_port: "8000"
     proto: tcp
 ```
@@ -394,7 +395,7 @@ WantedBy=multi-user.target
 
 Notez la décision du TP 6 (`--bind 0.0.0.0:8000`) devenue permanente dans le template : le rôle est **identique** sur app1 et app2, l'unité n'est plus une identité mais un rôle. Et la chaîne handler `template listify.service → notify: Recharger systemd + Redémarrer listify` code exactement votre réflexe manuel « après avoir modifié l'unité : daemon-reload puis restart », désormais déclenché **seulement si le fichier change**.
 
-Ajoutez le play `backend` (`hosts: app`), exécutez, vérifiez que les deux backends répondent, relancez pour l'idempotence.
+Ajoutez le play `backend` (`hosts: backend`), exécutez, vérifiez que les deux backends répondent, relancez pour l'idempotence.
 
 ## Étape 4 : le rôle `loadbalancer` (1 h)
 
@@ -471,7 +472,7 @@ Copiez vos statiques et le certificat dans le rôle (ou générez le certificat 
 
 ```jinja title="deploy/ansible/roles/loadbalancer/templates/listify.conf.j2"
 upstream listify_backend {
-{% for host in groups['app'] %}
+{% for host in groups['backend'] %}
     server {{ hostvars[host]['ansible_host'] }}:8000 max_fails=3 fail_timeout=10s;
 {% endfor %}
 }
@@ -515,9 +516,9 @@ server {
     state: reloaded
 ```
 
-Le template `listify.conf.j2` est le sommet du TP : la boucle `{% for host in groups['app'] %}` **régénère l'upstream depuis l'inventaire**. La liste des backends n'existe qu'à un seul endroit du projet, l'inventaire, et Nginx, pg_hba et ufw en dérivent tous les trois. La duplication d'information du chapitre 9 est vaincue.
+Le template `listify.conf.j2` est le sommet du TP : la boucle `{% for host in groups['backend'] %}` **régénère l'upstream depuis l'inventaire**. La liste des backends n'existe qu'à un seul endroit du projet, l'inventaire, et Nginx, pg_hba et ufw en dérivent tous les trois. La duplication d'information du chapitre 9 est vaincue.
 
-Complétez le `site.yml` avec le play `loadbalancer` (`hosts: lb`). Le playbook est maintenant complet :
+Complétez le `site.yml` avec le play `loadbalancer` (`hosts: loadbalancer`). Le playbook est maintenant complet :
 
 ```yaml title="deploy/ansible/site.yml (final)"
 - name: Socle commun
@@ -526,17 +527,17 @@ Complétez le `site.yml` avec le play `loadbalancer` (`hosts: lb`). Le playbook 
   roles: [common]
 
 - name: Tier données
-  hosts: db
+  hosts: database
   become: true
   roles: [database]
 
 - name: Tier applicatif
-  hosts: app
+  hosts: backend
   become: true
   roles: [backend]
 
 - name: Tier exposé
-  hosts: lb
+  hosts: loadbalancer
   become: true
   roles: [loadbalancer]
 ```
@@ -586,5 +587,5 @@ Le `PLAY RECAP` doit afficher **`changed=0`** sur les quatre machines. C'est la 
 
 1. Pour chaque rôle, citez la tâche qui a exigé de **reconstruire l'idempotence à la main** (garde `creates:`, `blockinfile` avec marqueurs...) et expliquez pourquoi le module « nu » ne suffisait pas.
 2. Déroulez ce qui se passe si vous changez `vault_db_password` puis relancez le playbook : quelles machines passent `changed`, quel handler se déclenche, l'application reste-t-elle cohérente pendant l'opération ?
-3. La tâche pg_hba boucle sur `groups['app']`. Que produit exactement le playbook si vous **retirez** app2 de l'inventaire puis relancez ? L'ancienne entrée pg_hba disparaît-elle ? (Testez : la réponse révèle une limite importante des rôles « additifs » et introduit la notion d'état *convergent complet* vs *additif*.)
+3. La tâche pg_hba boucle sur `groups['backend']`. Que produit exactement le playbook si vous **retirez** app2 de l'inventaire puis relancez ? L'ancienne entrée pg_hba disparaît-elle ? (Testez : la réponse révèle une limite importante des rôles « additifs » et introduit la notion d'état *convergent complet* vs *additif*.)
 4. Comparez, chronos à l'appui, le temps de ce TP à celui du TP 5+6 (que vous aviez consigné). Puis comparez le temps d'un **rejeu** (2ᵉ `ansible-playbook`) à celui d'une reconstruction manuelle. C'est la matière de votre compte rendu, et l'argument de vente de l'IaC en une ligne.

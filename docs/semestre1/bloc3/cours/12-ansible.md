@@ -37,18 +37,18 @@ Le prix de ce choix, pour être honnête : à très grande échelle (dizaines de
 L'inventaire liste les machines et les range en **groupes**, généralement par rôle. Format INI (ou YAML) :
 
 ```ini title="inventories/vagrant/hosts.ini"
-[lb]
+[loadbalancer]
 lb ansible_host=192.168.56.10
 
-[app]
+[backend]
 app1 ansible_host=192.168.56.21
 app2 ansible_host=192.168.56.22
 
-[db]
+[database]
 db ansible_host=192.168.56.31
 ```
 
-L'inventaire est le document que le chapitre 9 réclamait : le plan d'adressage, **exécutable**. Ajouter app3 = une ligne ici, et rien d'autre : les rôles et templates s'adaptent seuls (§4). Les variables propres à un groupe ou un hôte vivent dans des fichiers dédiés à côté (`group_vars/app.yml`, `host_vars/db.yml`) : les données séparées du code, comme toujours.
+Les groupes portent le nom des **rôles**, pas des machines : nommer un groupe comme son unique hôte (`[db]` contenant `db`) provoque l'avertissement `Found both group and host with same name`. L'inventaire est le document que le chapitre 9 réclamait : le plan d'adressage, **exécutable**. Ajouter app3 = une ligne ici, et rien d'autre : les rôles et templates s'adaptent seuls (§4). Les variables propres à un groupe ou un hôte vivent dans des fichiers dédiés à côté (`group_vars/backend.yml`, `host_vars/db.yml`) : les données séparées du code, comme toujours.
 
 ### 2.2 Modules et tâches : QUOI
 
@@ -86,17 +86,17 @@ Le **play** associe des hôtes (un groupe de l'inventaire) à une liste de tâch
   roles: [common]
 
 - name: Tier données
-  hosts: db
+  hosts: database
   become: true
   roles: [database]
 
 - name: Tier applicatif
-  hosts: app
+  hosts: backend
   become: true
   roles: [backend]
 
 - name: Tier exposé
-  hosts: lb
+  hosts: loadbalancer
   become: true
   roles: [loadbalancer]
 ```
@@ -145,7 +145,7 @@ Un **template** est un fichier à trous (syntaxe Jinja2 : `{{ variable }}`, `{% 
 
 ```nginx title="roles/loadbalancer/templates/listify.conf.j2 (extrait)"
 upstream listify_backend {
-{% for host in groups['app'] %}
+{% for host in groups['backend'] %}
     server {{ hostvars[host]['ansible_host'] }}:8000 max_fails=3 fail_timeout=10s;
 {% endfor %}
 }
@@ -186,7 +186,7 @@ Convention d'usage qui sauve la lisibilité : les variables du vault sont préfi
 2. Les objets : l'**inventaire** (groupes = rôles ; c'est le plan d'adressage devenu exécutable), les **modules** idempotents invoqués par des **tâches** au nom déclaratif, les **plays** (groupe × rôles, l'ordre des plays = l'orchestration minimale), les **rôles** (arborescence conventionnelle, partageable).
 3. Règle d'or : un module plutôt que `shell` ; chaque `shell` doit reconstruire son idempotence (`creates:`, `changed_when:`).
 4. `ok`/`changed`/`failed` instrumentent l'idempotence : **`changed=0` au 2ᵉ passage est la preuve** ; `--check --diff` est un détecteur de drift.
-5. **Templates Jinja2 + inventaire** : la configuration se *calcule* (boucle sur `groups['app']`) ; l'information n'existe qu'en un endroit, ajouter une machine = une ligne d'inventaire.
+5. **Templates Jinja2 + inventaire** : la configuration se *calcule* (boucle sur `groups['backend']`) ; l'information n'existe qu'en un endroit, ajouter une machine = une ligne d'inventaire.
 6. **Handlers** : déclenchés par `changed` via `notify`, exécutés une fois en fin de play : dix modifications, un redémarrage.
 7. **ansible-vault** : les secrets committés chiffrés, référencés par des variables en clair préfixées `vault_`.
 
