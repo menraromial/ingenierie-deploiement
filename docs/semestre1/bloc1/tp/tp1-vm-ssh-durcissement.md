@@ -115,6 +115,15 @@ Trois choses se passent, à comprendre et consigner :
 2. Le mot de passe demandé est celui de `deploy` **sur la VM** (authentification par mot de passe, que nous allons précisément supprimer).
 3. Vous êtes sur la VM : le prompt affiche `deploy@listify-s1`. Le trafic a suivi : terminal → 127.0.0.1:2222 → NAT VirtualBox → 10.0.2.15:22.
 
+!!! warning "Erreur « Too many authentication failures » ?"
+    Si vous avez déjà des clés SSH sur votre poste, `ssh` les propose **toutes** avant d'arriver au mot de passe ; chaque essai compte comme un échec, et le serveur coupe dès qu'il dépasse sa limite (`MaxAuthTries`, 6 par défaut) avant même de vous demander le mot de passe. Comptez vos clés avec `ssh-add -l`. La parade, à ce stade où la VM accepte encore le mot de passe : forcer `ssh` à ne proposer aucune clé et à aller droit au mot de passe.
+
+    ```bash
+    ssh -p 2222 -o PubkeyAuthentication=no -o PreferredAuthentications=password deploy@127.0.0.1
+    ```
+
+    Vous obtenez alors l'invite `deploy@127.0.0.1's password:`. Ce problème disparaît de lui-même après l'étape 4 : une fois votre clé publique déposée sur la VM, seule la bonne clé sera utilisée.
+
 Créez maintenant le dépôt de travail du semestre **sur votre poste hôte** :
 
 ```bash
@@ -157,6 +166,17 @@ ssh -p 2222 deploy@127.0.0.1   # doit maintenant demander la PASSPHRASE de la cl
                                # pas le mot de passe du serveur
 ```
 
+!!! warning "Vous avez déjà plusieurs clés SSH ? (`ssh-copy-id` échoue avec « Too many authentication failures »)"
+    Par défaut, `ssh-copy-id` déploie **toutes** les clés de votre agent et les propose toutes avant le mot de passe, ce qui dépasse `MaxAuthTries`. Désignez **une seule** clé à installer avec `-i` et forcez le mot de passe :
+
+    ```bash
+    ssh-copy-id -i ~/.ssh/id_ed25519.pub \
+      -o PubkeyAuthentication=no -o PreferredAuthentications=password \
+      -p 2222 deploy@127.0.0.1
+    ```
+
+    Cela n'installe que `id_ed25519.pub` et s'authentifie par le mot de passe de `deploy`. Le `ssh` de vérification qui suit exige alors le réglage `~/.ssh/config` de l'étape 4.3 (sinon l'agent propose encore ses autres clés et la connexion peut de nouveau être coupée).
+
 Sur la VM, regardez ce que `ssh-copy-id` a réellement fait : votre clé publique est une ligne dans `~/.ssh/authorized_keys`, et les permissions sont strictes (`700` sur `~/.ssh`, `600` sur le fichier), sans quoi sshd refuserait de s'en servir.
 
 ### 4.3 Se simplifier la vie : `~/.ssh/config` (poste hôte)
@@ -166,9 +186,13 @@ Host listify-s1
     HostName 127.0.0.1
     Port 2222
     User deploy
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
 ```
 
 Désormais : `ssh listify-s1`. Ce fichier est aussi une **documentation** de votre parc : Ansible saura le lire au bloc 3.
+
+Les deux dernières lignes règlent définitivement le problème « Too many authentication failures » : `IdentityFile` désigne la clé à utiliser et `IdentitiesOnly yes` interdit à `ssh` de proposer les **autres** clés de votre agent. Sans elles, si vous avez beaucoup de clés, la bonne peut être offerte trop tard (après les 6 essais autorisés) et le serveur coupe. C'est aussi une bonne pratique de sécurité : ne présenter à chaque serveur que la clé qui le concerne.
 
 ??? question "Point de contrôle n° 2"
     - `ssh listify-s1` vous connecte en demandant la passphrase de la clé (ou rien si un agent SSH tourne), **pas** le mot de passe deploy.
