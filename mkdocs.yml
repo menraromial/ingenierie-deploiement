@@ -85,6 +85,14 @@ nav:
           - "TP 3 : Frontend, Nginx en reverse proxy et TLS": semestre1/bloc1/tp/tp3-frontend-nginx-tls.md
           - "TP 4 : Le jour 2, mise à jour, sauvegarde, diagnostic": semestre1/bloc1/tp/tp4-jour2.md
           - "Défi final : le mur du déploiement manuel": semestre1/bloc1/defi-final.md
+      - "Bloc 2 : architecture multi-machines":
+          - Présentation du bloc: semestre1/bloc2/index.md
+          - "Ch. 6 : Pourquoi séparer les services": semestre1/bloc2/cours/06-pourquoi-separer-les-services.md
+          - "Ch. 7 : Réseau privé entre machines": semestre1/bloc2/cours/07-reseau-prive-entre-machines.md
+          - "Ch. 8 : Répartition de charge": semestre1/bloc2/cours/08-repartition-de-charge.md
+          - "Ch. 9 : Le problème de la configuration distribuée": semestre1/bloc2/cours/09-configuration-distribuee.md
+          - "TP 5 : Éclater l'application sur trois machines": semestre1/bloc2/tp/tp5-eclater-application.md
+          - "TP 6 : Deuxième backend et répartiteur de charge": semestre1/bloc2/tp/tp6-load-balancer.md
   - Semestre 2:
       - Vue d'ensemble: semestre2/index.md
   - Semestre 3:
