@@ -17,7 +17,7 @@ flowchart TB
             PS["postgresql.service<br/>(fourni par le paquet)"]
             LS["listify.service<br/>(écrit par VOUS)"]
         end
-        P[("PostgreSQL 15<br/>127.0.0.1:5432<br/>base listify, user SQL listify")]
+        P[("PostgreSQL 16<br/>127.0.0.1:5432<br/>base listify, user SQL listify")]
         G["Gunicorn, 3 workers<br/>127.0.0.1:8000<br/>utilisateur système listify"]
         E["/etc/listify/listify.env<br/>640 root:listify<br/>DB_PASSWORD=..."]
         C["/opt/listify/<br/>code + venv"]
@@ -44,23 +44,23 @@ Avant de configurer quoi que ce soit, **inventoriez ce que le paquet a fait** : 
 systemctl status postgresql            # un service est apparu... et déjà démarré
 sudo ss -tlnp | grep 5432              # qui écoute, sur quelle adresse ?
 id postgres                            # un utilisateur système a été créé
-dpkg -L postgresql-15 | head -30       # où sont les fichiers ?
-ls /etc/postgresql/15/main/            # les configurations
-sudo ls /var/lib/postgresql/15/main/   # les données (permissions : postgres only)
+dpkg -L postgresql-16 | head -30       # où sont les fichiers ?
+ls /etc/postgresql/16/main/            # les configurations
+sudo ls /var/lib/postgresql/16/main/   # les données (permissions : postgres only)
 ls /var/log/postgresql/                # les journaux fichier
 ```
 
-À consigner au runbook, sous forme de tableau : service, utilisateur, port et adresse de bind, chemin config, chemin données, chemin logs. Constat important : PostgreSQL écoute sur `127.0.0.1:5432` **par défaut** : sécurité par défaut raisonnable (Debian), que nous ne changerons pas au bloc 1.
+À consigner au runbook, sous forme de tableau : service, utilisateur, port et adresse de bind, chemin config, chemin données, chemin logs. Constat important : PostgreSQL écoute sur `127.0.0.1:5432` **par défaut** : sécurité par défaut raisonnable (packaging Debian/Ubuntu), que nous ne changerons pas au bloc 1.
 
 !!! note "Pourquoi le service démarre-t-il tout seul ?"
-    Politique Debian : un service installé est un service voulu, donc démarré et `enabled`. C'est le script `postinst` du paquet qui a tout fait : création de l'utilisateur, initialisation du répertoire de données (`initdb`), démarrage. Sur RHEL, la politique inverse s'applique (installé ≠ démarré). Moralité : ne présumez jamais, vérifiez avec `systemctl status`.
+    Politique Debian/Ubuntu : un service installé est un service voulu, donc démarré et `enabled`. C'est le script `postinst` du paquet qui a tout fait : création de l'utilisateur, initialisation du répertoire de données (`initdb`), démarrage. Sur RHEL, la politique inverse s'applique (installé ≠ démarré). Moralité : ne présumez jamais, vérifiez avec `systemctl status`.
 
 ### Étape 2 : comprendre l'authentification PostgreSQL (20 min)
 
 PostgreSQL a **ses propres** utilisateurs (rôles SQL), distincts des utilisateurs Linux. Le lien entre les deux est réglé par `pg_hba.conf` (*host-based authentication*). Regardez :
 
 ```bash
-sudo grep -vE '^\s*(#|$)' /etc/postgresql/15/main/pg_hba.conf
+sudo grep -vE '^\s*(#|$)' /etc/postgresql/16/main/pg_hba.conf
 ```
 
 Les deux lignes qui nous concernent :
@@ -150,7 +150,7 @@ sudo -u listify /opt/listify/venv/bin/pip install -r /opt/listify/backend/requir
 sudo -u listify /opt/listify/venv/bin/pip list
 ```
 
-Pourquoi pas `pip install` tout court ? Relisez le chapitre 2, §2.3 : Debian 12 refuse (`externally-managed-environment`), et c'est une bonne chose : les dépendances de Listify vivent dans `/opt/listify/venv`, ni dans le système, ni chez un autre service.
+Pourquoi pas `pip install` tout court ? Relisez le chapitre 2, §2.3 : Ubuntu 24.04 refuse (`externally-managed-environment`), et c'est une bonne chose : les dépendances de Listify vivent dans `/opt/listify/venv`, ni dans le système, ni chez un autre service.
 
 ### Étape 6 : la configuration dans l'environnement (20 min)
 

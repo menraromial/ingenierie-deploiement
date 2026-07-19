@@ -1,6 +1,6 @@
 # Bloc 1 : le déploiement « à l'ancienne », tout sur une machine
 
-**Semaines 1 à 5.** Vous allez déployer l'application fil rouge [Listify](../../fil-rouge.md) sur une unique machine virtuelle Debian, entièrement à la main : installation du système, base de données, backend en service systemd, reverse proxy Nginx, TLS, sauvegardes. Exactement comme un administrateur système de 2005... et comme, encore aujourd'hui, une part non négligeable des petites structures.
+**Semaines 1 à 5.** Vous allez déployer l'application fil rouge [Listify](../../fil-rouge.md) sur une unique machine virtuelle Ubuntu Server, entièrement à la main : installation du système, base de données, backend en service systemd, reverse proxy Nginx, TLS, sauvegardes. Exactement comme un administrateur système de 2005... et comme, encore aujourd'hui, une part non négligeable des petites structures.
 
 ## Pourquoi commencer par là ?
 
@@ -42,7 +42,7 @@ flowchart TB
 
 ## Ce que vous saurez faire à la fin du bloc
 
-- Installer une Debian minimale dans VirtualBox et vous y connecter en SSH par clés, avec un durcissement de base (root login désactivé, pare-feu ufw).
+- Installer un Ubuntu Server minimal dans VirtualBox et vous y connecter en SSH par clés, avec un durcissement de base (root login désactivé, pare-feu ufw).
 - Installer et sécuriser PostgreSQL, créer une base et un utilisateur applicatif dédiés.
 - Écrire vous-même une unité systemd pour un service applicatif, la démarrer, la surveiller, lire ses journaux.
 - Configurer Nginx en reverse proxy devant Gunicorn, servir des fichiers statiques, poser un certificat TLS auto-signé et expliquer ce qu'il faudrait pour un vrai certificat.

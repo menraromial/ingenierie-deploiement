@@ -16,7 +16,7 @@ flowchart LR
         T["Terminal<br/>ssh -p 2222 deploy@127.0.0.1"]
         K["Clé privée<br/>~/.ssh/id_ed25519"]
     end
-    subgraph VM["VM listify-s1 : Debian 12, 2 Go RAM, 2 vCPU"]
+    subgraph VM["VM listify-s1 : Ubuntu Server 24.04, 2 Go RAM, 2 vCPU"]
         S["sshd durci :<br/>clés seulement, root interdit"]
         U["ufw : deny incoming,<br/>allow 22/tcp"]
         D["Utilisateur deploy (sudo)"]
@@ -37,10 +37,10 @@ flowchart LR
         Gestionnaire des tâches → Performance → CPU → « Virtualisation : activée ». Sinon, activez VT-x/AMD-V dans le BIOS/UEFI.
 
 2. Installez VirtualBox ≥ 7.0 (version exacte : voir le guide d'installation de la semaine 1).
-3. Récupérez l'ISO **Debian 12 netinst (amd64)** depuis le miroir local de l'école (`debian-12.x.x-amd64-netinst.iso`, ~650 Mo).
+3. Récupérez l'ISO **Ubuntu Server 24.04 LTS (amd64)** (~2,7 Go) : depuis [releases.ubuntu.com/24.04](https://releases.ubuntu.com/24.04/), téléchargez le fichier `ubuntu-24.04.x-live-server-amd64.iso` (« Server install image »), ou prenez-le sur le miroir local de l'école. Tout le monde doit utiliser la **même** version : les corrections et les pannes injectées sont préparées dessus.
 
-!!! note "Pourquoi « netinst » ?"
-    L'image netinst ne contient que le minimum ; le reste est téléchargé à l'installation. C'est le choix « serveur » : on n'installe **que** ce dont on a besoin (réduction de la surface d'attaque, chapitre 5), et on choisit chaque composant consciemment.
+!!! note "« Server », pas « Desktop »"
+    Prenez bien l'image **Server** et non l'image Desktop : l'ISO serveur n'embarque **aucun environnement graphique**. C'est le choix « serveur » du chapitre 1 : on n'installe **que** ce dont on a besoin (réduction de la surface d'attaque, chapitre 5), et on administre tout à distance en SSH. L'installateur d'Ubuntu Server s'appelle **Subiquity** ; il diffère de l'installateur historique de Debian, d'où la procédure détaillée ci-dessous.
 
 ## Étape 1 : créer la VM (15 min)
 
@@ -49,7 +49,7 @@ Dans VirtualBox, créez une machine avec ces paramètres :
 | Paramètre | Valeur | Pourquoi |
 |---|---|---|
 | Nom | `listify-s1` | Convention du cours : rôle + semestre |
-| Type / Version | Linux / Debian (64-bit) | Active les bons pilotes paravirtualisés |
+| Type / Version | Linux / Ubuntu (64-bit) | Active les bons pilotes paravirtualisés |
 | RAM | 2048 Mo | Assez pour Nginx + Gunicorn + PostgreSQL (ch. 1, §1.2) |
 | CPU | 2 vCPU | Permet de raisonner le dimensionnement des workers (ch. 4) |
 | Disque | VDI, 20 Go, alloué dynamiquement | « Dynamique » : le fichier ne grossit qu'à l'usage réel |
@@ -66,29 +66,37 @@ Configurez tout de suite la **redirection de port SSH** : Configuration → Rés
 
 L'IP hôte `127.0.0.1` restreint la redirection à votre propre poste : personne d'autre sur le réseau de la salle ne pourra tenter de se connecter à votre VM.
 
-## Étape 2 : installer Debian 12 (30 min)
+## Étape 2 : installer Ubuntu Server 24.04 (30 min)
 
-Démarrez la VM sur l'ISO et suivez l'installateur (mode texte « Install », pas besoin du graphique). Points de décision, tout le reste par défaut :
+Démarrez la VM sur l'ISO. Au menu GRUB, choisissez « Try or Install Ubuntu Server ». L'installateur **Subiquity** se déroule en une série d'écrans (naviguez au clavier : flèches, ++tab++, ++enter++). Points de décision, tout le reste par défaut :
 
 1. **Langue / clavier** : à votre convenance (le serveur, lui, parlera anglais dans ses logs : c'est très bien).
-2. **Nom de machine** : `listify-s1` ; domaine : laisser vide.
-3. **Mot de passe root** : **laissez vide**. Décision importante : sans mot de passe root, l'installateur désactive le compte root et donne `sudo` au premier utilisateur : exactement la politique du chapitre 5.
-4. **Utilisateur** : nom complet libre, identifiant **`deploy`**, mot de passe robuste (il servira pour `sudo`).
-5. **Partitionnement** : « Assisté : utiliser un disque entier », tout dans une seule partition. (Le partitionnement fin est un vrai sujet d'admin, hors périmètre du cours.)
-6. **Choix des logiciels** : décochez **tout** sauf « **serveur SSH** » et « utilitaires usuels du système ». Pas d'environnement de bureau : notre serveur n'a pas d'écran.
+2. **Type d'installation** : choisissez **« Ubuntu Server »** (l'option standard, pas « minimized » qui retire des outils utiles au TP).
+3. **Réseau** : laissez la configuration automatique (DHCP). L'interface obtient `10.0.2.15/24` sur le réseau NAT de VirtualBox (ch. 3, §4).
+4. **Proxy** et **miroir** : laissez vides / par défaut.
+5. **Stockage** : « Use an entire disk », puis confirmez le résumé du partitionnement (l'installateur écrit sur le disque : lisez l'avertissement, il est normal). Le partitionnement fin est un vrai sujet d'admin, hors périmètre du cours.
+6. **Profile setup** : nom complet libre ; nom du serveur **`listify-s1`** ; identifiant **`deploy`** ; mot de passe robuste (il servira pour `sudo`).
+7. **Ubuntu Pro** : « Skip for now ».
+8. **SSH Setup** : **cochez « Install OpenSSH server »**. C'est l'étape la plus importante de l'installation : sans elle, pas de connexion à distance. Ne cochez pas « Import SSH identity » (nous déposerons la clé nous-mêmes à l'étape 4, pour bien comprendre le mécanisme).
+9. **Featured server snaps** : n'en sélectionnez **aucun**. Notre serveur n'installe que ce dont il a besoin.
 
-Au redémarrage, vous obtenez une console de login en mode texte. Connectez-vous en `deploy` **dans la console VirtualBox** une seule fois pour vérifier, puis n'y revenez qu'en secours : à partir de maintenant, **tout se fait en SSH**, comme sur un vrai serveur.
+L'installation se lance, puis propose « Reboot Now ». Au redémarrage, retirez l'ISO si VirtualBox ne l'a pas fait (Périphériques → Lecteurs optiques → Retirer le disque), et vous obtenez une console de login en mode texte.
+
+!!! info "Ubuntu Server applique déjà la politique du chapitre 5"
+    Contrairement à l'installateur Debian, Subiquity ne demande **jamais** de mot de passe root : le compte root est désactivé d'office et votre utilisateur `deploy` reçoit automatiquement `sudo`. C'est exactement le modèle « pas de connexion root directe » du chapitre 5, appliqué par défaut : rien à corriger.
+
+Connectez-vous en `deploy` **dans la console VirtualBox** une seule fois pour vérifier, puis n'y revenez qu'en secours : à partir de maintenant, **tout se fait en SSH**, comme sur un vrai serveur.
 
 ??? question "Point de contrôle n° 1 : votre première session"
     Dans la console VM, vérifiez et notez dans le runbook :
 
     ```bash
     ip -brief addr        # l'IP de la VM : 10.0.2.15/24 (réseau NAT VirtualBox)
-    sudo whoami           # doit répondre "root" (deploy a bien sudo)
+    sudo whoami           # doit répondre "root" (deploy a bien sudo, sans mot de passe root)
     systemctl status ssh  # sshd doit être "active (running)"
     ```
 
-    Si `sudo` échoue avec « deploy is not in the sudoers file » : vous avez donné un mot de passe root à l'installation. Réparez : connectez-vous root dans la console, puis `usermod -aG sudo deploy`, déconnectez/reconnectez deploy.
+    Si `systemctl status ssh` répond « Unit ssh.service could not be found » : vous avez oublié de cocher « Install OpenSSH server » à l'étape 8. Réparez sans réinstaller : `sudo apt update && sudo apt install -y openssh-server`.
 
 ## Étape 3 : première connexion SSH et création du dépôt (20 min)
 
@@ -196,8 +204,9 @@ Ces tests négatifs vont dans le runbook : prouver qu'une porte est fermée fait
 
 ## Étape 6 : pare-feu ufw (20 min)
 
+`ufw` (*Uncomplicated Firewall*) est développé par Canonical pour Ubuntu : il est déjà installé, simplement inactif. Une commande de moins que sur d'autres distributions.
+
 ```bash
-sudo apt update && sudo apt install -y ufw
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw allow 22/tcp        # AVANT enable : ne pas s'enfermer dehors (ch. 3, §5.1)
@@ -213,7 +222,8 @@ La sortie attendue de `status verbose` : politique `deny (incoming), allow (outg
 # Tout mettre à jour (ch. 5 : la majorité des compromissions exploitent du déjà-corrigé)
 sudo apt update && sudo apt upgrade -y
 
-# Correctifs de sécurité automatiques
+# Correctifs de sécurité automatiques : préinstallés et actifs sur Ubuntu Server,
+# on se contente de VÉRIFIER (le paquet est déjà là : apt le confirmera)
 sudo apt install -y unattended-upgrades
 systemctl status unattended-upgrades   # doit être active
 
@@ -248,4 +258,4 @@ Enfin, prenez votre premier **snapshot** : VM éteinte (`sudo poweroff`), Virtua
 1. Expliquez le trajet complet d'un paquet lors de `ssh listify-s1`, en nommant chaque traduction d'adresse et de port.
 2. Pourquoi `PasswordAuthentication no` rend-il fail2ban largement redondant *pour SSH* ? Quel service futur (TP 3) remettra fail2ban dans la discussion ?
 3. Un camarade a perdu la passphrase de sa clé. Peut-il la récupérer ? Que doit-il faire, étape par étape, pour retrouver l'accès à sa VM sans la réinstaller ?
-4. `ufw default deny incoming` : pourquoi cette politique n'empêche-t-elle pas `apt` de fonctionner, alors que les réponses des miroirs Debian sont bien des paquets entrants ? (Indice : pare-feu *à états*.)
+4. `ufw default deny incoming` : pourquoi cette politique n'empêche-t-elle pas `apt` de fonctionner, alors que les réponses des miroirs Ubuntu sont bien des paquets entrants ? (Indice : pare-feu *à états*.)

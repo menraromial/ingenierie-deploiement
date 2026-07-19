@@ -30,7 +30,7 @@ Chaque chapitre du cours se termine par sa propre bibliographie commentée, pré
 | Ressource | URL | Usage dans le parcours |
 |---|---|---|
 | The Twelve-Factor App (Adam Wiggins, Heroku, 2011) | [12factor.net/fr](https://12factor.net/fr/) | S1 bloc 1 (facteurs 1 à 5), puis relecture complète au S2 |
-| Documentation Debian (Administration) | [debian.org/doc](https://www.debian.org/doc/) | S1, système de référence des TP |
+| Documentation Ubuntu Server | [documentation.ubuntu.com/server](https://documentation.ubuntu.com/server/) | S1, système de référence des TP |
 | Documentation Ansible | [docs.ansible.com](https://docs.ansible.com/) | S1 bloc 3 |
 | Documentation Podman | [docs.podman.io](https://docs.podman.io/) | S2 bloc 1 |
 | Documentation Kubernetes (Concepts) | [kubernetes.io/docs/concepts](https://kubernetes.io/docs/concepts/) | S2 bloc 2 |

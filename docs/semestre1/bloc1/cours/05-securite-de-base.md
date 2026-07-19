@@ -106,7 +106,7 @@ La force du principe est de s'appliquer identiquement à chaque niveau ; c'est l
 
 ### 2.3 sudo : l'élévation contrôlée
 
-`sudo` exécute une commande avec les droits d'un autre utilisateur (root par défaut), selon la politique de `/etc/sudoers` (à éditer exclusivement avec `visudo`, qui valide la syntaxe : un sudoers cassé = plus d'élévation possible du tout). Sur Debian, être membre du groupe `sudo` suffit. Deux vertus par rapport à une session root : chaque commande élevée est **journalisée** avec son auteur réel, et l'élévation est **ponctuelle** : le reste du temps, vos erreurs de frappe n'ont que vos droits.
+`sudo` exécute une commande avec les droits d'un autre utilisateur (root par défaut), selon la politique de `/etc/sudoers` (à éditer exclusivement avec `visudo`, qui valide la syntaxe : un sudoers cassé = plus d'élévation possible du tout). Sur Debian/Ubuntu, être membre du groupe `sudo` suffit. Deux vertus par rapport à une session root : chaque commande élevée est **journalisée** avec son auteur réel, et l'élévation est **ponctuelle** : le reste du temps, vos erreurs de frappe n'ont que vos droits.
 
 ## 3. La surface d'attaque
 
@@ -118,7 +118,7 @@ Principe d'ingénierie : **ce qui n'existe pas ne peut pas être attaqué.** Cha
 
 1. **Inventorier ce qui écoute** : `sudo ss -tlnp` : chaque ligne doit être justifiable. Un service inconnu qui écoute = une question à résoudre immédiatement.
 2. **Fermer ou confiner** : service inutile → désinstaller ; service interne → bind 127.0.0.1 (ou réseau privé au bloc 2) ; service public → pare-feu + durcissement.
-3. **Minimiser l'installé** : c'est la raison de l'installation Debian **minimale** du TP 1 (pas d'interface graphique, pas de services superflus) : moins de paquets = moins de CVE à suivre.
+3. **Minimiser l'installé** : c'est la raison de l'installation **Ubuntu Server** (sans bureau) du TP 1 (pas d'interface graphique, pas de services superflus) : moins de paquets = moins de CVE à suivre.
 4. **Maintenir à jour** : la majorité des compromissions exploitent des vulnérabilités *déjà corrigées* par l'éditeur. `apt upgrade` régulier, et le paquet `unattended-upgrades` pour les correctifs de sécurité automatiques (installé au TP 1).
 
 ### 3.2 Le cas Listify : mesurer la réduction
@@ -164,6 +164,6 @@ Dernier principe structurant : aucune mesure n'est fiable seule ; on **superpose
 
 ### Pour aller plus loin
 
-- fail2ban : documentation et paquet Debian ; à expérimenter sur votre VM en bonus du TP 1.
+- fail2ban : documentation et paquet Debian/Ubuntu ; à expérimenter sur votre VM en bonus du TP 1.
 - Le concept de bastion moderne et l'enregistrement de sessions : cherchez « SSH bastion pattern » ; comparez avec Teleport ou le simple `ProxyJump`.
 - Pour mesurer le bruit d'Internet : le projet Shodan (moteur de recherche des services exposés) ; cherchez-y « port:5432 » pour voir combien de PostgreSQL publics existent réellement.

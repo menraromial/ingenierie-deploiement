@@ -139,7 +139,7 @@ flowchart TB
     subgraph Internet
         C["Client HTTPS"]
     end
-    subgraph VM["VM Debian : listify.local"]
+    subgraph VM["VM Ubuntu : listify.local"]
         direction TB
         F["ufw : 22, 80, 443 uniquement"]
         N["Nginx (www-data)<br/>:443 TLS, statiques /opt/listify/frontend<br/>proxy /api/ → 127.0.0.1:8000"]

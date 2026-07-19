@@ -39,14 +39,14 @@ sudo apt install -y nginx
 Rituel d'inventaire (le même qu'au TP 2, il doit devenir un réflexe) :
 
 ```bash
-systemctl status nginx          # démarré et enabled (politique Debian)
+systemctl status nginx          # démarré et enabled (politique Debian/Ubuntu)
 sudo ss -tlnp | grep nginx      # écoute sur 0.0.0.0:80 : premier service PUBLIC
 id www-data                     # l'utilisateur système de Nginx
 ls /etc/nginx/                  # la configuration
 ls /var/log/nginx/              # access.log et error.log
 ```
 
-La structure de configuration Debian, à comprendre avant de toucher quoi que ce soit :
+La structure de configuration Nginx sur Debian/Ubuntu, à comprendre avant de toucher quoi que ce soit :
 
 - `/etc/nginx/nginx.conf` : configuration globale, qui inclut les deux répertoires suivants ; on n'y touche pas.
 - `/etc/nginx/sites-available/` : un fichier par site, **disponibles**.

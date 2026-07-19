@@ -26,7 +26,7 @@ flowchart TB
 
 Le semestre suit une trajectoire en trois temps, chacun se terminant par une prise de conscience qui motive le suivant :
 
-1. **[Bloc 1](bloc1/index.md) (semaines 1 à 5) : le déploiement « à l'ancienne », tout sur une machine.** Vous installez et exploitez l'application fil rouge à la main sur une VM Debian : système, réseau, reverse proxy, TLS, sauvegardes. Le bloc se clôt par un défi chronométré... conçu pour être perdu.
+1. **[Bloc 1](bloc1/index.md) (semaines 1 à 5) : le déploiement « à l'ancienne », tout sur une machine.** Vous installez et exploitez l'application fil rouge à la main sur une VM Ubuntu Server : système, réseau, reverse proxy, TLS, sauvegardes. Le bloc se clôt par un défi chronométré... conçu pour être perdu.
 2. **Bloc 2 (semaines 6 à 8) : architecture multi-machines.** Un service par VM, réseau privé, pare-feu inter-machines, répartition de charge. La douleur du bloc 1, multipliée par quatre machines : le *configuration drift* devient tangible.
 3. **Bloc 3 (semaines 9 à 13) : Infrastructure as Code.** Vagrant décrit les machines, Ansible les configure de façon idempotente, Terraform introduit l'état désiré. L'application entière se déploie en une commande depuis un dépôt Git ; on rejoue le défi du bloc 1 et on chronomètre.
 
@@ -52,5 +52,5 @@ Ce semestre introduit des concepts qui reviendront pendant tout le parcours. À 
 ## Environnement de travail
 
 - **Poste étudiant** : 16 Go de RAM recommandés (8 Go minimum avec adaptations), VirtualBox ≥ 7.0, puis Vagrant au bloc 3.
-- **Système invité de référence** : Debian 12 « Bookworm » (netinst). Toutes les corrections et les pannes injectées sont préparées sur cette version : ne changez pas de distribution sans accord de l'enseignant.
+- **Système invité de référence** : Ubuntu Server 24.04 LTS « Noble Numbat ». Toutes les corrections et les pannes injectées sont préparées sur cette version : ne changez pas de distribution sans accord de l'enseignant.
 - Un **guide d'installation** aux versions figées est distribué en semaine 1 ; les images ISO et boxes Vagrant sont disponibles sur le miroir local de l'école pour économiser la bande passante.

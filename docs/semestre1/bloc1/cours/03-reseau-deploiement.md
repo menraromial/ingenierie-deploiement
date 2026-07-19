@@ -132,7 +132,7 @@ flowchart LR
         subgraph VBox["NAT VirtualBox"]
             R["Redirection :<br/>hôte 127.0.0.1:2222 → invité 10.0.2.15:22"]
         end
-        subgraph VM["VM Debian (réseau privé 10.0.2.0/24)"]
+        subgraph VM["VM Ubuntu (réseau privé 10.0.2.0/24)"]
             S["sshd écoute sur :22"]
         end
     end

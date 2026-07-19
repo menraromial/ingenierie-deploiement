@@ -7,7 +7,7 @@
 
 ## L'énoncé
 
-L'enseignant vous fournit une VM Debian 12 **neuve et vierge** (même image que le TP 1, seule la connexion SSH par mot de passe est prête). Vous avez 30 minutes pour y redéployer l'application Listify v1.1, à l'identique de votre VM des TP 1-4 :
+L'enseignant vous fournit une VM Ubuntu Server 24.04 **neuve et vierge** (même image que le TP 1, seule la connexion SSH par mot de passe est prête). Vous avez 30 minutes pour y redéployer l'application Listify v1.1, à l'identique de votre VM des TP 1-4 :
 
 - SSH par clés, durcissement, ufw ;
 - PostgreSQL, base, rôle, schéma + migration ;

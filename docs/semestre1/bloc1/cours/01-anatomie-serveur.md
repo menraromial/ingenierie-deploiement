@@ -44,7 +44,7 @@ Tout déploiement consomme quatre ressources, et tout dimensionnement se raisonn
 - **Réseau** : bande passante et latence. Souvent négligé jusqu'au jour où il devient le goulot d'étranglement.
 
 !!! example "Exemple travaillé : dimensionner Listify"
-    L'application fil rouge pour 100 utilisateurs simultanés : Gunicorn avec 4 workers consomme environ 4 × 60 Mo = 240 Mo de RAM ; PostgreSQL avec ses caches, environ 512 Mo pour une petite base ; Nginx est négligeable (quelques Mo) ; le système Debian de base, environ 200 Mo. Total ≈ 1 Go : notre VM de TP à 2 Go de RAM est confortable. Le premier facteur limitant en cas de montée en charge ne sera pas la RAM mais le nombre de workers Gunicorn (voir chapitre 4).
+    L'application fil rouge pour 100 utilisateurs simultanés : Gunicorn avec 4 workers consomme environ 4 × 60 Mo = 240 Mo de RAM ; PostgreSQL avec ses caches, environ 512 Mo pour une petite base ; Nginx est négligeable (quelques Mo) ; le système Ubuntu Server de base, environ 250 Mo. Total ≈ 1 Go : notre VM de TP à 2 Go de RAM est confortable. Le premier facteur limitant en cas de montée en charge ne sera pas la RAM mais le nombre de workers Gunicorn (voir chapitre 4).
 
 ## 2. La virtualisation
 
@@ -113,6 +113,7 @@ Où met-on physiquement le serveur ? La réponse a changé quatre fois en trente
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': {
+  'fontSize': '22px',
   'cScale0': '#1a237e', 'cScaleLabel0': '#ffffff',
   'cScale1': '#283593', 'cScaleLabel1': '#ffffff',
   'cScale2': '#303f9f', 'cScaleLabel2': '#ffffff',
@@ -202,7 +203,7 @@ Les notions VirtualBox nécessaires (création de VM, types de réseau, snapshot
 ## Pour préparer le TP 1
 
 - Installer VirtualBox ≥ 7.0 sur votre poste (lien et version exacte dans le guide d'installation distribué en semaine 1).
-- Télécharger l'ISO Debian 12 netinst depuis le miroir local de l'école.
+- Télécharger l'ISO **Ubuntu Server 24.04 LTS** (`ubuntu-24.04.x-live-server-amd64.iso`) depuis [releases.ubuntu.com/24.04](https://releases.ubuntu.com/24.04/) (ou depuis le miroir local de l'école si disponible).
 - Vérifier dans le BIOS/UEFI que la virtualisation matérielle (Intel VT-x / AMD-V) est activée.
 
 ## Bibliographie du chapitre
