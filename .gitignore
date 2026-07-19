@@ -1,0 +1,17 @@
+# Environnement Python local
+.venv/
+__pycache__/
+*.pyc
+
+# Sortie de build MkDocs (générée par la CI, jamais versionnée)
+site/
+
+# Caches
+.cache/
+.mkdocs_cache/
+
+# Éditeurs / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store

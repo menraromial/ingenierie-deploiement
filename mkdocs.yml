@@ -1,0 +1,91 @@
+site_name: Ingénierie du Déploiement et de la Mise en Production
+site_description: >
+  Parcours en 3 semestres pour élèves ingénieurs : du serveur unique
+  à l'Infrastructure as Code, des conteneurs à Kubernetes, du CI/CD au MLOps.
+site_author: Romial Menra
+site_url: https://menraromial.github.io/ingenierie-deploiement/
+repo_url: https://github.com/menraromial/ingenierie-deploiement
+repo_name: menraromial/ingenierie-deploiement
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  language: fr
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Passer en mode sombre
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Passer en mode clair
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - navigation.footer
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - footnotes
+  - tables
+  - def_list
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.keys
+  - toc:
+      permalink: "¶"
+      toc_depth: 3
+
+nav:
+  - Accueil:
+      - Présentation du parcours: index.md
+      - Application fil rouge: fil-rouge.md
+      - Bibliographie générale: bibliographie.md
+  - Semestre 1:
+      - Vue d'ensemble: semestre1/index.md
+      - "Bloc 1 : le déploiement à l'ancienne":
+          - Présentation du bloc: semestre1/bloc1/index.md
+          - "Ch. 1 : Anatomie d'un serveur": semestre1/bloc1/cours/01-anatomie-serveur.md
+          - "Ch. 2 : Le système d'exploitation serveur": semestre1/bloc1/cours/02-systeme-exploitation-serveur.md
+          - "Ch. 3 : Le réseau pour le déploiement": semestre1/bloc1/cours/03-reseau-deploiement.md
+          - "Ch. 4 : Architecture d'une application web déployée": semestre1/bloc1/cours/04-architecture-application-web.md
+          - "Ch. 5 : Sécurité de base": semestre1/bloc1/cours/05-securite-de-base.md
+          - "TP 1 : Créer et durcir sa machine virtuelle": semestre1/bloc1/tp/tp1-vm-ssh-durcissement.md
+          - "TP 2 : Déployer la base de données et le backend à la main": semestre1/bloc1/tp/tp2-backend-bdd.md
+          - "TP 3 : Frontend, Nginx en reverse proxy et TLS": semestre1/bloc1/tp/tp3-frontend-nginx-tls.md
+          - "TP 4 : Le jour 2, mise à jour, sauvegarde, diagnostic": semestre1/bloc1/tp/tp4-jour2.md
+          - "Défi final : le mur du déploiement manuel": semestre1/bloc1/defi-final.md
+  - Semestre 2:
+      - Vue d'ensemble: semestre2/index.md
+  - Semestre 3:
+      - Vue d'ensemble: semestre3/index.md
