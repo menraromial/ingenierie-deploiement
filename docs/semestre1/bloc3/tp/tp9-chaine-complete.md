@@ -53,7 +53,7 @@ ansible-playbook site.yml --vault-password-file .vault-pass
 
 echo "==> Terminé. Vérification :"
 curl -sk https://listify.local/api/health || \
-  echo "   (pensez à '192.168.56.10 listify.local' dans /etc/hosts du poste)"
+  echo "   (si listify.local est injoignable : cd deploy && vagrant hostmanager)"
 ```
 
 ```bash
@@ -120,11 +120,11 @@ Le livrable le plus professionnalisant du parcours (et le critère le plus discr
 ## Reconstruction complète
 1. Cloner ce dépôt
 2. Préparer les secrets et l'outillage (non versionnés) :
+   - `vagrant plugin install vagrant-hostmanager` (gère le /etc/hosts, dont `listify.local`)
    - créer `deploy/ansible/.vault-pass` contenant la phrase de passe du vault
    - `python3 -m venv deploy/ansible/.ansible-venv && ... pip install ansible && ansible-galaxy collection install ...`
-3. Ajouter `192.168.56.10 listify.local` au /etc/hosts du poste
-4. Lancer : `./deploy.sh`
-5. Ouvrir https://listify.local
+3. Lancer : `./deploy.sh` (hostmanager pose l'entrée `listify.local` du poste au `vagrant up`)
+4. Ouvrir https://listify.local
 
 ## Architecture
 (le schéma du bloc 2 + le plan d'adressage)

@@ -33,9 +33,57 @@ sudo apt update && sudo apt install -y vagrant
 vagrant --version
 ```
 
-### 0.2 Libérer les adresses : éteindre les VM du bloc 2
+### 0.1 bis - Le plugin vagrant-hostmanager
 
-Vos nouvelles machines Vagrant vont porter **les mêmes adresses** que celles du bloc 2 : deux machines revendiquant `192.168.56.21` sur le même réseau, vous savez désormais ce que ça donne. **Éteignez les quatre VM manuelles** (`listify-lb`, `listify-app1`, `listify-app2`, `listify-db`) et gardez-les éteintes ; vous les supprimerez après la validation du TP 9 (elles restent votre filet de sécurité d'ici là).
+La résolution de noms interne (le `/etc/hosts` que vous répliquiez à la main sur chaque machine au TP 5) est un problème si courant qu'un **plugin Vagrant** le résout : [`vagrant-hostmanager`](https://github.com/devopsgroup-io/vagrant-hostmanager). Il maintient les entrées `/etc/hosts` **sur toutes les VM du parc, et sur votre poste hôte**, à jour automatiquement à chaque `up`/`destroy`. Installez-le une fois :
+
+```bash
+vagrant plugin install vagrant-hostmanager
+vagrant plugin list      # doit montrer vagrant-hostmanager
+```
+
+Pourquoi un plugin plutôt que notre provisioner shell du TP 5 ? Parce qu'il est **idempotent par conception** (pas de garde `grep` à écrire, cf. ch. 10) et qu'il gère le côté **hôte** : l'entrée `192.168.56.10 listify.local` que vous ajoutiez manuellement à votre `/etc/hosts` aux TP 5 et 8 sera désormais posée toute seule. C'est l'esprit de l'IaC : un problème récurrent finit par avoir son outil dédié.
+
+### 0.2 Libérer les adresses ET les noms : traiter les VM du bloc 2
+
+Vos nouvelles machines Vagrant vont entrer en conflit avec celles du bloc 2 sur **deux** ressources :
+
+- l'**adresse** : deux machines revendiquant `192.168.56.21` sur le même réseau, vous savez désormais ce que ça donne (il suffit de les **éteindre**) ;
+- le **nom VirtualBox** : notre Vagrantfile nomme ses VM `listify-lb`, `listify-app1`... (via `vb.name`), exactement comme vos VM manuelles. Or deux VM VirtualBox ne peuvent pas porter le même nom, même éteintes. `vagrant up` échoue alors dès la première avec :
+
+    ```text
+    A VirtualBox machine with the name 'listify-lb' already exists.
+    ```
+
+Il ne suffit donc pas d'éteindre : il faut **libérer les noms**. Deux façons, au choix.
+
+=== "Renommer (garder le bloc 2 comme témoin)"
+    Le TP 9 conserve les VM manuelles comme filet de sécurité ; renommez-les pour libérer les identifiants sans les perdre. **VM éteintes**, sur le poste hôte :
+
+    ```bash
+    for n in lb app1 app2 db; do
+      VBoxManage modifyvm "listify-$n" --name "s2-listify-$n" 2>/dev/null \
+        && echo "renommée : listify-$n -> s2-listify-$n"
+    done
+    ```
+
+=== "Supprimer (si le bloc 2 est validé)"
+    Si vous n'avez plus besoin des VM manuelles (le TP 9 rejouera tout le déploiement) :
+
+    ```bash
+    for n in lb app1 app2 db; do
+      VBoxManage unregistervm "listify-$n" --delete 2>/dev/null \
+        && echo "supprimée : listify-$n"
+    done
+    ```
+
+!!! warning "Si `vagrant up` a déjà échoué en cours de route"
+    Le conflit s'arrête à la première machine : vous vous retrouvez avec `lb` à moitié créée et les autres `not created`. Après avoir libéré les noms, nettoyez cet état partiel avant de recommencer, depuis `deploy/` :
+
+    ```bash
+    vagrant destroy -f
+    vagrant up
+    ```
 
 Purgez aussi les empreintes SSH de ces adresses (les machines Vagrant auront de nouvelles clés d'hôte, vous connaissez la musique) :
 
@@ -77,7 +125,7 @@ cd ~ && rm -rf /tmp/vagrant-demo
 
 ## Étape 2 : le Vagrantfile du parc Listify (1 h)
 
-Dans votre dépôt `listify`, créez le répertoire d'infrastructure et le Vagrantfile (celui du chapitre 11, avec le provisioner en plus) :
+Dans votre dépôt `listify`, créez le répertoire d'infrastructure et le Vagrantfile (celui du chapitre 11, enrichi de la configuration hostmanager) :
 
 ```bash
 cd ~/Github/edu/listify        # adaptez à votre chemin
@@ -94,29 +142,26 @@ MACHINES = {
   "db"   => ["192.168.56.31", 1024],
 }
 
-# Résolution interne : le bloc /etc/hosts, appliqué partout (ch. 7, §5)
-HOSTS_SNIPPET = <<~SHELL
-  if ! grep -q "listify-db" /etc/hosts; then
-    cat >> /etc/hosts <<'EOF'
-192.168.56.10   listify-lb
-192.168.56.21   listify-app1
-192.168.56.22   listify-app2
-192.168.56.31   listify-db
-EOF
-  fi
-SHELL
-
 Vagrant.configure("2") do |config|
   config.vm.box = "bento/ubuntu-24.04"
   config.vm.box_version = "202508.03.0"
 
-  # Provisioner commun : exécuté au premier "up" de chaque machine
-  config.vm.provision "shell", inline: HOSTS_SNIPPET
+  # Résolution interne du parc, gérée par le plugin vagrant-hostmanager
+  # (remplace le /etc/hosts recopié à la main au TP 5 : ch. 7, §5)
+  config.hostmanager.enabled           = true   # lancer à chaque up/destroy
+  config.hostmanager.manage_guest      = true   # mettre à jour le /etc/hosts des VM
+  config.hostmanager.manage_host       = true   # ... ET celui du poste hôte
+  config.hostmanager.ignore_private_ip = false  # utiliser l'adresse host-only (.10...)
+  config.hostmanager.include_offline   = true   # inclure les VM éteintes
 
   MACHINES.each do |name, (ip, ram)|
     config.vm.define name do |machine|
       machine.vm.hostname = "listify-#{name}"
       machine.vm.network "private_network", ip: ip
+      # Le load balancer répond aussi au nom "listify.local" (alias hostmanager)
+      if name == "lb"
+        machine.hostmanager.aliases = ["listify.local"]
+      end
       machine.vm.provider "virtualbox" do |vb|
         vb.name   = "listify-#{name}"
         vb.memory = ram
@@ -126,6 +171,9 @@ Vagrant.configure("2") do |config|
   end
 end
 ```
+
+!!! note "`manage_host = true` va demander votre mot de passe"
+    Modifier le `/etc/hosts` **de l'hôte** exige les droits root sur votre poste : au premier `vagrant up`, hostmanager vous demandera votre mot de passe sudo. C'est le prix (assumé) de la mise à jour automatique côté hôte. En contrepartie, l'entrée `192.168.56.10 listify-lb listify.local` apparaît toute seule dans votre `/etc/hosts` : vous n'aurez **pas** à l'ajouter à la main aux TP 8 et 9.
 
 Ajoutez l'état local au `.gitignore` du dépôt, puis lancez et **chronométrez** :
 
@@ -147,16 +195,29 @@ Comptez ce que ces minutes ont remplacé : la création des 4 VM, les cartes ré
 
     Notez au passage le nom d'interface que la box attribue à la carte privée (il peut différer de `enp0s8` selon la box : peu importe, netplan est géré par Vagrant ici).
 
-### 2.1 Regardez le provisioner avec les yeux du chapitre 10
+### 2.1 Vérifier le travail de hostmanager, et le lire avec les yeux du chapitre 10
 
-Relisez `HOSTS_SNIPPET` : nous avons dû **construire l'idempotence à la main** (le `if ! grep -q`). Sans cette garde, chaque `vagrant provision` dupliquerait le bloc dans /etc/hosts : la non-idempotence silencieuse du chapitre 10, §4.2, exactement. Vérifiez que la garde tient :
+Le plugin a écrit les entrées `/etc/hosts` **partout** : sur les quatre VM, et sur votre poste. Constatez-le des deux côtés :
 
 ```bash
-vagrant provision app1              # rejouer le provisioner
-vagrant ssh app1 -c 'grep -c listify-db /etc/hosts'   # doit rester 1
+# Sur une VM :
+vagrant ssh app1 -c 'grep listify /etc/hosts'
+# 192.168.56.10  listify-lb listify.local
+# 192.168.56.21  listify-app1 ... etc.
+
+# Sur votre poste hôte :
+grep listify /etc/hosts
+# les mêmes entrées, dont listify.local -> celui du lb
 ```
 
-C'est la limite assumée des provisioners shell, et l'argument d'Ansible : ses modules apportent cette structure *par défaut* (et `blockinfile` remplacera notre garde artisanale dès le TP 8).
+Puis vérifiez l'**idempotence** (la propriété centrale du ch. 10) : rejouez la mise à jour et comptez.
+
+```bash
+vagrant hostmanager                 # relancer la mise à jour des /etc/hosts
+vagrant ssh app1 -c 'grep -c listify-db /etc/hosts'   # doit rester 1, jamais dupliqué
+```
+
+C'est tout l'intérêt d'un outil dédié par rapport au provisioner shell qu'on aurait pu écrire (`cat >> /etc/hosts`) : ce dernier dupliquerait le bloc à chaque exécution (la non-idempotence silencieuse du ch. 10, §4.2) tant qu'on ne lui ajoute pas une garde `if ! grep -q ...` à la main. hostmanager, comme les modules Ansible du TP 8, apporte cette structure *par défaut* : lire l'état, comparer, n'agir que si besoin. Retenez le principe : dès qu'un besoin est récurrent (ici, `/etc/hosts`), préférez l'outil qui gère l'idempotence à sa place plutôt que de la reconstruire.
 
 ## Étape 3 : le geste-phénix (30 min)
 
@@ -175,9 +236,10 @@ Consignez les deux chronos. Puis écrivez au runbook la réponse à cette questi
 
 ## Point de contrôle final
 
+- [ ] Plugin `vagrant-hostmanager` installé (`vagrant plugin list`)
 - [ ] `deploy/Vagrantfile` committé ; `deploy/.vagrant/` ignoré par Git
 - [ ] `vagrant up` depuis zéro : 4 machines, hostnames corrects, réseau privé fonctionnel, résolution par noms
-- [ ] Provisioner rejoué sans duplication (garde d'idempotence vérifiée)
+- [ ] `/etc/hosts` de l'hôte ET des VM peuplés par hostmanager (dont `listify.local`), sans duplication au rejeu
 - [ ] Chronos consignés : up initial, destroy, up de reconstruction (et avec linked_clone en bonus)
 - [ ] Les réponses de l'étape 3 rédigées au runbook
 - [ ] Les 4 VM manuelles du bloc 2 éteintes (conservées jusqu'au TP 9)
@@ -192,5 +254,5 @@ Consignez les deux chronos. Puis écrivez au runbook la réponse à cette questi
 
 1. `vagrant up` est-il idempotent ? Testez (relancez-le sur un parc déjà démarré) et argumentez avec le vocabulaire du chapitre 10.
 2. Pourquoi `.vagrant/` ne doit-il jamais être committé, alors que le Vagrantfile doit l'être ? Reliez à la distinction état désiré / état local, et au cas du state Terraform (ch. 13, §3.3).
-3. Notre provisioner shell est idempotent grâce à une garde `grep`. Écrivez la version de la garde qui serait nécessaire si le bloc à insérer pouvait **changer** (indice : c'est plus dur qu'il n'y paraît, et c'est exactement ce que `blockinfile` d'Ansible gère avec ses marqueurs).
+3. hostmanager gère `/etc/hosts` idempotemment. Si vous deviez le refaire à la main avec un provisioner shell (`cat >> /etc/hosts`), quelle garde faudrait-il, et comment la compliquer pour gérer le cas où le bloc à insérer **change** d'une exécution à l'autre ? (Indice : c'est plus dur qu'un simple `grep`, et c'est exactement ce que gèrent les marqueurs de `blockinfile` d'Ansible, TP 8.)
 4. La box `bento/ubuntu-24.04` est du code que vous exécutez : listez les risques (chaîne d'approvisionnement) et les parades raisonnables (sources, versions épinglées, miroir local de l'école). Le S2 reposera la même question pour les images de conteneurs.

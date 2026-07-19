@@ -152,7 +152,10 @@ mkdir -p roles/common/tasks roles/common/handlers
     state: enabled
 ```
 
-Arrêtez-vous sur `blockinfile` : c'est la réponse propre à la garde `grep` artisanale du TP 7. Ses **marqueurs** (`# BEGIN/END LISTIFY HOSTS`) délimitent le bloc géré ; rejouer la tâche remplace le bloc entre marqueurs sans jamais dupliquer, et modifier le contenu met à jour proprement. L'idempotence *par structure* du chapitre 12, là où le shell exigeait de la reconstruire.
+Arrêtez-vous sur `blockinfile` : ses **marqueurs** (`# BEGIN/END LISTIFY HOSTS`) délimitent le bloc géré ; rejouer la tâche remplace le bloc entre marqueurs sans jamais dupliquer, et modifier le contenu met à jour proprement. L'idempotence *par structure* du chapitre 12.
+
+!!! note "Pourquoi gérer /etc/hosts ici alors que hostmanager le fait déjà ?"
+    Au TP 7, le plugin `vagrant-hostmanager` peuple `/etc/hosts` sur les VM **et** sur votre poste : pratique pour la boucle de développement locale. Mais ce plugin est une commodité **propre à Vagrant** : il n'existe pas quand Ansible déploie sur de vraies machines (le cas de production, cf. bonus 1 du TP 9). Le rôle `common` gère donc `/etc/hosts` de son côté pour que la configuration Ansible soit **complète et autonome**, indépendamment de Vagrant. Les deux coexistent sans conflit (marqueurs distincts) : hostmanager pour le confort local, Ansible comme source de vérité du déployé.
 
 Ajoutez `common` au playbook et testez immédiatement (on construit rôle par rôle, on ne écrit pas tout d'un coup) :
 
@@ -544,7 +547,7 @@ Complétez le `site.yml` avec le play `loadbalancer` (`hosts: lb`). Le playbook 
 ansible-playbook site.yml --ask-vault-pass          # 1ʳᵉ exécution complète
 ```
 
-Complétez `/etc/hosts` de votre **poste** (`192.168.56.10 listify.local`, comme au TP 5), puis validez de bout en bout :
+L'entrée `listify.local` de votre **poste** a normalement été posée par hostmanager au TP 7 (`grep listify.local /etc/hosts` pour vérifier ; si elle manque, `cd deploy && vagrant hostmanager`). Validez ensuite de bout en bout :
 
 ```bash
 curl -sk https://listify.local/api/health           # ok/ok
