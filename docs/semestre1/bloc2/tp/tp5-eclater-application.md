@@ -145,29 +145,87 @@ Un clone est une **copie parfaite**, y compris de tout ce qui devrait être uniq
 
     3. **Taper à la main** : les commandes ci-dessous sont courtes, et les saisir une fois n'est pas du temps perdu (vous verrez au bloc 3 ce que ce geste répétitif deviendra).
 
-```bash
-# 1. L'identité : hostname + l'entrée locale 127.0.1.1 d'Ubuntu
-sudo hostnamectl set-hostname listify-app1
-sudo sed -i 's/^127\.0\.1\.1.*/127.0.1.1 listify-app1/' /etc/hosts
+Le bloc est le même sur les trois machines, aux **deux valeurs d'identité** près (le nom et l'adresse) ; l'étape 3, elle, est rigoureusement identique partout. Chaque onglet ci-dessous est prêt à coller sur la machine correspondante :
 
-# 2. L'adresse privée : netplan (ch. 7, §4.2)
-sudo tee /etc/netplan/60-hostonly.yaml > /dev/null <<'EOF'
-network:
-  version: 2
-  ethernets:
-    enp0s8:
-      addresses:
-        - 192.168.56.21/24
-EOF
-sudo chmod 600 /etc/netplan/60-hostonly.yaml
-sudo netplan apply        # en console, pas besoin de netplan try
-ip -brief addr            # enp0s8 doit porter l'adresse
+=== "listify-lb (.10)"
 
-# 3. Les clés d'hôte SSH : chaque serveur doit avoir les SIENNES
-sudo rm /etc/ssh/ssh_host_*
-sudo dpkg-reconfigure openssh-server
-sudo systemctl restart ssh
-```
+    ```bash
+    # 1. L'identité : hostname + l'entrée locale 127.0.1.1 d'Ubuntu
+    sudo hostnamectl set-hostname listify-lb
+    sudo sed -i 's/^127\.0\.1\.1.*/127.0.1.1 listify-lb/' /etc/hosts
+
+    # 2. L'adresse privée : netplan (ch. 7, §4.2)
+    sudo tee /etc/netplan/60-hostonly.yaml > /dev/null <<'EOF'
+    network:
+      version: 2
+      ethernets:
+        enp0s8:
+          addresses:
+            - 192.168.56.10/24
+    EOF
+    sudo chmod 600 /etc/netplan/60-hostonly.yaml
+    sudo netplan apply        # en console, pas besoin de netplan try
+    ip -brief addr            # enp0s8 doit porter l'adresse
+
+    # 3. Les clés d'hôte SSH : chaque serveur doit avoir les SIENNES
+    sudo rm /etc/ssh/ssh_host_*
+    sudo dpkg-reconfigure openssh-server
+    sudo systemctl restart ssh
+    ```
+
+=== "listify-app1 (.21)"
+
+    ```bash
+    # 1. L'identité : hostname + l'entrée locale 127.0.1.1 d'Ubuntu
+    sudo hostnamectl set-hostname listify-app1
+    sudo sed -i 's/^127\.0\.1\.1.*/127.0.1.1 listify-app1/' /etc/hosts
+
+    # 2. L'adresse privée : netplan (ch. 7, §4.2)
+    sudo tee /etc/netplan/60-hostonly.yaml > /dev/null <<'EOF'
+    network:
+      version: 2
+      ethernets:
+        enp0s8:
+          addresses:
+            - 192.168.56.21/24
+    EOF
+    sudo chmod 600 /etc/netplan/60-hostonly.yaml
+    sudo netplan apply        # en console, pas besoin de netplan try
+    ip -brief addr            # enp0s8 doit porter l'adresse
+
+    # 3. Les clés d'hôte SSH : chaque serveur doit avoir les SIENNES
+    sudo rm /etc/ssh/ssh_host_*
+    sudo dpkg-reconfigure openssh-server
+    sudo systemctl restart ssh
+    ```
+
+=== "listify-db (.31)"
+
+    ```bash
+    # 1. L'identité : hostname + l'entrée locale 127.0.1.1 d'Ubuntu
+    sudo hostnamectl set-hostname listify-db
+    sudo sed -i 's/^127\.0\.1\.1.*/127.0.1.1 listify-db/' /etc/hosts
+
+    # 2. L'adresse privée : netplan (ch. 7, §4.2)
+    sudo tee /etc/netplan/60-hostonly.yaml > /dev/null <<'EOF'
+    network:
+      version: 2
+      ethernets:
+        enp0s8:
+          addresses:
+            - 192.168.56.31/24
+    EOF
+    sudo chmod 600 /etc/netplan/60-hostonly.yaml
+    sudo netplan apply        # en console, pas besoin de netplan try
+    ip -brief addr            # enp0s8 doit porter l'adresse
+
+    # 3. Les clés d'hôte SSH : chaque serveur doit avoir les SIENNES
+    sudo rm /etc/ssh/ssh_host_*
+    sudo dpkg-reconfigure openssh-server
+    sudo systemctl restart ssh
+    ```
+
+Trois fois le même geste, avec deux valeurs qui changent : gardez cette sensation, c'est exactement ce qu'une boucle sur un inventaire Ansible supprimera au bloc 3.
 
 !!! warning "Pourquoi régénérer les clés d'hôte ?"
     Les trois clones partagent les clés d'hôte de la base : trois serveurs présentant la **même identité** SSH. C'est un problème de sécurité (compromettre une clé = usurper les trois) et une source de confusion pour `known_hosts`. La régénération rend à chacun son identité, celle que vous vérifierez à la première connexion (ch. 5, §1.3). Cas d'école de ce qu'un clonage ne règle pas : l'**identité** ne se copie pas, elle s'attribue. (Dans la même famille, pour les curieux : `/etc/machine-id`, dupliqué aussi ; sans conséquence dans nos TP, mais à savoir pour les parcs réels.)
@@ -189,6 +247,20 @@ Host listify-lb listify-app1 listify-app2 listify-db
     IdentitiesOnly yes
 ```
 
+!!! danger "Purger les empreintes des trois machines, **depuis votre PC**"
+    Vos premières connexions vont déclencher « REMOTE HOST IDENTIFICATION HAS CHANGED! » : c'est le résultat **attendu** de la régénération des clés (et si votre PC avait déjà rencontré ces adresses lors d'une session précédente, à plus forte raison). Purgez les trois d'un coup, puis reconnectez-vous en acceptant les nouvelles empreintes :
+
+    ```bash
+    ssh-keygen -f ~/.ssh/known_hosts -R '192.168.56.10'
+    ssh-keygen -f ~/.ssh/known_hosts -R '192.168.56.21'
+    ssh-keygen -f ~/.ssh/known_hosts -R '192.168.56.31'
+    ```
+
+    Deux pièges qui font perdre du temps :
+
+    - **Ces commandes se lancent sur l'hôte, jamais dans la VM.** `known_hosts` est la mémoire du **client** SSH : c'est votre PC qui a mémorisé l'identité des serveurs, donc c'est chez lui qu'il faut corriger. Dans la VM, le fichier n'existe même pas (elle n'a encore joué que le rôle de serveur). Repère général : `ssh`, `scp`, `ssh-copy-id`, `ssh-keygen -R` et `~/.ssh/config` sont des commandes **client** (sur votre PC) ; `sshd`, `/etc/ssh/sshd_config` et `authorized_keys` vivent côté **serveur**, dans la VM.
+    - **Ne mettez pas le `~` entre guillemets** : le shell ne le développe qu'en dehors des quotes. `-f '~/.ssh/known_hosts'` échoue avec « no such file or directory » alors que le fichier existe ; utilisez `~/.ssh/known_hosts` sans quotes, ou le chemin absolu.
+
 ??? question "Point de contrôle n° 1 : le réseau est câblé"
     - Depuis l'hôte : `ssh listify-db 'hostname'` répond `listify-db` (idem pour les trois). Première connexion : l'empreinte présentée est **différente** pour chaque machine, preuve que la régénération des clés a fonctionné.
     - Entre VM : `ssh listify-app1 'ping -c2 listify-db'` fonctionne **par le nom** (le /etc/hosts de la base fait effet).
@@ -200,12 +272,23 @@ Host listify-lb listify-app1 listify-app2 listify-db
 
 Démarrez `listify-s1` (bloc 1) une dernière fois, produisez un dump **frais** (celui du TP 4 date d'avant vos dernières tâches), rapatriez-le, éteignez :
 
+!!! warning "Le retour de « host key changed » sur `[127.0.0.1]:2222`, et l'occasion de vérifier une empreinte"
+    Entre-temps, ce même guichet NAT a servi à joindre `listify-base` (étape 1) : votre PC a donc mémorisé l'identité de la base pour `[127.0.0.1]:2222`, et `listify-s1` présente de nouveau la sienne. Nettoyez et reconnectez :
+
+    ```bash
+    ssh-keygen -f ~/.ssh/known_hosts -R '[127.0.0.1]:2222'
+    ```
+
+    Profitez-en pour faire ce que la sécurité réclame et qu'on néglige toujours : l'empreinte que SSH vous présente maintenant doit être **exactement celle que vous avez acceptée au TP 1** pour cette machine (elle est dans votre runbook : c'est précisément à cela que sert de la consigner). Si elle correspond, vous avez la preuve formelle que c'est bien votre ancienne VM. Un guichet NAT change d'occupant ; une clé d'hôte, non.
+
 ```bash
-ssh listify-s1 'sudo -u postgres pg_dump -Fc -f /tmp/listify-final.dump listify'
+ssh -t listify-s1 'sudo -u postgres pg_dump -Fc -f /tmp/listify-final.dump listify'
 scp listify-s1:/tmp/listify-final.dump ./backups/
-ssh listify-s1 'sudo poweroff'
-# listify-s1 ne sera plus jamais démarrée : gardez-la éteinte comme témoin.
+ls -lh ./backups/listify-final.dump      # VÉRIFIER que le dump est arrivé...
+ssh -t listify-s1 'sudo poweroff'        # ... AVANT d'éteindre définitivement
 ```
+
+Le `-t` est indispensable partout où une commande distante appelle `sudo` : sans pseudo-terminal, `sudo` refuse de demander le mot de passe (« a terminal is required », TP 4, partie A). Il en va de même pour toutes les commandes `ssh ... 'sudo ...'` de ce TP et du suivant. Et vérifiez toujours l'arrivée du dump **avant** d'éteindre la source : une extinction ne se rattrape qu'en rallumant, mais l'ordre des gestes est ce qui distingue une migration d'un incident.
 
 Une sauvegarde qui sert à **déménager** : les sauvegardes ne sont pas que pour les catastrophes, ce sont les valises des données.
 

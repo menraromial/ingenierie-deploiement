@@ -95,7 +95,7 @@ ssh listify-app2 'curl -s http://localhost:8000/api/health'
 ```
 
 ??? question "Point de contrôle n° 1"
-    Les deux backends répondent ok/ok ; `ssh listify-app2 'sudo ufw status'` montre les règles **héritées du clone** (8000 depuis .10 : notez que le pare-feu, lui, était clonable tel quel : pourquoi ?) ; et votre compteur de machines touchées est à jour (app2, app1, db... et ce n'est pas fini).
+    Les deux backends répondent ok/ok ; `ssh -t listify-app2 'sudo ufw status'` montre les règles **héritées du clone** (8000 depuis .10 : notez que le pare-feu, lui, était clonable tel quel : pourquoi ?) ; et votre compteur de machines touchées est à jour (app2, app1, db... et ce n'est pas fini).
 
 ## Étape 2 : l'upstream Nginx (30 min)
 
@@ -171,13 +171,13 @@ done | sort | uniq -c
 Pendant que la boucle tourne, **terminal 2** :
 
 ```bash
-ssh listify-app2 'sudo systemctl stop listify'
+ssh -t listify-app2 'sudo systemctl stop listify'
 ```
 
 Résultat attendu du terminal 1 : **200 réponses 200**, ou presque. Expliquez-le avec le ch. 8 : les requêtes tombées sur app2 mort ont échoué en connexion (*error*), `proxy_next_upstream` les a **rejouées** sur app1, et après 3 échecs (`max_fails=3`), app2 est sorti du pool pour 10 s (`fail_timeout`), renouvelés tant qu'il reste mort. L'utilisateur n'a rien vu. Vérifiez la trace côté LB :
 
 ```bash
-ssh listify-lb 'sudo tail -5 /var/log/nginx/error.log'
+ssh -t listify-lb 'sudo tail -5 /var/log/nginx/error.log'
 # ... connect() failed (111: Connection refused) while connecting to upstream ...
 ```
 
