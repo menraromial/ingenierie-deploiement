@@ -113,6 +113,13 @@ Pour chaque nom (`listify-lb`, `listify-app1`, `listify-db`) : clic droit sur `l
 
 Un clone est une **copie parfaite**, y compris de tout ce qui devrait être unique. Démarrez chaque clone et, **dans la console VirtualBox** (pas de SSH possible : la carte host-only n'a pas encore d'adresse), déroulez, en remplaçant nom et adresse (`listify-lb` = `.10`, `listify-app1` = `.21`, `listify-db` = `.31`) :
 
+!!! tip "Comment coller du texte dans la console VirtualBox ?"
+    Le presse-papiers partagé (Périphériques → Presse-papiers partagé) **ne fonctionne pas** ici : il exige les Additions invité **et une session graphique**, que notre serveur n'a pas. Trois façons de s'en sortir, du plus confortable au plus rapide :
+
+    1. **Éviter la console** : donnez à chaque clone une redirection NAT temporaire sur un port hôte **distinct** (`listify-lb` → 2210, `listify-app1` → 2221, `listify-db` → 2231), faites l'individualisation en SSH avec copier-coller (`ssh -p 2221 deploy@127.0.0.1`), puis supprimez ces redirections une fois les adresses privées en place. C'est la méthode recommandée si vous avez beaucoup à coller.
+    2. **Faire taper VirtualBox** depuis l'hôte, VM allumée : `VBoxManage controlvm listify-app1 keyboardputstring "sudo hostnamectl set-hostname listify-app1"`. Attention : les frappes suivent la disposition clavier de **l'invité** ; en clavier français, relisez la ligne avant d'appuyer sur Entrée.
+    3. **Taper à la main** : les commandes ci-dessous sont courtes, et les saisir une fois n'est pas du temps perdu (vous verrez au bloc 3 ce que ce geste répétitif deviendra).
+
 ```bash
 # 1. L'identité : hostname + l'entrée locale 127.0.1.1 d'Ubuntu
 sudo hostnamectl set-hostname listify-app1
