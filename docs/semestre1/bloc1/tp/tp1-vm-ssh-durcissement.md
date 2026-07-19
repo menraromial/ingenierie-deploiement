@@ -203,10 +203,10 @@ Les deux dernières lignes règlent définitivement le problème « Too many aut
 !!! danger "Filet de sécurité obligatoire"
     Gardez **deux** terminaux : le premier reste connecté en SSH pendant toute l'étape (session de secours) ; le second teste. En cas d'erreur fatale, il reste aussi la console VirtualBox : c'est votre « accès physique ».
 
-Sur la VM, créez le fichier de durcissement (on ne modifie pas `sshd_config` directement : les fichiers de `sshd_config.d/` sont inclus et survivent mieux aux mises à jour du paquet) :
+Sur la VM, créez le fichier de durcissement (on ne modifie pas `sshd_config` directement : les fichiers de `sshd_config.d/` sont inclus et survivent mieux aux mises à jour du paquet). Le préfixe **`00-`** du nom est important, on explique pourquoi juste après :
 
 ```bash
-sudo tee /etc/ssh/sshd_config.d/50-hardening.conf > /dev/null <<'EOF'
+sudo tee /etc/ssh/sshd_config.d/00-hardening.conf > /dev/null <<'EOF'
 PermitRootLogin no
 PasswordAuthentication no
 KbdInteractiveAuthentication no
@@ -217,14 +217,29 @@ sudo sshd -t          # test de syntaxe : AUCUNE sortie = OK
 sudo systemctl reload ssh
 ```
 
-Vérifiez depuis le **second** terminal du poste hôte :
+!!! danger "Piège Ubuntu : le fichier `50-cloud-init.conf` qui réactive le mot de passe"
+    Le fichier principal `/etc/ssh/sshd_config` inclut `sshd_config.d/*.conf` **par ordre alphabétique**, et pour sshd **c'est la _première_ valeur lue d'un paramètre qui gagne** (pas la dernière). Or l'installateur d'Ubuntu Server a déposé un fichier **`/etc/ssh/sshd_config.d/50-cloud-init.conf`** contenant `PasswordAuthentication yes`. Si vous nommiez votre fichier `50-hardening.conf`, il serait lu **après** `50-cloud-init` (`c` < `h`) et votre `PasswordAuthentication no` serait **ignoré** : la connexion par mot de passe resterait ouverte. En le nommant `00-hardening.conf`, il est lu **en premier** et vos réglages l'emportent. Vérifiez toujours la config **effective** (celle qui s'applique vraiment), c'est le réflexe à prendre :
+
+    ```bash
+    sudo sshd -T | grep -iE 'passwordauthentication|permitrootlogin'
+    # attendu : passwordauthentication no  /  permitrootlogin no
+    ```
+
+Vérifiez ensuite depuis le **second** terminal du poste hôte :
 
 ```bash
 ssh listify-s1                                   # doit fonctionner (clé)
 ssh -p 2222 -o PubkeyAuthentication=no \
     -o PreferredAuthentications=password deploy@127.0.0.1
 # doit échouer : "Permission denied (publickey)"
-ssh -p 2222 root@127.0.0.1                       # doit échouer aussi
+# Si vous obtenez au contraire l'invite "password:", c'est le piège ci-dessus :
+# revérifiez le nom 00-hardening.conf et la sortie de sshd -T.
+ssh -p 2222 -o PubkeyAuthentication=no \
+    -o PreferredAuthentications=password root@127.0.0.1
+# doit échouer : "Permission denied" (c'est PermitRootLogin no qui bloque)
+# Astuce : sans ces deux options et si vous avez plusieurs clés dans l'agent,
+# vous verriez "Too many authentication failures" -- root est refusé quand même,
+# mais le message est moins parlant. Les options forcent un motif clair.
 ```
 
 Ces tests négatifs vont dans le runbook : prouver qu'une porte est fermée fait partie du travail, pas seulement prouver que la vôtre est ouverte.

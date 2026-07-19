@@ -84,10 +84,18 @@ scp -r frontend listify-s1:/tmp/frontend
 sudo mv /tmp/frontend /opt/listify/frontend
 sudo chown -R root:root /opt/listify/frontend
 sudo chmod -R a+rX /opt/listify/frontend
+
+# Laisser Nginx (www-data) TRAVERSER le home de listify pour atteindre frontend/
+sudo chmod o+x /opt/listify
 ```
 
 !!! question "Pourquoi root:root et pas listify, ni www-data ?"
     Réfléchissez avant de lire. Les statiques sont des fichiers que Nginx doit seulement **lire**. S'ils appartenaient à `www-data`, un Nginx compromis pourrait les **modifier** (défiguration). La règle : le propriétaire d'un fichier servi n'est pas celui qui le sert ; `www-data` n'a besoin que de la lecture (`a+rX` : lecture pour tous, traversée des répertoires). Même logique que le `listify.env` en 640 : les permissions expriment une politique.
+
+!!! danger "Piège Ubuntu : `www-data` ne peut pas traverser `/opt/listify` (erreur 404 / « Permission denied »)"
+    Rendre `frontend/` lisible par tous ne suffit pas : encore faut-il que Nginx puisse **entrer** dans le répertoire parent `/opt/listify` pour l'atteindre. Or vous avez créé `/opt/listify` au TP 2 comme **home** de l'utilisateur `listify`, et Ubuntu crée les répertoires personnels en mode **0750** (`drwxr-x---`, un durcissement plus strict que l'ancien Debian 0755) : les « autres », dont `www-data`, n'ont **aucun** droit dessus. Sans la ligne `sudo chmod o+x /opt/listify` ci-dessus, `GET /` renvoie un 404 et `/var/log/nginx/error.log` affiche `stat("/opt/listify/frontend/") failed (13: Permission denied)`.
+
+    On donne `o+x` (traverser) et **non** `o+rx` (lister) : pour servir `/opt/listify/frontend/index.html`, Nginx doit *traverser* `/opt/listify`, pas en *lister* le contenu. C'est la distinction exacte du chapitre 2 (§3.3) : sur un répertoire, `x` = entrer, `r` = lister. Vérifiez avec `ls -ld /opt/listify` (attendu : `drwxr-x--x`, soit 751).
 
 ## Étape 3 : le certificat TLS auto-signé (40 min)
 
@@ -194,6 +202,14 @@ curl -s  -o /dev/null -w '%{redirect_url}\n' http://listify.local:8080/
 ```
 
 Puis **au navigateur** : `https://listify.local:8443`. L'avertissement de sécurité est attendu : lisez-le vraiment (quel est le message exact ? quelle CA manque ?), acceptez l'exception, et utilisez l'application : créez des tâches, supprimez-en. Vous devez voir la tâche `test tp2` créée... au TP 2 : la persistance traverse les tiers.
+
+!!! question "Pourquoi le navigateur affiche-t-il « non sécurisé » malgré le certificat ?"
+    C'est le résultat pédagogique voulu, et il illustre les **deux garanties distinctes** de TLS (ch. 3, §6.1-6.2) que le navigateur, lui, ne confond pas :
+
+    - **Le chiffrement fonctionne.** La session est bien chiffrée : un certificat auto-signé chiffre aussi bien qu'un certificat payant. Contre un espion *passif*, vous êtes protégé.
+    - **L'authentification échoue.** Un certificat ne porte pas qu'une clé publique : il doit être **signé par une autorité de certification (CA) présente dans le magasin de confiance du navigateur**. Cette signature atteste que la clé appartient bien à `listify.local`. Or le vôtre est **signé par lui-même** (`Issuer` = `Subject`, vu à l'étape 3). Aucune CA connue ne le cautionne : le navigateur ne peut donc pas **prouver l'identité** du serveur, et avertit.
+
+    Autrement dit, le cadenas barré ne dit pas « on peut lire vos données » (elles sont chiffrées), il dit « **je ne peux pas prouver que vous parlez au bon serveur** ». Contre un attaquant *actif* qui s'interposerait avec son propre certificat auto-signé, le navigateur ne saurait pas faire la différence : d'où l'alerte. Trois façons de la lever, de la moins à la plus propre : (1) accepter l'exception à la main, comme ici (vous jouez vous-même le vérificateur d'identité, acceptable en local seulement) ; (2) créer votre propre CA et l'importer dans le magasin du navigateur, puis signer le certificat avec elle (bonus 1 de l'étape 6, ce que font les entreprises en interne) ; (3) un certificat signé par une CA publique comme Let's Encrypt (impossible en TP faute de domaine public, voir l'étape 6). Retenez la formule : un site HTTPS n'est pas « sûr » dans l'absolu, il est *chiffré et authentifié* ; le vôtre est chiffré mais non authentifié.
 
 Enfin, observez le travail du proxy dans les journaux :
 

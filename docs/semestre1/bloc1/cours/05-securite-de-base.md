@@ -58,9 +58,9 @@ ssh deploy@192.168.56.10   # connexion sans mot de passe du serveur
 
 ### 1.4 Durcissement de sshd
 
-Le durcissement du TP 1, dans `/etc/ssh/sshd_config` (ou mieux : un fichier dédié `/etc/ssh/sshd_config.d/50-hardening.conf`) :
+Le durcissement du TP 1, dans un fichier dédié `/etc/ssh/sshd_config.d/00-hardening.conf` (plutôt que d'éditer `sshd_config` directement : un fichier de `sshd_config.d/` survit mieux aux mises à jour du paquet). Le préfixe **`00-`** n'est pas cosmétique : sshd retient la **première** valeur lue de chaque paramètre, et les fichiers de `sshd_config.d/` sont lus par ordre alphabétique ; sur Ubuntu Server, l'installateur y dépose un `50-cloud-init.conf` avec `PasswordAuthentication yes`, qu'un fichier trié avant lui doit donc précéder pour l'emporter. On vérifie toujours le résultat avec `sudo sshd -T` (la configuration *effective*).
 
-```text title="/etc/ssh/sshd_config.d/50-hardening.conf"
+```text title="/etc/ssh/sshd_config.d/00-hardening.conf"
 # Interdire la connexion directe en root : on se connecte avec son compte
 # nominatif, puis on élève avec sudo (traçabilité + pas de compte-cible évident)
 PermitRootLogin no
