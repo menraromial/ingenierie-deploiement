@@ -63,20 +63,23 @@ Déroulez, dans cet ordre, en notant au runbook le **pourquoi de l'ordre** :
 scp db/migrations/001-add-done.sql listify-s1:/tmp/
 ssh listify-s1 'psql "postgresql://listify@127.0.0.1:5432/listify" -f /tmp/001-add-done.sql'
 
-# 2. Le nouveau code backend
+# 2. Le nouveau code backend (ssh -t : sudo a besoin d'un terminal, voir encadré)
 scp backend/app.py listify-s1:/tmp/app.py
-ssh listify-s1 'sudo mv /tmp/app.py /opt/listify/backend/app.py &&
-                sudo chown listify:listify /opt/listify/backend/app.py'
+ssh -t listify-s1 'sudo mv /tmp/app.py /opt/listify/backend/app.py &&
+                   sudo chown listify:listify /opt/listify/backend/app.py'
 
 # 3. Redémarrer le service (le code Python chargé en mémoire ne change pas tout seul)
-ssh listify-s1 'sudo systemctl restart listify'
+ssh -t listify-s1 'sudo systemctl restart listify'
 
 # 4. Le frontend
 scp frontend/app.js listify-s1:/tmp/app.js
-ssh listify-s1 'sudo mv /tmp/app.js /opt/listify/frontend/app.js &&
-                sudo chown root:root /opt/listify/frontend/app.js &&
-                sudo chmod a+r /opt/listify/frontend/app.js'
+ssh -t listify-s1 'sudo mv /tmp/app.js /opt/listify/frontend/app.js &&
+                   sudo chown root:root /opt/listify/frontend/app.js &&
+                   sudo chmod a+r /opt/listify/frontend/app.js'
 ```
+
+!!! warning "Pourquoi `ssh -t` devant `sudo` ? (« a terminal is required »)"
+    Une commande lancée en une ligne (`ssh serveur 'sudo ...'`) est **non interactive** : SSH n'alloue pas de pseudo-terminal (TTY). Or `sudo` réclame un TTY pour saisir le mot de passe en le masquant ; sans lui, il refuse avec `sudo: a terminal is required to read the password`. L'option **`-t`** force l'allocation d'un TTY, et le mot de passe de `deploy` est demandé normalement. La ligne 1 (le `psql`) n'a pas de `sudo`, elle n'en a donc pas besoin. Retenez la friction : automatiser des commandes privilégiées à distance bute vite sur cette question du TTY et du mot de passe : Ansible la résout proprement au bloc 3 (option `--ask-become-pass`, ou `sudo` sans mot de passe pour le compte d'automatisation).
 
 Testez au navigateur (`Ctrl+Maj+R` pour contourner le cache) : les cases à cocher fonctionnent et l'état persiste après rechargement.
 
