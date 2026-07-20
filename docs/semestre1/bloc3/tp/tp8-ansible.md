@@ -255,6 +255,31 @@ mkdir -p roles/database/tasks roles/database/handlers
     name: "{{ db_name }}"
     owner: "{{ db_user }}"
 
+# --- Schéma applicatif : créer la table "tasks" et appliquer les migrations ---
+# Sans cela, la base existe mais est vide : le backend renvoie 500 sur /api/tasks
+# ("relation tasks does not exist"). On se connecte EN TANT QUE listify (via TCP
+# localhost) pour que les tables lui appartiennent, et non à postgres.
+- name: L'état du schéma est-il à jour (colonne "done" présente) ?
+  become_user: postgres
+  community.postgresql.postgresql_query:
+    db: "{{ db_name }}"
+    query: >
+      SELECT EXISTS (SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'tasks' AND column_name = 'done') AS ok
+  register: schema_state
+
+- name: Charger le schéma puis les migrations (idempotent grâce à la garde ci-dessus)
+  community.postgresql.postgresql_query:
+    login_host: 127.0.0.1
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+    db: "{{ db_name }}"
+    query: "{{ lookup('file', item) }}"
+  loop:
+    - "{{ playbook_dir }}/../../db/schema.sql"
+    - "{{ playbook_dir }}/../../db/migrations/001-add-done.sql"
+  when: not schema_state.query_result[0].ok
+
 - name: Chaque backend est autorisé dans pg_hba (une entrée par machine du groupe app)
   become_user: postgres
   community.postgresql.postgresql_pg_hba:
@@ -289,6 +314,9 @@ mkdir -p roles/database/tasks roles/database/handlers
 ```
 
 Le moment fort du TP est la double boucle `loop: "{{ groups['backend'] }}"` : les autorisations pg_hba **et** ufw sont générées **une par backend, depuis l'inventaire**. Ajoutez app3 à l'inventaire un jour, et les deux entrées apparaissent toutes seules. Le « coût de app3 » que vous aviez chiffré au TP 6 (éditer pg_hba, éditer ufw, sur la bonne machine, sans oubli) vient de tomber à zéro. Relisez la synthèse du TP 6 : c'est ici, concrètement, que sa promesse est tenue.
+
+!!! note "Le chargement du schéma, et son idempotence"
+    Créer la base ne crée pas les **tables** : sans la tâche de chargement du schéma, `/api/tasks` renverrait 500 (`relation "tasks" does not exist`). On charge donc `db/schema.sql` **et** la migration `001-add-done.sql` du TP 4 (le code déployé est en v1.1, il attend la colonne `done`). Deux finesses : (1) la connexion se fait **en tant que `listify`** (via `login_host: 127.0.0.1`) pour que les tables lui appartiennent, sans quoi le backend, qui se connecte en `listify`, n'y aurait pas accès ; (2) une **garde** (`when: not schema_state...ok`) n'exécute le chargement que si l'état final manque, ce qui préserve le `changed=0` au second passage. Si vous ajoutez d'autres migrations plus tard, ajoutez-les à la liste `loop` (ou remplacez-la par un `fileglob` trié sur `db/migrations/`).
 
 Ajoutez maintenant le play `database` à la suite de votre `site.yml` (qui ne contenait que `common`) :
 
