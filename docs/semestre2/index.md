@@ -2,41 +2,61 @@
 
 **Objectif général :** passer de « je déploie des machines » à « je déploie des applications » ; automatiser le chemin du commit à la production.
 
-**Prérequis :** Semestre 1 validé (SSH, réseau, Ansible, notion d'idempotence).
+**Prérequis :** Semestre 1 validé (SSH, réseau, Ansible, notion d'idempotence, état désiré / réconciliation).
 
-!!! info "Contenu en cours de rédaction"
-    Le contenu détaillé de ce semestre sera publié bloc par bloc, dans l'ordre du parcours. Le plan ci-dessous est contractuel.
+## Là où le semestre 1 s'est arrêté
 
-## Plan du semestre
+Au bloc 3 du S1, une commande reconstruisait quatre machines et y déployait Listify. Mais vous avez vous-mêmes listé ce qui restait fragile (TP 9, étape 3, point 4) : l'orchestration était un script, la reconstruction détruisait tout au lieu de faire évoluer en douceur, et surtout **l'unité de déploiement restait la machine**. Ce semestre change d'unité : on ne déploie plus des machines, on déploie des **applications empaquetées** (des conteneurs), et on confie leur cycle de vie à un **orchestrateur** qui les place, les redémarre, les met à l'échelle et les remplace sans coupure. Le fil rouge Listify est repris et conteneurisé.
 
-### Bloc 1 : la conteneurisation (semaines 1 à 5)
+```mermaid
+flowchart LR
+    subgraph B1["Bloc 1 : conteneurisation"]
+        C["Podman<br/>namespaces, cgroups<br/>images OCI"]
+    end
+    subgraph B2["Bloc 2 : orchestration"]
+        K["Kubernetes<br/>réconciliation<br/>Deployment, Service, Ingress"]
+    end
+    subgraph B3["Bloc 3 : CI/CD + observabilité"]
+        P["Du commit à la prod<br/>GitOps<br/>Prometheus / Grafana"]
+    end
+    C --> K --> P
+```
 
-- Pourquoi les conteneurs : limites des VM, le problème du « ça marche sur ma machine ».
-- Sous le capot (cœur théorique du semestre) : namespaces Linux, cgroups, systèmes de fichiers en couches (OverlayFS), différence fondamentale conteneur/VM.
-- L'écosystème et les standards OCI : Docker / Podman / containerd / runc / CRI-O ; architecture sans démon et rootless de Podman.
-- Images : Containerfile, cache de build, layers, registres, multi-stage, scan Trivy.
-- Réseau et stockage des conteneurs ; composition avec `podman-compose` ; le pod et `podman kube play` comme passerelle vers Kubernetes.
-- **TP 1 à 4** : construire un conteneur sans moteur (unshare, cgroups), Containerfile du fil rouge, composition complète, registre local et scan de vulnérabilités.
+## La continuité conceptuelle avec le S1 (à rendre explicite)
 
-### Bloc 2 : orchestration, Kubernetes (semaines 6 à 10)
+Ce semestre n'introduit pas des idées neuves : il **incarne à une autre échelle** les concepts du S1. Gardez cette table sous les yeux, elle est le fil de révision et une source d'exercices d'examen.
 
-- Le problème de l'orchestration ; historique (Borg, Mesos, Swarm) et pourquoi Kubernetes a gagné.
-- Le modèle mental : API déclarative, boucles de réconciliation, etcd, scheduler, kubelet.
-- Objets fondamentaux : Pod, Deployment, Service, Ingress, ConfigMap, Secret, PV/PVC, StatefulSet.
-- Exploitation : requests/limits, probes, stratégies de déploiement, RBAC en survol ; Helm.
-- **TP 5 à 8** : premier déploiement et auto-réparation vue en direct, fil rouge complet sur cluster local, diagnostic de pannes injectées, packaging Helm.
+| Concept du S1 | Sa forme au S2 |
+|---|---|
+| Isolation (VM, utilisateurs système) | **Namespaces et cgroups** Linux (bloc 1) : l'isolation *dans* un noyau partagé |
+| Immutabilité (« phénix », `destroy && up`) | L'**image de conteneur** : artefact immuable par construction (bloc 1) |
+| État désiré / réconciliation (Terraform, Ansible) | Les **boucles de contrôle** de Kubernetes, en continu (bloc 2) |
+| Idempotence (modules Ansible) | Les **manifests** déclaratifs `kubectl apply` (bloc 2) |
+| Auto-réparation (systemd `Restart=`, master Gunicorn) | Les **contrôleurs** qui recréent les Pods morts (bloc 2) |
+| Reverse proxy, load balancer (Nginx du S1) | **Service** et **Ingress** (bloc 2) |
+| Le `deploy.sh` (orchestration écrite) | Le **pipeline CI/CD** et le **GitOps** (bloc 3) |
+| Observabilité (journaux systemd) | **Prometheus / Grafana**, métriques et SLO (bloc 3) |
 
-### Bloc 3 : CI/CD et observabilité (semaines 11 à 14)
+## Un semestre plus exigeant en théorie
 
-- Intégration continue, livraison vs déploiement continus, promotion d'artefacts, stratégies de branches.
-- GitOps : le dépôt Git comme unique source de vérité ; Argo CD en démonstration.
-- Observabilité : logs / métriques / traces, Prometheus, Grafana, SLI/SLO en notions.
-- **TP 9 à 11** : forge locale Gitea + runner, pipeline complet du commit au déploiement sur cluster, monitoring kube-prometheus-stack.
+Le S1 était surtout pratique. Le S2 a un **cœur théorique** revendiqué (namespaces/cgroups au bloc 1, modèle de réconciliation au bloc 2) sur lequel porte l'examen. Pour nourrir votre esprit critique et vous ouvrir à la recherche, chaque chapitre comporte une rubrique **« Regard recherche »** qui pointe vers les articles scientifiques fondateurs : les papiers Google sur Borg et Omega, la comparaison IBM entre machines virtuelles et conteneurs, Dapper sur le traçage distribué, la recherche empirique DORA sur la performance des équipes... Ces lectures ne sont pas obligatoires, mais un ingénieur qui veut innover doit savoir remonter aux sources primaires, et non se contenter de tutoriels.
+
+## Organisation
+
+- **[Bloc 1](bloc1/index.md) (semaines 1 à 5) : la conteneurisation.** Ce qu'est *réellement* un conteneur (on en construit un à la main, sans moteur), les standards OCI, les images, le réseau et la composition, avec Podman.
+- **Bloc 2 (semaines 6 à 10) : orchestration, Kubernetes.** Le problème de l'orchestration, le modèle mental de la réconciliation, les objets fondamentaux, Helm.
+- **Bloc 3 (semaines 11 à 14) : CI/CD et observabilité.** Du commit à la production, GitOps, monitoring.
+
+## Environnement de travail
+
+- **Moteur de conteneurs : Podman** (sans démon, *rootless*), déjà présent sur les postes ; aucun droit administrateur requis.
+- **Cluster Kubernetes local** (bloc 2) : minikube (pilote Podman) ou kind ; k3s dans une VM Vagrant en repli.
+- **Forge locale** (bloc 3) : Gitea + runner en conteneurs. Aucune dépendance à un service en ligne payant.
 
 ## Évaluation du semestre
 
 | Épreuve | Poids | Modalités |
 |---|---|---|
-| Contrôle continu | 25 % | TP notés, en particulier le TP 7 « diagnostic de pannes » en temps limité |
-| Projet | 45 % | Par binôme : conteneuriser une application, chart Helm, pipeline CI/CD sur forge locale, monitoring. Soutenance : live demo d'un commit qui part en production, panne surprise à diagnostiquer |
-| Examen théorique | 30 % | Namespaces/cgroups, modèle de réconciliation, objets K8s, conception de pipeline, VM vs conteneurs |
+| Contrôle continu | 25 % | TP notés, en particulier le TP de diagnostic de pannes Kubernetes en temps limité |
+| Projet | 45 % | Par binôme : conteneuriser une application, la packager en chart Helm, pipeline CI/CD complet sur forge locale, monitoring de base. Soutenance : live demo d'un commit qui part en production, puis panne surprise à diagnostiquer |
+| Examen théorique | 30 % | Namespaces/cgroups, modèle de réconciliation, objets K8s, conception d'un pipeline, questions d'architecture (VM vs conteneurs vs les deux) |

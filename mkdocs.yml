@@ -106,5 +106,16 @@ nav:
       - "Évaluation du Semestre 1": semestre1/evaluation.md
   - Semestre 2:
       - Vue d'ensemble: semestre2/index.md
+      - "Bloc 1 : la conteneurisation":
+          - Présentation du bloc: semestre2/bloc1/index.md
+          - "Ch. 14 : Pourquoi les conteneurs": semestre2/bloc1/cours/14-pourquoi-les-conteneurs.md
+          - "Ch. 15 : Sous le capot (namespaces, cgroups)": semestre2/bloc1/cours/15-sous-le-capot.md
+          - "Ch. 16 : OCI et l'écosystème": semestre2/bloc1/cours/16-oci-ecosysteme.md
+          - "Ch. 17 : Les images de conteneurs": semestre2/bloc1/cours/17-images.md
+          - "Ch. 18 : Réseau, stockage et composition": semestre2/bloc1/cours/18-reseau-stockage-composition.md
+          - "TP 11 : Construire un conteneur à la main": semestre2/bloc1/tp/tp11-namespaces-cgroups.md
+          - "TP 12 : Conteneuriser les trois services": semestre2/bloc1/tp/tp12-images-containerfile.md
+          - "TP 13 : Composer l'application et générer un manifeste K8s": semestre2/bloc1/tp/tp13-composition-pod.md
+          - "TP 14 : Registre local, scan et service systemd": semestre2/bloc1/tp/tp14-registre-scan.md
   - Semestre 3:
       - Vue d'ensemble: semestre3/index.md
