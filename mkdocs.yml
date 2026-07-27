@@ -117,5 +117,15 @@ nav:
           - "TP 12 : Conteneuriser les trois services": semestre2/bloc1/tp/tp12-images-containerfile.md
           - "TP 13 : Composer l'application et générer un manifeste K8s": semestre2/bloc1/tp/tp13-composition-pod.md
           - "TP 14 : Registre local, scan et service systemd": semestre2/bloc1/tp/tp14-registre-scan.md
+      - "Bloc 2 : orchestration, Kubernetes":
+          - Présentation du bloc: semestre2/bloc2/index.md
+          - "Ch. 19 : Le problème de l'orchestration": semestre2/bloc2/cours/19-probleme-orchestration.md
+          - "Ch. 20 : Le modèle mental de Kubernetes": semestre2/bloc2/cours/20-modele-mental.md
+          - "Ch. 21 : Les objets fondamentaux": semestre2/bloc2/cours/21-objets-fondamentaux.md
+          - "Ch. 22 : Exploiter un cluster et Helm": semestre2/bloc2/cours/22-exploitation-helm.md
+          - "TP 15 : Premier déploiement et auto-réparation": semestre2/bloc2/tp/tp15-premier-deploiement.md
+          - "TP 16 : Listify complet sur Kubernetes": semestre2/bloc2/tp/tp16-fil-rouge-complet.md
+          - "TP 17 : Casser pour comprendre (diagnostic)": semestre2/bloc2/tp/tp17-diagnostic-pannes.md
+          - "TP 18 : Packager en chart Helm": semestre2/bloc2/tp/tp18-helm.md
   - Semestre 3:
       - Vue d'ensemble: semestre3/index.md
