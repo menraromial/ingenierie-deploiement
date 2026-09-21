@@ -1,0 +1,5 @@
+# Les sources TikZ des figures ne doivent pas apparaître dans la barre
+# des langages de GitHub (Linguist) : le site n'est pas un projet LaTeX.
+figures/** linguist-detectable=false
+*.tex linguist-detectable=false
+*.sty linguist-detectable=false
