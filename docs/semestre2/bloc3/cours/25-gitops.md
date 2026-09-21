@@ -106,7 +106,7 @@ Trois options de la politique de synchronisation déterminent le comportement de
 | `prune: true` | Une ressource supprimée de Git est supprimée du cluster | Elle reste orpheline dans le cluster |
 | `selfHeal: true` | Une modification manuelle du cluster est annulée | La dérive est signalée (`OutOfSync`) mais conservée |
 
-Par défaut, Argo CD interroge le dépôt Git toutes les trois minutes ; on peut configurer la forge pour qu'elle le prévienne immédiatement par un *webhook* à chaque push. Côté cluster, en revanche, il observe les ressources en continu par le mécanisme de *watch* de l'API Kubernetes (chapitre 20) : une dérive est vue en quelques secondes.
+Par défaut, Argo CD interroge le dépôt Git périodiquement, de l'ordre de trois minutes, avec une part d'aléa qui évite que toutes les applications interrogent Git au même instant ; lors de la validation du TP 20, un commit a mis environ six minutes à être vu. On peut demander une actualisation immédiate (annotation `argocd.argoproj.io/refresh`), ou configurer la forge pour qu'elle prévienne Argo CD par un *webhook* à chaque push. Côté cluster, en revanche, il observe les ressources en continu par le mécanisme de *watch* de l'API Kubernetes (chapitre 20) : une dérive est vue en quelques secondes.
 
 :::exemple[Une dérive, annulée]
 Listify est déployé par Argo CD avec `automated`, `prune` et `selfHeal`. Le manifest du dépôt de configuration déclare 3 répliques pour le backend. Un soir, pour « soulager » un nœud, un administrateur tape :
@@ -127,7 +127,7 @@ La modification manuelle aura vécu quelques secondes. La leçon n'est pas qu'il
 
 ### 4.3 La ressource Application
 
-Voici l'Application qui déploie Listify au TP 20. Argo CD sait lire directement un chart Helm, comme celui du TP 18 :
+Voici l'Application qui déploie Listify au [TP 20](../tp/tp20-livraison-gitops.md), où elle a été appliquée et validée. Argo CD sait lire directement un chart Helm, comme celui du TP 18 ; l'adresse `host.containers.internal` est celle par laquelle un conteneur joint le poste de travail, expliquée dans le TP :
 
 ```yaml title="argocd/listify.yaml"
 apiVersion: argoproj.io/v1alpha1
@@ -138,12 +138,12 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: http://gitea.local:3000/equipe/listify-config.git
+    repoURL: http://host.containers.internal:3000/etudiant/listify-config.git
     targetRevision: main            # la branche qui fait foi
     path: chart                     # le chart Helm de Listify dans ce dépôt
     helm:
       valueFiles:
-        - values-prod.yaml
+        - ../values-prod.yaml       # à la racine du dépôt, à côté du chart
   destination:
     server: https://kubernetes.default.svc   # le cluster où tourne Argo CD lui-même
     namespace: listify
@@ -174,7 +174,7 @@ Pourquoi ne pas tout mettre dans un seul dépôt ?
 4. **Des rythmes différents.** On peut modifier la configuration de production (passer de 3 à 5 répliques) sans toucher au code, et inversement.
 
 :::exemple[Combien de temps entre le commit et la production ?]
-Un développeur pousse une correction sur `main` à 14 h 00. Mesures sur la chaîne du TP 20 : le pipeline de CI dure 7 minutes et se termine par le commit du nouveau tag ; Argo CD interroge Git toutes les 3 minutes, sans webhook ; le rolling update de 3 répliques prend environ 1 minute.
+Un développeur pousse une correction sur `main` à 14 h 00. Hypothèses, proches des mesures du TP 20 : le pipeline de CI dure 7 minutes et se termine par le commit du nouveau tag ; Argo CD interroge Git toutes les 3 minutes, sans webhook ; le rolling update de 3 répliques prend environ 1 minute.
 
 - **Au mieux**, Argo CD interroge Git juste après le commit de la CI : $7 + 0 + 1 = 8$ minutes, mise en production à 14 h 08.
 - **Au pire**, il vient de l'interroger juste avant : $7 + 3 + 1 = 11$ minutes, à 14 h 11.
@@ -229,7 +229,7 @@ Le GitOps n'est pas une solution universelle, et un ingénieur doit en connaîtr
 1. Un pipeline qui applique lui-même les manifests laisse quatre problèmes : **la CI détient les clés** de la production, la **dérive** passe inaperçue, l'état de la production est difficile à connaître, la **reconstruction** est laborieuse.
 2. **OpenGitOps** : état désiré **déclaratif**, **versionné et immuable**, **tiré automatiquement**, **réconcilié en continu**. C'est la réconciliation du chapitre 20 appliquée à toute la production, avec Git pour source.
 3. **Pull contre push** : en pull, aucun identifiant du cluster ne sort du cluster, rien n'y entre, et tout changement de la production est un commit relu et annulable.
-4. **Argo CD** : ressource `Application` (source Git, destination cluster), états **Synced/OutOfSync** et **Healthy/Progressing/Degraded**, options `automated`, `prune`, `selfHeal`. Git interrogé toutes les 3 minutes par défaut, cluster observé en continu.
+4. **Argo CD** : ressource `Application` (source Git, destination cluster), états **Synced/OutOfSync** et **Healthy/Progressing/Degraded**, options `automated`, `prune`, `selfHeal`. Git interrogé environ toutes les 3 minutes par défaut, cluster observé en continu.
 5. **Deux dépôts** : le code et sa CI d'un côté, la configuration de production de l'autre. La CI se termine par un commit du nouveau tag.
 6. **Secrets** : jamais en clair dans Git (base64 n'est pas un chiffrement). Sealed Secrets, SOPS, ou référence à un coffre externe.
 7. **Retour arrière = `git revert`** ; **reconstruction = démarrage d'Argo CD sur un cluster neuf**. Mais Git ne contient pas les données : les sauvegardes restent indispensables.

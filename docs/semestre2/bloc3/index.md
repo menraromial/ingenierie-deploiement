@@ -43,9 +43,9 @@ Vous retrouverez l'idée centrale du parcours sous une forme nouvelle. Au S1, An
 
 | Semaine | CM | TP |
 |---|---|---|
-| 11 | [Ch. 23 : L'intégration continue](cours/23-integration-continue.md) | TP 19 : forge locale Gitea, runner, premier pipeline (lint et tests) |
-| 12 | [Ch. 24 : Livraison et déploiement continus](cours/24-livraison-deploiement-continus.md) | TP 20 (début) : pipeline complet, build, scan et push de l'image |
-| 13 | [Ch. 25 : GitOps](cours/25-gitops.md) | TP 20 (fin) : Argo CD, un commit met à jour la production |
+| 11 | [Ch. 23 : L'intégration continue](cours/23-integration-continue.md) | [TP 19](tp/tp19-forge-premier-pipeline.md) : forge locale Gitea, runner, premier pipeline (lint et tests) |
+| 12 | [Ch. 24 : Livraison et déploiement continus](cours/24-livraison-deploiement-continus.md) | [TP 20](tp/tp20-livraison-gitops.md) (partie A) : pipeline complet, build, push, scan, commit du tag |
+| 13 | [Ch. 25 : GitOps](cours/25-gitops.md) | [TP 20](tp/tp20-livraison-gitops.md) (partie B) : Argo CD, un commit met à jour la production |
 | 14 | [Ch. 26 : Observabilité](cours/26-observabilite.md) | TP 21 : Prometheus, Grafana et une alerte sur le taux d'erreurs |
 
 ## Ce que vous saurez faire à la fin du bloc
@@ -59,8 +59,8 @@ Vous retrouverez l'idée centrale du parcours sous une forme nouvelle. Au S1, An
 
 ## Environnement de travail
 
-- **Forge locale : Gitea** en conteneur Podman, avec son runner (**act_runner**) qui exécute des workflows au format GitHub Actions. Aucune dépendance à un service en ligne.
-- **Le cluster kind** du bloc 2, qu'on réutilise tel quel.
+- **Forge locale : Gitea** en conteneur Podman, qui sert aussi de registre d'images, avec son runner (**act_runner**) qui exécute des workflows au format GitHub Actions. Aucune dépendance à un service en ligne.
+- **Un cluster kind**, recréé au TP 20 pour qu'il sache tirer les images du registre de Gitea.
 - **Argo CD** et **kube-prometheus-stack** (Prometheus, Alertmanager, Grafana), installés dans le cluster avec Helm.
 
 :::warning[Les ressources de votre poste]

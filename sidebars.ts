@@ -113,6 +113,8 @@ const sidebars: SidebarsConfig = {
             `${s2b3}/cours/livraison-deploiement-continus`,
             `${s2b3}/cours/gitops`,
             `${s2b3}/cours/observabilite`,
+            `${s2b3}/tp/tp19-forge-premier-pipeline`,
+            `${s2b3}/tp/tp20-livraison-gitops`,
           ],
         },
       ],

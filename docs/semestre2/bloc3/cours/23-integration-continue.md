@@ -199,7 +199,7 @@ Gitea, la forge que vous installerez au TP 19, implémente depuis sa version 1.1
 
 ### 6.2 Le workflow de Listify
 
-Voici le premier pipeline de Listify, celui que vous mettrez en place au TP 19. Il comporte deux jobs : le lint, puis les tests, qui ont besoin d'un vrai PostgreSQL.
+Voici le premier pipeline de Listify, celui que vous mettrez en place au [TP 19](../tp/tp19-forge-premier-pipeline.md), où il a été exécuté et validé tel quel. Il comporte deux jobs : le lint, puis les tests, qui ont besoin d'un vrai PostgreSQL.
 
 ```yaml title=".gitea/workflows/ci.yaml"
 name: ci
@@ -230,6 +230,11 @@ jobs:
           POSTGRES_USER: listify
           POSTGRES_PASSWORD: ci-password
           POSTGRES_DB: listify
+        options: >-              # le job attend que la base réponde avant de démarrer
+          --health-cmd "pg_isready -U listify"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
     env:
       DB_HOST: db                  # le service est joignable par son nom
       DB_PASSWORD: ci-password
@@ -246,7 +251,7 @@ Quatre points à comprendre :
 
 - **Le déclencheur** couvre deux cas : chaque `push` sur `main` (l'intégration elle-même) et chaque pull request (vérifier **avant** d'intégrer).
 - **`needs: lint`** crée la dépendance de la section 5.2 : les tests ne démarrent que si le lint est passé.
-- **Le bloc `services`** démarre un conteneur PostgreSQL à côté du job et le détruit à la fin. Chaque exécution part d'une base vide : aucun test ne dépend des restes du précédent.
+- **Le bloc `services`** démarre un conteneur PostgreSQL à côté du job et le détruit à la fin. Chaque exécution part d'une base vide : aucun test ne dépend des restes du précédent. La **sonde de santé** (`options`) fait attendre le job jusqu'à ce que la base accepte les connexions ; sans elle, les tests risqueraient de démarrer avant PostgreSQL et d'échouer de façon aléatoire.
 - **Le mot de passe est en clair**, et c'est acceptable **ici** parce qu'il ne protège qu'une base jetable qui n'existe que pendant le job. Un vrai secret (le mot de passe du registre au TP 20) se stocke dans les **secrets** de la forge et se lit par `${{ secrets.NOM }}` ; il n'apparaît jamais dans le dépôt.
 
 ### 6.3 Les tests correspondants
