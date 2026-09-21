@@ -1,0 +1,22 @@
+% Ch. 12 : architecture sans agent d'Ansible
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Enc, text width=34mm, minimum height=16mm] (pl) at (0,12) {\textbf{Playbooks}\\\textbf{+ rôles}\sub{dans Git}};
+  \node[box=Enc, text width=34mm, minimum height=12mm] (in) at (0,-14) {\textbf{Inventaire}};
+  \node[keybox=Enc, text width=36mm, minimum height=14mm, font=\ttfamily\large\bfseries] (ap) at (54,0) {ansible-playbook};
+  \draw[flow=Enc] (pl.east) -- (ap.west);
+  \draw[flow=Enc] (in.east) -- (ap.west);
+  \foreach \n/\y [count=\k] in {listify-db/27, listify-app1/9, listify-app2/-9, listify-lb/-27}{
+    \node[box=Rule, fill=white, text width=30mm] (m\k) at (152,\y) {\ico[Muted]{server}\enspace\textbf{\n}};
+    \draw[flow] (ap.east) -- ++(10,0) |- (m\k.west);
+  }
+  \node[elabelc, fill=none, anchor=south] at (116,27.5) {SSH};
+  \node[note, anchor=north, text width=46mm, align=flush center] at (108,-33) {pousse un module Python, l'exécute, récupère le résultat JSON};
+  \begin{scope}[on background layer]
+    \node[dframe=Enc, fit=(pl)(in)(ap), inner sep=5mm, yshift=3mm, inner ysep=8mm] (c) {};
+  \end{scope}
+  \node[ftitle, text=Enc, anchor=north west] at (c.north west) {NŒUD DE CONTRÔLE (VOTRE POSTE)};
+\end{tikzpicture}
+\end{document}

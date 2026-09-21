@@ -1,0 +1,33 @@
+% Ch. 4 : schéma-bilan du bloc 1
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{tier/.style={box=#1, text width=96mm, minimum height=19mm, align=flush left}}
+  % #1 nom, #2 utilisateur, #3 détails
+  \newcommand{\tl}[3]{\textbf{#1}\hfill{\normalsize\color{Muted}utilisateur \cmd{#2}}\\[1mm]{\normalsize #3}}
+  \node[box=Rule, fill=white, text width=40mm] (c) at (0,34) {\ico[Muted]{globe}\enspace Client HTTPS};
+  \node[box=Brick, text width=96mm, minimum height=9mm] (f) at (0,14)
+       {\ico[Brick]{shield-alt}\enspace\textbf{ufw} : seuls 22, 80 et 443 entrent};
+  \node[tier=Ocre] (n) at (0,-8)
+       {\tl{Nginx}{www-data}{\cmd{:443} TLS \textperiodcentered{} statiques \cmd{/opt/listify/frontend}\\proxy \cmd{/api/} $\rightarrow$ \cmd{127.0.0.1:8000}}};
+  \node[tier=Enc] (g) at (0,-38)
+       {\tl{Gunicorn}{listify}{master + 3 workers \textperiodcentered{} bind \cmd{127.0.0.1:8000}\\\cmd{EnvironmentFile=/etc/listify/listify.env}}};
+  \node[tier=Plum] (p) at (0,-68)
+       {\tl{PostgreSQL}{postgres}{bind \cmd{127.0.0.1:5432} \textperiodcentered{} base et rôle \cmd{listify}}};
+  \draw[flow] (c) -- (f);
+  \draw[flow] (f) -- (n);
+  \draw[flow] (n) -- (g);
+  \draw[flow] (g) -- (p);
+
+  \node[box=Sea, text width=30mm, minimum height=80mm] (s) at (84,-38)
+       {\ico[Sea]{cogs}\\[1.5mm]\textbf{systemd}\\[1.5mm]{\normalsize démarre,\\redémarre,\\journalise}\\[2mm]{\small\ttfamily nginx\\listify\\postgresql}};
+  \foreach \t in {n,g,p} \draw[dflow=Sea] (s.west |- \t) -- (\t.east);
+  \node[note, above=1mm] at ($(s.west |- n)!.5!(n.east)$) {surveille};
+
+  \begin{scope}[on background layer]
+    \node[dframe=Muted, fit=(f)(n)(g)(p)(s), inner sep=6mm, yshift=3mm] (vm) {};
+  \end{scope}
+  \node[ftitle, anchor=north west] at (vm.north west) {VM UBUNTU \textperiodcentered{} LISTIFY.LOCAL};
+\end{tikzpicture}
+\end{document}

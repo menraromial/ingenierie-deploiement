@@ -1,24 +1,34 @@
-# TP 7 : Le socle multi-machines en une commande
+---
+title: "TP 7 : Le socle multi-machines en une commande"
+sidebar_label: "TP 7 : Le socle multi-machines en une commande"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 4 h
-    - **Prérequis** : TP 6 terminé ; chapitres 10 et 11
-    - **Livrables** : le `Vagrantfile` des 4 machines committé dans le dépôt `listify` ; le **chronométrage** d'un `vagrant destroy && vagrant up` complet ; runbook à jour
-    - **Compétences travaillées** : C2 (cœur du TP), C6
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-    À la fin de ce TP, le parc entier du bloc 2 (4 machines, réseau privé, hostnames) se crée et se détruit en une commande. Les machines ne portent encore aucun service : c'est le travail d'Ansible au TP 8.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 3 · Travaux pratiques 7"
+  title="Le socle multi-machines en une commande"
+  competences={['C2', 'C6']}
+/>
+
+:::fiche
+- **Durée** : 4 h
+- **Prérequis** : TP 6 terminé ; chapitres 10 et 11
+- **Livrables** : le `Vagrantfile` des 4 machines committé dans le dépôt `listify` ; le **chronométrage** d'un `vagrant destroy && vagrant up` complet ; runbook à jour
+- **Compétences travaillées** : C2 (cœur du TP), C6
+
+À la fin de ce TP, le parc entier du bloc 2 (4 machines, réseau privé, hostnames) se crée et se détruit en une commande. Les machines ne portent encore aucun service : c'est le travail d'Ansible au TP 8.
+:::
 
 ## Ce que vous allez construire
 
-```mermaid
-flowchart LR
-    G["Dépôt listify<br/>deploy/Vagrantfile"] -->|"vagrant up"| V["VirtualBox"]
-    V --> LB["listify-lb (.10)"]
-    V --> A1["listify-app1 (.21)"]
-    V --> A2["listify-app2 (.22)"]
-    V --> DB["listify-db (.31)"]
-    G -->|"vagrant destroy -f"| X["Tout disparaît<br/>et peut renaître à l'identique"]
-```
+<Figure src="tp7-architecture" num="TP7.1" alt="Depuis le dépôt, vagrant up fait créer par VirtualBox les quatre VM du parc ; vagrant destroy -f les supprime toutes, et elles peuvent renaître à l'identique.">
+  Ce que vous allez construire : le parc du bloc 2 décrit dans un fichier, créé et détruit en une commande.
+</Figure>
 
 ## Étape 0 : préparer le terrain (30 min)
 
@@ -57,33 +67,44 @@ Vos nouvelles machines Vagrant vont entrer en conflit avec celles du bloc 2 sur 
 
 Il ne suffit donc pas d'éteindre : il faut **libérer les noms**. Deux façons, au choix.
 
-=== "Renommer (garder le bloc 2 comme témoin)"
-    Le TP 9 conserve les VM manuelles comme filet de sécurité ; renommez-les pour libérer les identifiants sans les perdre. **VM éteintes**, sur le poste hôte :
+<Tabs>
+<TabItem value="renommer-garder-le-bloc-2-comme-t-moin" label="Renommer (garder le bloc 2 comme témoin)">
 
-    ```bash
-    for n in lb app1 app2 db; do
-      VBoxManage modifyvm "listify-$n" --name "s2-listify-$n" 2>/dev/null \
-        && echo "renommée : listify-$n -> s2-listify-$n"
-    done
-    ```
+Le TP 9 conserve les VM manuelles comme filet de sécurité ; renommez-les pour libérer les identifiants sans les perdre. **VM éteintes**, sur le poste hôte :
 
-=== "Supprimer (si le bloc 2 est validé)"
-    Si vous n'avez plus besoin des VM manuelles (le TP 9 rejouera tout le déploiement) :
+```bash
+for n in lb app1 app2 db; do
+  VBoxManage modifyvm "listify-$n" --name "s2-listify-$n" 2>/dev/null \
+    && echo "renommée : listify-$n -> s2-listify-$n"
+done
+```
 
-    ```bash
-    for n in lb app1 app2 db; do
-      VBoxManage unregistervm "listify-$n" --delete 2>/dev/null \
-        && echo "supprimée : listify-$n"
-    done
-    ```
+</TabItem>
+</Tabs>
 
-!!! warning "Si `vagrant up` a déjà échoué en cours de route"
-    Le conflit s'arrête à la première machine : vous vous retrouvez avec `lb` à moitié créée et les autres `not created`. Après avoir libéré les noms, nettoyez cet état partiel avant de recommencer, depuis `deploy/` :
+<Tabs>
+<TabItem value="supprimer-si-le-bloc-2-est-valid" label="Supprimer (si le bloc 2 est validé)">
 
-    ```bash
-    vagrant destroy -f
-    vagrant up
-    ```
+Si vous n'avez plus besoin des VM manuelles (le TP 9 rejouera tout le déploiement) :
+
+```bash
+for n in lb app1 app2 db; do
+  VBoxManage unregistervm "listify-$n" --delete 2>/dev/null \
+    && echo "supprimée : listify-$n"
+done
+```
+
+</TabItem>
+</Tabs>
+
+:::warning[Si `vagrant up` a déjà échoué en cours de route]
+Le conflit s'arrête à la première machine : vous vous retrouvez avec `lb` à moitié créée et les autres `not created`. Après avoir libéré les noms, nettoyez cet état partiel avant de recommencer, depuis `deploy/` :
+
+```bash
+vagrant destroy -f
+vagrant up
+```
+:::
 
 Purgez aussi les empreintes SSH de ces adresses (les machines Vagrant auront de nouvelles clés d'hôte, vous connaissez la musique) :
 
@@ -93,8 +114,9 @@ for ip in 192.168.56.10 192.168.56.21 192.168.56.22 192.168.56.31; do
 done
 ```
 
-!!! note "Vos entrées `~/.ssh/config` du bloc 2 deviennent obsolètes"
-    Elles pointent vers l'utilisateur `deploy` et votre clé personnelle ; les machines Vagrant utilisent l'utilisateur `vagrant` et une clé générée par machine (dans `.vagrant/`). Pendant ce bloc, la porte d'entrée est **`vagrant ssh <machine>`**, qui gère tout ; laissez vos entrées de config en place mais ne vous étonnez pas qu'elles ne fonctionnent plus telles quelles. Ansible, au TP 8, utilisera l'inventaire pour trouver utilisateur et clés.
+:::note[Vos entrées `~/.ssh/config` du bloc 2 deviennent obsolètes]
+Elles pointent vers l'utilisateur `deploy` et votre clé personnelle ; les machines Vagrant utilisent l'utilisateur `vagrant` et une clé générée par machine (dans `.vagrant/`). Pendant ce bloc, la porte d'entrée est **`vagrant ssh <machine>`**, qui gère tout ; laissez vos entrées de config en place mais ne vous étonnez pas qu'elles ne fonctionnent plus telles quelles. Ansible, au TP 8, utilisera l'inventaire pour trouver utilisateur et clés.
+:::
 
 ## Étape 1 : premier contact, une seule machine (45 min)
 
@@ -120,8 +142,12 @@ vagrant destroy -f          # destruction complète
 cd ~ && rm -rf /tmp/vagrant-demo
 ```
 
-??? question "Point de contrôle n° 1"
-    Répondez au runbook : où la box a-t-elle été stockée (`vagrant box list`) ? Par quel mécanisme réseau `vagrant ssh` entre-t-il dans la VM alors que vous n'avez configuré aucune redirection (indice : `vagrant ssh-config` montre un port sur 127.0.0.1 : Vagrant a créé la redirection NAT pour vous : celle que vous faisiez à la main depuis le TP 1) ?
+<details className="controle">
+<summary>Point de contrôle n° 1</summary>
+
+Répondez au runbook : où la box a-t-elle été stockée (`vagrant box list`) ? Par quel mécanisme réseau `vagrant ssh` entre-t-il dans la VM alors que vous n'avez configuré aucune redirection (indice : `vagrant ssh-config` montre un port sur 127.0.0.1 : Vagrant a créé la redirection NAT pour vous : celle que vous faisiez à la main depuis le TP 1) ?
+
+</details>
 
 ## Étape 2 : le Vagrantfile du parc Listify (1 h)
 
@@ -172,8 +198,9 @@ Vagrant.configure("2") do |config|
 end
 ```
 
-!!! note "`manage_host = true` va demander votre mot de passe"
-    Modifier le `/etc/hosts` **de l'hôte** exige les droits root sur votre poste : au premier `vagrant up`, hostmanager vous demandera votre mot de passe sudo. C'est le prix (assumé) de la mise à jour automatique côté hôte. En contrepartie, l'entrée `192.168.56.10 listify-lb listify.local` apparaît toute seule dans votre `/etc/hosts` : vous n'aurez **pas** à l'ajouter à la main aux TP 8 et 9.
+:::note[`manage_host = true` va demander votre mot de passe]
+Modifier le `/etc/hosts` **de l'hôte** exige les droits root sur votre poste : au premier `vagrant up`, hostmanager vous demandera votre mot de passe sudo. C'est le prix (assumé) de la mise à jour automatique côté hôte. En contrepartie, l'entrée `192.168.56.10 listify-lb listify.local` apparaît toute seule dans votre `/etc/hosts` : vous n'aurez **pas** à l'ajouter à la main aux TP 8 et 9.
+:::
 
 Ajoutez l'état local au `.gitignore` du dépôt, puis lancez et **chronométrez** :
 
@@ -185,15 +212,19 @@ vagrant status              # les 4 : running
 
 Comptez ce que ces minutes ont remplacé : la création des 4 VM, les cartes réseau, les hostnames, les adresses netplan, le /etc/hosts partout, sans aucun des pièges du TP 5 (MAC dupliquées, clés d'hôte partagées, `dquote>`...). Chaque box démarre neuve avec son identité propre : **les problèmes d'individualisation du clonage n'existent structurellement plus**.
 
-??? question "Point de contrôle n° 2 : le parc répond"
-    ```bash
-    vagrant ssh app1 -c 'hostname && ip -brief addr'
-    # listify-app1 ; enp0s3 (NAT) + enp0s9 ou enp0s8 (192.168.56.21)
-    vagrant ssh app1 -c 'ping -c2 listify-db'    # la résolution interne fonctionne
-    vagrant ssh lb   -c 'ping -c2 192.168.56.31' # le réseau privé est câblé
-    ```
+<details className="controle">
+<summary>Point de contrôle n° 2 : le parc répond</summary>
 
-    Notez au passage le nom d'interface que la box attribue à la carte privée (il peut différer de `enp0s8` selon la box : peu importe, netplan est géré par Vagrant ici).
+```bash
+vagrant ssh app1 -c 'hostname && ip -brief addr'
+# listify-app1 ; enp0s3 (NAT) + enp0s9 ou enp0s8 (192.168.56.21)
+vagrant ssh app1 -c 'ping -c2 listify-db'    # la résolution interne fonctionne
+vagrant ssh lb   -c 'ping -c2 192.168.56.31' # le réseau privé est câblé
+```
+
+Notez au passage le nom d'interface que la box attribue à la carte privée (il peut différer de `enp0s8` selon la box : peu importe, netplan est géré par Vagrant ici).
+
+</details>
 
 ### 2.1 Vérifier le travail de hostmanager, et le lire avec les yeux du chapitre 10
 
@@ -231,8 +262,9 @@ time vagrant up              # ... et tout renaît, à l'identique
 
 Consignez les deux chronos. Puis écrivez au runbook la réponse à cette question, en une phrase chacun : qu'est-ce qui a de la valeur maintenant, la machine ou le fichier ? où est passé le risque de drift des machines *elles-mêmes* ? que reste-t-il à automatiser pour que le défi du bloc 1 soit gagnable (indice : les machines sont nues) ?
 
-!!! tip "Accélérer les reconstructions : les clones liés"
-    Ajoutez `vb.linked_clone = true` dans le bloc provider : au lieu de copier le disque de la box pour chaque VM, VirtualBox crée des clones liés (delta sur une image de base importée une fois). Reconstructions nettement plus rapides, disque économisé : mesurez la différence, elle ira au compte rendu. (Vous reconnaissez le mécanisme : c'est le « clone lié » que VirtualBox proposait au TP 5, cette fois bien employé.)
+:::tip[Accélérer les reconstructions : les clones liés]
+Ajoutez `vb.linked_clone = true` dans le bloc provider : au lieu de copier le disque de la box pour chaque VM, VirtualBox crée des clones liés (delta sur une image de base importée une fois). Reconstructions nettement plus rapides, disque économisé : mesurez la différence, elle ira au compte rendu. (Vous reconnaissez le mécanisme : c'est le « clone lié » que VirtualBox proposait au TP 5, cette fois bien employé.)
+:::
 
 ## Point de contrôle final
 

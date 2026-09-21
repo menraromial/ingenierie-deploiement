@@ -1,0 +1,27 @@
+% TP 5 : l'application éclatée sur trois machines
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Rule, fill=white, text width=48mm, minimum height=16mm] (h) at (0,52)
+       {\ico[Muted]{laptop}\enspace\textbf{Poste hôte} {\color{Muted}(.1)}\sub{navigateur + SSH direct}};
+  \node[box=Ocre, text width=56mm, minimum height=20mm] (lb) at (0,8)
+       {\textbf{listify-lb} {\color{Muted}(.10)}\sub{Nginx : TLS, statiques,}\sub{proxy \cmd{/api/}}};
+  \node[box=Enc, text width=56mm, minimum height=18mm] (a1) at (0,-26)
+       {\textbf{listify-app1} {\color{Muted}(.21)}\sub{Gunicorn \cmd{192.168.56.21:8000}}};
+  \node[db=Plum, minimum width=50mm, minimum height=24mm] (db) at (0,-62)
+       {\textbf{listify-db} {\color{Muted}(.31)}\sub{PostgreSQL}\sub{écoute sur .31 + localhost}};
+  \draw[flow] (h) -- node[elabelc, right=2mm, fill=none, pos=.3]{https://listify.local:443} (lb);
+  \draw[flow] (lb) -- node[elabelc, right=2mm, fill=none]{8000} node[elabel, left=2mm, fill=none, text=Muted]{seul flux autorisé} (a1);
+  \draw[flow=Plum] (a1) -- node[elabelc, right=2mm, fill=none]{5432} node[elabel, left=2mm, fill=none, text=Muted]{seul flux autorisé} (db);
+
+  \begin{scope}[on background layer]
+    \node[dframe=Enc, fit={(lb)(a1)(db)(-56,8)(52,8)}, inner sep=5mm, yshift=-3mm, inner ysep=9mm] (net) {};
+  \end{scope}
+  \node[ftitle, text=Enc, anchor=south west] at (net.south west) {VBOXNET0 \textperiodcentered{} 192.168.56.0/24 \textperiodcentered{} DHCP DÉSACTIVÉ};
+
+  \node[box=Rule, fill=Paper, text=Muted, text width=40mm, minimum height=22mm, dash pattern=on 3pt off 2pt] (s1) at (100,-62)
+       {\textbf{listify-s1} {\normalsize(bloc 1)}\sub{un dernier \cmd{pg\_dump},}\sub{puis extinction}};
+  \draw[dflow=Muted] (s1) -- node[elabel, above=1mm, fill=none]{migration} node[elabel, below=1mm, fill=none]{des données} (db);
+\end{tikzpicture}
+\end{document}

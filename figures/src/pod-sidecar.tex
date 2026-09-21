@@ -1,0 +1,14 @@
+% Ch. 18 : le pod et son sidecar
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Enc, text width=44mm, minimum height=20mm] (a) at (0,0) {\ico[Enc]{cube}\enspace\textbf{Conteneur principal}\sub{l'application}};
+  \node[box=Ocre, text width=44mm, minimum height=20mm] (b) at (84,0) {\ico[Ocre]{cube}\enspace\textbf{Conteneur annexe}\sub{sidecar : logs, proxy,}\sub{métriques...}};
+  \draw[{Stealth[length=2.2mm,width=1.6mm]}-{Stealth[length=2.2mm,width=1.6mm]}, draw=Ink, line width=.8pt] (a) -- node[elabelc, above=1mm, fill=none]{localhost} (b);
+  \begin{scope}[on background layer]
+    \node[dframe=Sea, fit=(a)(b), inner sep=6mm, yshift=3mm, inner ysep=9mm] (p) {};
+  \end{scope}
+  \node[ftitle, text=Sea, anchor=north west] at (p.north west) {POD \textperiodcentered{} NAMESPACE RÉSEAU PARTAGÉ, UNE SEULE IP};
+\end{tikzpicture}
+\end{document}

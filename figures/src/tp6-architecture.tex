@@ -1,0 +1,27 @@
+% TP 6 : deuxième backend et répartition de charge
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Rule, fill=white, text width=40mm, minimum height=14mm] (h) at (0,50)
+       {\ico[Muted]{laptop}\enspace\textbf{Poste hôte}};
+  \node[box=Ocre, text width=56mm, minimum height=20mm] (lb) at (0,8)
+       {\textbf{listify-lb} {\color{Muted}(.10)}\sub{upstream round-robin}\sub{\cmd{max\_fails=3}, retries}};
+  \node[box=Enc, text width=48mm, minimum height=20mm] (a1) at (-34,-28)
+       {\textbf{listify-app1} {\color{Muted}(.21)}\sub{Gunicorn \cmd{0.0.0.0:8000}}};
+  \node[box=Enc, text width=48mm, minimum height=20mm] (a2) at (34,-28)
+       {\textbf{listify-app2} {\color{Muted}(.22)}\sub{Gunicorn \cmd{0.0.0.0:8000}}\sub{clone de app1}};
+  \node[db=Plum, minimum width=40mm, minimum height=20mm] (db) at (0,-64) {\textbf{listify-db} {\color{Muted}(.31)}};
+
+  \draw[flow] (h) -- node[elabelc, right=2mm, fill=none, pos=.3]{https://listify.local} (lb);
+  \draw[flow] (lb.south) -- ++(0,-6) -| node[elabel, pos=.75, left=1mm, fill=none]{50 \%} (a1.north);
+  \draw[flow] (lb.south) -- ++(0,-6) -| node[elabel, pos=.75, right=1mm, fill=none]{50 \%} (a2.north);
+  \draw[flow=Plum] (a1.south) |- (db.west);
+  \draw[flow=Plum] (a2.south) |- (db.east);
+
+  \begin{scope}[on background layer]
+    \node[dframe=Enc, fit=(lb)(a1)(a2)(db), inner sep=6mm, yshift=-3mm, inner ysep=9mm] (net) {};
+  \end{scope}
+  \node[ftitle, text=Enc, anchor=south west] at (net.south west) {192.168.56.0/24};
+\end{tikzpicture}
+\end{document}

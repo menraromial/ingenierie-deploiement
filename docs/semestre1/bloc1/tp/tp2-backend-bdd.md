@@ -1,33 +1,32 @@
-# TP 2 : Déployer la base de données et le backend à la main
+---
+title: "TP 2 : Déployer la base de données et le backend à la main"
+sidebar_label: "TP 2 : Déployer la base de données et le backend à la main"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 4 h (2 séances de 2 h : PostgreSQL, puis backend + systemd)
-    - **Prérequis** : TP 1 terminé (VM durcie, SSH par clés) ; chapitre 2 (paquets, utilisateurs, systemd)
-    - **Livrables** : PostgreSQL opérationnel avec base et utilisateur dédiés ; le backend Listify en service systemd `listify.service` démarrant au boot ; runbook à jour
-    - **Compétences travaillées** : C1, C6
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    C'est le TP le plus formateur du bloc : vous faites **à la main, en le comprenant, tout ce qu'Ansible fera pour vous au TP 8**. Chaque étape pénible d'aujourd'hui est un argument de vente de l'automatisation de demain : notez la douleur, elle est au programme.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 1 · Travaux pratiques 2"
+  title="Déployer la base de données et le backend à la main"
+  competences={['C1', 'C6']}
+/>
+
+:::fiche
+- **Durée** : 4 h (2 séances de 2 h : PostgreSQL, puis backend + systemd)
+- **Prérequis** : TP 1 terminé (VM durcie, SSH par clés) ; chapitre 2 (paquets, utilisateurs, systemd)
+- **Livrables** : PostgreSQL opérationnel avec base et utilisateur dédiés ; le backend Listify en service systemd `listify.service` démarrant au boot ; runbook à jour
+- **Compétences travaillées** : C1, C6
+
+C'est le TP le plus formateur du bloc : vous faites **à la main, en le comprenant, tout ce qu'Ansible fera pour vous au TP 8**. Chaque étape pénible d'aujourd'hui est un argument de vente de l'automatisation de demain : notez la douleur, elle est au programme.
+:::
 
 ## Ce que vous allez construire
 
-```mermaid
-flowchart TB
-    subgraph VM["VM listify-s1"]
-        subgraph SystemD["systemd"]
-            PS["postgresql.service<br/>(fourni par le paquet)"]
-            LS["listify.service<br/>(écrit par VOUS)"]
-        end
-        P[("PostgreSQL 16<br/>127.0.0.1:5432<br/>base listify, user SQL listify")]
-        G["Gunicorn, 3 workers<br/>127.0.0.1:8000<br/>utilisateur système listify"]
-        E["/etc/listify/listify.env<br/>640 root:listify<br/>DB_PASSWORD=..."]
-        C["/opt/listify/<br/>code + venv"]
-    end
-    PS --> P
-    LS --> G
-    G -->|"SQL"| P
-    E -.EnvironmentFile.-> G
-    C -.WorkingDirectory.-> G
-```
+<Figure src="tp2-architecture" num="TP2.1" alt="Dans la VM, systemd pilote postgresql.service et listify.service ; Gunicorn lit son fichier d'environnement et son code, et interroge PostgreSQL en local.">
+  Ce que vous allez construire : le backend et la base de données, tous deux pilotés par systemd, n'écoutant que sur 127.0.0.1.
+</Figure>
 
 ## Séance 1 : PostgreSQL
 
@@ -52,8 +51,9 @@ ls /var/log/postgresql/                # les journaux fichier
 
 À consigner au runbook, sous forme de tableau : service, utilisateur, port et adresse de bind, chemin config, chemin données, chemin logs. Constat important : PostgreSQL écoute sur `127.0.0.1:5432` **par défaut** : sécurité par défaut raisonnable (packaging Debian/Ubuntu), que nous ne changerons pas au bloc 1.
 
-!!! note "Pourquoi le service démarre-t-il tout seul ?"
-    Politique Debian/Ubuntu : un service installé est un service voulu, donc démarré et `enabled`. C'est le script `postinst` du paquet qui a tout fait : création de l'utilisateur, initialisation du répertoire de données (`initdb`), démarrage. Sur RHEL, la politique inverse s'applique (installé ≠ démarré). Moralité : ne présumez jamais, vérifiez avec `systemctl status`.
+:::note[Pourquoi le service démarre-t-il tout seul ?]
+Politique Debian/Ubuntu : un service installé est un service voulu, donc démarré et `enabled`. C'est le script `postinst` du paquet qui a tout fait : création de l'utilisateur, initialisation du répertoire de données (`initdb`), démarrage. Sur RHEL, la politique inverse s'applique (installé ≠ démarré). Moralité : ne présumez jamais, vérifiez avec `systemctl status`.
+:::
 
 ### Étape 2 : comprendre l'authentification PostgreSQL (20 min)
 
@@ -105,15 +105,19 @@ psql "postgresql://listify@127.0.0.1:5432/listify" -f /tmp/schema.sql
 # (le mot de passe est demandé : c'est bien le chemin scram par TCP)
 ```
 
-??? question "Point de contrôle n° 1"
-    ```bash
-    psql "postgresql://listify@127.0.0.1:5432/listify" \
-         -c "INSERT INTO tasks (title) VALUES ('test tp2');" \
-         -c "SELECT * FROM tasks;"
-    ```
-    Une ligne revient avec `id`, `title`, `created_at`. Rejouez le chargement du schéma : `psql ... -f /tmp/schema.sql` ne produit **aucune erreur** à la seconde exécution : première démonstration concrète d'**idempotence** (le `IF NOT EXISTS`), consignez-la explicitement au runbook.
+<details className="controle">
+<summary>Point de contrôle n° 1</summary>
 
-    Test négatif : `psql "postgresql://listify@127.0.0.1:5432/postgres" -c "SELECT 1;"` : le rôle listify peut-il se connecter à la base `postgres` ? (Oui par défaut : les bases acceptent les connexions de tous les rôles ; il ne peut par contre rien y lire. Pour l'interdire complètement : `REVOKE CONNECT ON DATABASE postgres FROM PUBLIC;` : question 3 en fin de TP.)
+```bash
+psql "postgresql://listify@127.0.0.1:5432/listify" \
+     -c "INSERT INTO tasks (title) VALUES ('test tp2');" \
+     -c "SELECT * FROM tasks;"
+```
+Une ligne revient avec `id`, `title`, `created_at`. Rejouez le chargement du schéma : `psql ... -f /tmp/schema.sql` ne produit **aucune erreur** à la seconde exécution : première démonstration concrète d'**idempotence** (le `IF NOT EXISTS`), consignez-la explicitement au runbook.
+
+Test négatif : `psql "postgresql://listify@127.0.0.1:5432/postgres" -c "SELECT 1;"` : le rôle listify peut-il se connecter à la base `postgres` ? (Oui par défaut : les bases acceptent les connexions de tous les rôles ; il ne peut par contre rien y lire. Pour l'interdire complètement : `REVOKE CONNECT ON DATABASE postgres FROM PUBLIC;` : question 3 en fin de TP.)
+
+</details>
 
 ## Séance 2 : le backend en service systemd
 
@@ -136,8 +140,9 @@ sudo mv /tmp/backend /opt/listify/backend
 sudo chown -R listify:listify /opt/listify/backend
 ```
 
-!!! note "scp : la méthode d'aujourd'hui, la douleur de demain"
-    Copier le code par `scp` est fragile (quelle version ? des fichiers en trop restent-ils ?) : notez-le au runbook. Au TP 4, la mise à jour par scp vous le fera vivre ; au bloc 3, Ansible synchronisera depuis Git.
+:::note[scp : la méthode d'aujourd'hui, la douleur de demain]
+Copier le code par `scp` est fragile (quelle version ? des fichiers en trop restent-ils ?) : notez-le au runbook. Au TP 4, la mise à jour par scp vous le fera vivre ; au bloc 3, Ansible synchronisera depuis Git.
+:::
 
 ### Étape 5 : l'environnement virtuel et les dépendances (20 min)
 
@@ -200,7 +205,7 @@ curl -s http://127.0.0.1:8000/api/tasks
 # [{"created_at":"...","id":1,"title":"test tp2"}]
 ```
 
-Observez aussi les processus : `ps -u listify -f` montre le master Gunicorn et ses 3 workers (ch. 4, §2.2). Arrêtez avec ++ctrl+c++ dans le premier terminal.
+Observez aussi les processus : `ps -u listify -f` montre le master Gunicorn et ses 3 workers (ch. 4, §2.2). Arrêtez avec <kbd>Ctrl</kbd>+<kbd>C</kbd> dans le premier terminal.
 
 ### Étape 8 : l'unité systemd (40 min)
 

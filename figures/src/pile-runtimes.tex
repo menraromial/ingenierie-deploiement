@@ -1,0 +1,14 @@
+% Ch. 16 : la pile des runtimes
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{lv/.style={box=#1, text width=84mm, minimum height=17mm}}
+  \node[lv=Enc]  (k) at (0,0)    {\textbf{Kubernetes} {\normalsize\color{Muted}(bloc 2)}\sub{orchestrateur : place et supervise les conteneurs}};
+  \node[box=Rule, fill=white, text width=84mm, minimum height=8mm] (cri) at (0,-18) {\textbf{interface CRI} {\normalsize\color{Muted}Container Runtime Interface}};
+  \node[lv=Sea]  (h) at (0,-36)  {\textbf{Runtime de haut niveau} : \cmd{containerd}, \cmd{CRI-O}\sub{gère images, réseau, cycle de vie}};
+  \node[lv=Ocre] (l) at (0,-59)  {\textbf{Runtime de bas niveau (OCI)} : \cmd{runc}, \cmd{crun}\sub{crée réellement le conteneur}};
+  \node[lv=Brick] (n) at (0,-82) {\textbf{Noyau Linux}\sub{namespaces, cgroups, overlay (ch. 15)}};
+  \draw[flow] (k) -- (cri); \draw[flow] (cri) -- (h); \draw[flow] (h) -- (l); \draw[flow] (l) -- (n);
+\end{tikzpicture}
+\end{document}

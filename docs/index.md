@@ -1,4 +1,19 @@
-# Ingénierie du Déploiement et de la Mise en Production
+---
+title: "Présentation du parcours"
+sidebar_label: "Présentation du parcours"
+hide_title: true
+slug: /
+---
+
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
+
+<ChapterHead
+  kicker="Cycle ingénieur · M1-M2 · trois semestres"
+  title="Ingénierie du Déploiement et de la Mise en Production"
+  lecture="5 min"
+  competences={['C1', 'C2', 'C3', 'C4', 'C5', 'C6']}
+/>
 
 **Public :** élèves ingénieurs en informatique (cycle ingénieur, niveau M1-M2)
 **Durée :** 3 semestres, environ 60 h encadrées par semestre (CM 40 % / TD 10 % / TP 50 %)
@@ -9,20 +24,9 @@ Ce parcours ne présente pas une liste d'outils à la mode. Il fait revivre, dan
 
 Chaque outil du parcours (Ansible, Podman, Kubernetes, Airflow, MLflow...) sera introduit comme la **réponse à un problème que vous aurez vécu en TP**, jamais comme une recette à recopier. Quand vous découvrirez Ansible, vous saurez exactement quelle douleur il soulage, parce que vous l'aurez ressentie la semaine précédente.
 
-```mermaid
-flowchart LR
-    subgraph S1["Semestre 1 : Fondations"]
-        A["Déploiement manuel<br/>sur une VM"] --> B["Multi-machines<br/>à la main"] --> C["Infrastructure as Code<br/>Vagrant + Ansible + Terraform"]
-    end
-    subgraph S2["Semestre 2 : Conteneurs et CI/CD"]
-        D["Conteneurisation<br/>Podman"] --> E["Orchestration<br/>Kubernetes"] --> F["CI/CD et GitOps<br/>Observabilité"]
-    end
-    subgraph S3["Semestre 3 : MLOps et Big Data"]
-        G["Reproductibilité<br/>DVC"] --> H["MLflow + Airflow"] --> I["Monitoring de drift<br/>Spark, Kafka"]
-    end
-    C --> D
-    F --> G
-```
+<Figure src="parcours" alt="Trois colonnes, une par semestre : fondations, conteneurs et CI/CD, MLOps et big data ; chaque colonne enchaîne trois blocs.">
+  Le parcours comme une suite de problèmes résolus. Chaque bloc introduit un outil comme la réponse à une douleur vécue au TP précédent ; la dernière étape d'un semestre motive la première du suivant.
+</Figure>
 
 ## Philosophie générale
 
@@ -45,8 +49,9 @@ Tous les TP tournent sur le poste de l'étudiant :
 
 Aucun compte cloud payant n'est requis. Le cloud est traité en théorie et via des émulateurs (LocalStack en démonstration).
 
-!!! info "Pourquoi Podman plutôt que Docker ?"
-    Podman est 100 % open source, fonctionne **sans démon** et en mode **rootless** par défaut. C'est un choix à la fois pédagogique (l'architecture est plus transparente : chaque conteneur est un simple processus fils, visible avec `ps`) et pratique (pas de licence Docker Desktop, pas de droits administrateur nécessaires en salle de TP). Les commandes étant identiques (`alias docker=podman`), la compétence est directement transférable en entreprise, où Docker reste le standard de fait.
+:::info[Pourquoi Podman plutôt que Docker ?]
+Podman est 100 % open source, fonctionne **sans démon** et en mode **rootless** par défaut. C'est un choix à la fois pédagogique (l'architecture est plus transparente : chaque conteneur est un simple processus fils, visible avec `ps`) et pratique (pas de licence Docker Desktop, pas de droits administrateur nécessaires en salle de TP). Les commandes étant identiques (`alias docker=podman`), la compétence est directement transférable en entreprise, où Docker reste le standard de fait.
+:::
 
 ### 4. Projet fil rouge
 
@@ -89,4 +94,8 @@ Le même petit nombre de concepts revient à chaque semestre, incarné dans des 
 
 ## Bibliographie de référence du parcours
 
+<div className="biblio">
+
 La bibliographie détaillée, chapitre par chapitre, se trouve en fin de chaque leçon. Les ouvrages socles du parcours sont recensés dans la [bibliographie générale](bibliographie.md).
+
+</div>

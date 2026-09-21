@@ -1,0 +1,17 @@
+% Ch. 16 : les trois spécifications OCI
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{spec/.style={box=#1, text width=46mm, minimum height=30mm}}
+  \node[spec=Sea] (d) at (0,0)   {\textbf{Distribution spec}\\[1mm]{\normalsize pousser et tirer des\\images d'un registre\\(API HTTP)}};
+  \node[spec=Enc] (i) at (84,0)  {\textbf{Image spec}\\[1mm]{\normalsize structure d'une image :\\couches, manifeste,\\configuration}};
+  \node[spec=Ocre] (r) at (168,0) {\textbf{Runtime spec}\\[1mm]{\normalsize exécuter un « bundle »\\(image dépaquetée)\\en conteneur}};
+  \draw[{Stealth[length=2.2mm,width=1.6mm]}-{Stealth[length=2.2mm,width=1.6mm]}, draw=Ink, line width=.8pt] (d) -- node[elabel, above=1mm, fill=none]{transportée} node[elabel, below=1mm, fill=none]{par} (i);
+  \draw[flow] (i) -- node[elabel, above=1mm, fill=none]{dépaquetée} node[elabel, below=1mm, fill=none]{en} (r);
+  \begin{scope}[on background layer]
+    \node[frame, fit=(d)(r), inner sep=5mm, yshift=3mm, inner ysep=8mm] (o) {};
+  \end{scope}
+  \node[ftitle, anchor=north west] at (o.north west) {LES TROIS SPÉCIFICATIONS OCI};
+\end{tikzpicture}
+\end{document}

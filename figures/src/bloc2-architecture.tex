@@ -1,0 +1,29 @@
+% Bloc 2 : architecture cible sur quatre machines
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Rule, fill=white, text width=44mm, minimum height=16mm] (h) at (0,52)
+       {\ico[Muted]{laptop}\enspace\textbf{Poste hôte}\sub{navigateur + SSH}};
+  \node[box=Ocre, text width=56mm, minimum height=20mm] (lb) at (0,8)
+       {\textbf{listify-lb} {\color{Muted}(.10)}\sub{Nginx : TLS, statiques,}\sub{répartition de charge}};
+  \node[box=Enc, text width=44mm, minimum height=20mm] (a1) at (-32,-26)
+       {\textbf{listify-app1} {\color{Muted}(.21)}\sub{Gunicorn \cmd{:8000}}};
+  \node[box=Enc, text width=44mm, minimum height=20mm, dash pattern=on 3pt off 1.5pt] (a2) at (32,-26)
+       {\textbf{listify-app2} {\color{Muted}(.22)}\sub{Gunicorn \cmd{:8000}}\sub{\itshape ajouté au TP 6}};
+  \node[db=Plum, minimum width=46mm, minimum height=22mm] (db) at (0,-62)
+       {\textbf{listify-db} {\color{Muted}(.31)}\sub{PostgreSQL \cmd{:5432}}};
+
+  \draw[flow] (h) -- node[elabelc, right=2mm, fill=none, pos=.3]{https://listify.local} node[elabelc, left=2mm, fill=none, pos=.3]{:443} (lb);
+  \draw[flow] (lb.south) -- ++(0,-5) -| (a1.north);
+  \draw[flow] (lb.south) -- ++(0,-5) -| (a2.north);
+  \draw[flow=Plum] (a1.south) |- (db.west);
+  \draw[flow=Plum] (a2.south) |- (db.east);
+
+  \begin{scope}[on background layer]
+    \node[dframe=Enc, fit=(lb)(a1)(a2)(db), inner sep=6mm, yshift=-3mm, inner ysep=9mm] (net) {};
+  \end{scope}
+  \node[ftitle, text=Enc, anchor=south west] at (net.south west) {RÉSEAU PRIVÉ HOST-ONLY \textperiodcentered{} 192.168.56.0/24};
+  \draw[dflow=Muted] (h.east) -| node[elabel, pos=.3, above=1mm, fill=none]{SSH direct \cmd{192.168.56.x}} ([xshift=-6mm]net.north east);
+\end{tikzpicture}
+\end{document}

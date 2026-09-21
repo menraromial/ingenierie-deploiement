@@ -1,0 +1,32 @@
+.box {
+  --tone: var(--c-muted);
+  --tone-bg: transparent;
+  margin: 1.8rem 0;
+  padding: 1rem 1.25rem 1rem 1.3rem;
+  border-left: 3px solid var(--tone);
+  background: var(--tone-bg);
+  border-radius: 0 4px 4px 0;
+}
+.kicker {
+  font-family: var(--font-ui);
+  font-size: .74rem; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--tone);
+}
+.title {
+  font-family: var(--font-ui);
+  font-size: 1.05rem; font-weight: 700;
+  color: var(--ifm-heading-color);
+  margin-top: .15rem;
+}
+.body { margin-top: .5rem; font-size: .97rem; }
+.body > :last-child { margin-bottom: 0; }
+
+.enc   { --tone: var(--c-enc);   --tone-bg: var(--c-enc-bg); }
+.sea   { --tone: var(--c-sea);   --tone-bg: var(--c-sea-bg); }
+.ocre  { --tone: var(--c-ocre);  --tone-bg: var(--c-ocre-bg); }
+.brick { --tone: var(--c-brick); --tone-bg: var(--c-brick-bg); }
+.plum  { --tone: var(--c-plum);  --tone-bg: var(--c-plum-bg); }
+.ink   { --tone: var(--c-muted); --tone-bg: transparent; border-left-width: 2px; }
+.ink .body { font-style: normal; }
+[data-kind='citation'] .body { font-style: italic; font-size: 1.02rem; }

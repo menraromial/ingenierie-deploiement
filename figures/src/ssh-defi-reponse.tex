@@ -1,0 +1,23 @@
+% Ch. 5 : authentification SSH par clé, défi-réponse
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \def\C{0} \def\S{120}
+  \node[seqhead=Enc, text width=44mm] (hc) at (\C,0) {\ico[Enc]{laptop}\enspace Client\\[-.3mm]{\normalsize\mdseries\color{Muted}détient la clé \textbf{privée}}};
+  \node[seqhead=Sea, text width=44mm] (hs) at (\S,0) {\ico[Sea]{server}\enspace Serveur\\[-.3mm]{\normalsize\mdseries\color{Muted}connaît la clé \textbf{publique}}};
+  \foreach \x/\h in {\C/hc,\S/hs} \draw[lifeline] (\h.south) -- (\x,-100);
+
+  \node[note, draw=Rule, fill=white, rounded corners=2pt, text width=112mm, align=flush center, inner sep=2.5mm] at (60,-20)
+       {préalable, fait une seule fois : la clé publique du client est déposée dans \cmd{\textasciitilde/.ssh/authorized\_keys} du serveur};
+
+  \newcommand{\m}[5]{\draw[#4] (#2,#1) -- node[mlabel]{#5} (#3,#1);}
+  \node[step] at (\C-6,-36) {1}; \m{-36}{\C}{\S}{msg}{je veux me connecter (j'annonce ma clé publique)}
+  \node[step] at (\C-6,-50) {2}; \m{-50}{\S}{\C}{msg}{défi : signe-moi cette valeur aléatoire}
+  \node[step] at (\C-6,-64) {3}; \m{-64}{\C}{\S}{msg=Enc}{signature calculée avec la clé privée}
+  \node[note, below=.6mm] at (60,-64) {la clé privée ne quitte jamais le client};
+  \node[step] at (\C-6,-80) {4};
+  \draw[msg] (\S,-76) -- ++(12,0) |- node[pos=.25, right=1mm, elabel, align=left, fill=none]{vérifie avec\\la clé publique} (\S,-84);
+  \node[step] at (\C-6,-94) {5}; \m{-94}{\S}{\C}{ret=Sea}{accès accordé}
+\end{tikzpicture}
+\end{document}

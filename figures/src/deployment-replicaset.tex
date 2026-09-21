@@ -1,0 +1,14 @@
+% Ch. 21 : Deployment, ReplicaSet, Pods
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Enc, text width=54mm, minimum height=20mm] (d) at (0,0) {\textbf{Deployment}\sub{déclare : image, replicas,}\sub{stratégie de mise à jour}};
+  \node[box=Sea, text width=54mm, minimum height=16mm] (r) at (0,-30) {\textbf{ReplicaSet}\sub{maintient N Pods identiques}};
+  \draw[flow] (d) -- (r);
+  \foreach \x/\k in {-38/1, 0/2, 38/3}{
+    \node[box=Plum, text width=24mm] (p\k) at (\x,-58) {\ico[Plum]{cube}\enspace Pod};
+    \draw[flow=Sea] (r.south) -- ++(0,-5) -| (p\k.north);
+  }
+\end{tikzpicture}
+\end{document}

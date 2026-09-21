@@ -1,27 +1,32 @@
-# TP 9 : La chaîne complète, et la revanche du défi
+---
+title: "TP 9 : La chaîne complète et la revanche du défi"
+sidebar_label: "TP 9 : La chaîne complète et la revanche du défi"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 4 h
-    - **Prérequis** : TP 7 et 8 terminés ; chapitres 10 à 12
-    - **Livrables** : le script `deploy.sh` qui reconstruit tout depuis un dépôt vierge ; le **compte rendu comparatif chronométré** avec le défi du bloc 1 ; le README « reconstruction en une commande » ; runbook final
-    - **Compétences travaillées** : C2 (cœur), C1, C6
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    C'est le TP de clôture du semestre. On soude Vagrant et Ansible, on rejoue le défi du bloc 1, et on mesure le chemin parcouru.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 3 · Travaux pratiques 9"
+  title="La chaîne complète, et la revanche du défi"
+  competences={['C1', 'C2', 'C6']}
+/>
+
+:::fiche
+- **Durée** : 4 h
+- **Prérequis** : TP 7 et 8 terminés ; chapitres 10 à 12
+- **Livrables** : le script `deploy.sh` qui reconstruit tout depuis un dépôt vierge ; le **compte rendu comparatif chronométré** avec le défi du bloc 1 ; le README « reconstruction en une commande » ; runbook final
+- **Compétences travaillées** : C2 (cœur), C1, C6
+
+C'est le TP de clôture du semestre. On soude Vagrant et Ansible, on rejoue le défi du bloc 1, et on mesure le chemin parcouru.
+:::
 
 ## Ce que vous allez construire
 
-```mermaid
-flowchart LR
-    subgraph G["Dépôt Git listify (source de vérité unique)"]
-        C["code applicatif<br/>backend/ frontend/"]
-        I["infrastructure<br/>deploy/Vagrantfile<br/>deploy/ansible/"]
-        S["deploy.sh"]
-    end
-    S -->|"1. vagrant up"| P["4 VM créées"]
-    S -->|"2. ansible-playbook"| CFG["4 VM configurées"]
-    P --> CFG
-    CFG --> APP["https://listify.local<br/>opérationnel"]
-```
+<Figure src="tp9-chaine" num="TP9.1" alt="Le dépôt Git contient le code, l'infrastructure et deploy.sh ; ce script lance vagrant up puis ansible-playbook, et l'application devient accessible sur https://listify.local.">
+  Ce que vous allez construire : de la source de vérité unique à l'application en ligne, en une commande. C'est la revanche du défi du bloc 1.
+</Figure>
 
 ## Étape 1 : souder les deux moitiés (1 h 30)
 
@@ -62,8 +67,9 @@ chmod +x deploy.sh
 
 L'orchestration est ici un script de deux étapes ; c'est modeste, mais **explicite et versionné**, ce que votre discipline personnelle des blocs 1-2 n'était pas. Les orchestrateurs des semestres suivants (Kubernetes, Airflow) remplaceront ce script par des systèmes qui gèrent l'ordre, les reprises et l'échelle : vous saurez alors précisément quel manque ils comblent, car vous l'aurez écrit à la main.
 
-!!! warning "Une dépendance d'ordre à ne pas masquer"
-    `vagrant up` crée les machines mais ne garantit pas que PostgreSQL sera prêt à la microseconde où le backend démarre. Ici, pas de souci : Ansible configure la base (play `db`) **avant** les backends (play `app`), et de toute façon notre backend sait attendre (503 propre, conçu au TP 2). Mais notez la question, elle est centrale au S2 : *comment un composant attend-il qu'un autre soit prêt ?* Les réponses (probes, health checks, retry) sont au programme de Kubernetes.
+:::warning[Une dépendance d'ordre à ne pas masquer]
+`vagrant up` crée les machines mais ne garantit pas que PostgreSQL sera prêt à la microseconde où le backend démarre. Ici, pas de souci : Ansible configure la base (play `db`) **avant** les backends (play `app`), et de toute façon notre backend sait attendre (503 propre, conçu au TP 2). Mais notez la question, elle est centrale au S2 : *comment un composant attend-il qu'un autre soit prêt ?* Les réponses (probes, health checks, retry) sont au programme de Kubernetes.
+:::
 
 Testez le script sur votre parc existant : il doit être **idempotent** de bout en bout (vagrant up ne recrée rien, ansible passe `changed=0`).
 
@@ -90,8 +96,9 @@ time ./deploy.sh
 
 Chronométrez. À la fin, `https://listify.local` fonctionne, servi par une infrastructure que **vous n'avez pas touchée à la main une seule fois**.
 
-!!! note "Ce qui n'est pas dans Git est ce qu'il faut re-fournir"
-    L'étape 3 ci-dessus révèle la frontière exacte entre le versionné et le local : le venv Ansible (reconstructible) et le mot de passe du vault (secret, jamais commité) doivent être re-fournis. Documentez-les **précisément** dans le README : c'est là que se joue le « reconstructible par un tiers ». Un README qui oublie le vault-pass produit un dépôt qui « marche chez moi » : l'exact défaut que tout le semestre combat.
+:::note[Ce qui n'est pas dans Git est ce qu'il faut re-fournir]
+L'étape 3 ci-dessus révèle la frontière exacte entre le versionné et le local : le venv Ansible (reconstructible) et le mot de passe du vault (secret, jamais commité) doivent être re-fournis. Documentez-les **précisément** dans le README : c'est là que se joue le « reconstructible par un tiers ». Un README qui oublie le vault-pass produit un dépôt qui « marche chez moi » : l'exact défaut que tout le semestre combat.
+:::
 
 ## Étape 3 : la revanche du défi du bloc 1 (1 h)
 

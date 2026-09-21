@@ -1,12 +1,26 @@
-# Chapitre 16 : L'écosystème et les standards OCI
+---
+title: "Ch. 16 : OCI et l'écosystème"
+sidebar_label: "Ch. 16 : OCI et l'écosystème"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    - expliquer pourquoi une standardisation (OCI) était nécessaire et ce que couvrent ses trois spécifications ;
-    - situer chaque brique de la pile : image, runtime, moteur, distribution (Docker, Podman, containerd, runc, CRI-O) ;
-    - décrire l'architecture **sans démon** et **rootless** de Podman et la comparer honnêtement à Docker ;
-    - expliquer l'intégration de Podman avec systemd (Quadlet) et sa parenté avec le S1.
+<ChapterHead
+  kicker="Semestre 2 · Bloc 1 · Chapitre 16"
+  title="L'écosystème et les standards OCI"
+  lecture="10 min"
+/>
+
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- expliquer pourquoi une standardisation (OCI) était nécessaire et ce que couvrent ses trois spécifications ;
+- situer chaque brique de la pile : image, runtime, moteur, distribution (Docker, Podman, containerd, runc, CRI-O) ;
+- décrire l'architecture **sans démon** et **rootless** de Podman et la comparer honnêtement à Docker ;
+- expliquer l'intégration de Podman avec systemd (Quadlet) et sa parenté avec le S1.
+:::
 
 ## 1. Le besoin de standards : la guerre des formats évitée
 
@@ -18,16 +32,9 @@ C'est une leçon d'ingénierie et d'écosystème à retenir : **la standardisati
 
 L'OCI définit trois contrats, qu'il faut savoir distinguer (question d'examen fréquente) :
 
-```mermaid
-flowchart LR
-    subgraph OCI["Les 3 spécifications OCI"]
-        I["<b>Image spec</b><br/>Comment une image est<br/>structurée : couches, manifeste,<br/>configuration"]
-        R["<b>Runtime spec</b><br/>Comment exécuter un<br/>'bundle' (image dépaquetée)<br/>en conteneur"]
-        D["<b>Distribution spec</b><br/>Comment pousser/tirer<br/>des images vers/depuis<br/>un registre (API HTTP)"]
-    end
-    I -->|"dépaquetée en"| R
-    I <-->|"transportée par"| D
-```
+<Figure src="oci-specs" num="16.1" alt="Les trois spécifications OCI : la spécification d'image, dépaquetée en bundle pour la spécification runtime, et transportée par la spécification de distribution.">
+  Les trois contrats de l'Open Container Initiative. Tout outil qui les respecte est interchangeable avec un autre : c'est ce qui permet de construire avec Podman et d'exécuter avec Kubernetes.
+</Figure>
 
 | Spécification | Définit | Analogie |
 |---|---|---|
@@ -41,22 +48,17 @@ Un point conceptuel clé : une image est identifiée de deux façons. Par un **t
 
 L'écosystème semble un fouillis de noms ; en réalité, c'est une pile de responsabilités bien séparées, chacune correspondant à une couche OCI ou à l'orchestration au-dessus :
 
-```mermaid
-flowchart TB
-    K["<b>Kubernetes</b> (bloc 2)<br/>orchestrateur : place et supervise les conteneurs"]
-    CRI["<b>Interface CRI</b> (Container Runtime Interface)"]
-    HL["<b>Runtime de haut niveau</b><br/>containerd / CRI-O<br/>gère images, réseau, cycle de vie"]
-    LL["<b>Runtime de bas niveau (OCI)</b><br/>runc / crun<br/>crée réellement le conteneur (namespaces, cgroups)"]
-    KER["<b>Noyau Linux</b><br/>namespaces, cgroups, overlay (ch. 15)"]
-    K --> CRI --> HL --> LL --> KER
-```
+<Figure src="pile-runtimes" num="16.2" alt="Pile de cinq couches : Kubernetes, l'interface CRI, un runtime de haut niveau (containerd, CRI-O), un runtime de bas niveau (runc, crun), le noyau Linux.">
+  La pile des runtimes de conteneurs. Chaque couche a une responsabilité unique ; seule celle du bas parle réellement au noyau.
+</Figure>
 
 - **runc** (et son alternative en C, **crun**, plus rapide et utilisée par Podman) : le **runtime de bas niveau**, conforme à la *runtime spec*. C'est lui qui fait *réellement* les appels systèmes du chapitre 15. Minuscule et interchangeable.
 - **containerd** / **CRI-O** : les **runtimes de haut niveau**. Ils gèrent le téléchargement des images, le stockage, le réseau, et délèguent la création du conteneur à runc/crun. CRI-O est spécifiquement conçu pour Kubernetes.
 - **Docker** et **Podman** : les **moteurs** (outils utilisateur) qui offrent la ligne de commande, construisent les images, et orchestrent tout ce qui précède.
 
-!!! note "L'insight à retenir"
-    Quand vous tapez `podman run`, la vraie création du conteneur est faite tout en bas par `crun`, via les primitives du ch. 15. Tous les étages au-dessus (moteur, runtime de haut niveau) ne font qu'apprêter le terrain et gérer le cycle de vie. Cette séparation en couches est ce qui permet à Kubernetes de fonctionner indifféremment avec containerd ou CRI-O : il parle à l'interface CRI, pas à un produit.
+:::note[L'insight à retenir]
+Quand vous tapez `podman run`, la vraie création du conteneur est faite tout en bas par `crun`, via les primitives du ch. 15. Tous les étages au-dessus (moteur, runtime de haut niveau) ne font qu'apprêter le terrain et gérer le cycle de vie. Cette séparation en couches est ce qui permet à Kubernetes de fonctionner indifféremment avec containerd ou CRI-O : il parle à l'interface CRI, pas à un produit.
+:::
 
 ## 4. Docker vs Podman : l'architecture, honnêtement
 
@@ -71,15 +73,9 @@ Docker repose sur un **démon** (`dockerd`), un processus qui tourne en permanen
 
 Podman adopte le modèle **fork-exec**, sans démon : la commande `podman run` **est** le processus parent du conteneur, exactement comme un shell qui lance un programme. Conséquences, qui sont autant d'atouts pédagogiques :
 
-```mermaid
-flowchart TB
-    subgraph DOCKER["Docker : client-démon"]
-        CLI1["docker (client)"] -->|socket| DAEMON["dockerd (root, permanent)"] --> CT1["conteneurs"]
-    end
-    subgraph PODMAN["Podman : fork-exec"]
-        CLI2["podman run"] -->|"fork-exec"| CT2["conteneur (processus fils direct)"]
-    end
-```
+<Figure src="docker-vs-podman" num="16.3" alt="À gauche, le client docker parle par un socket à un démon dockerd permanent qui tourne en root et lance les conteneurs ; à droite, podman run lance directement le conteneur comme processus fils.">
+  Deux architectures de moteur. Le démon de Docker est un point de défaillance unique et un privilège permanent ; Podman n'a rien qui tourne entre deux commandes.
+</Figure>
 
 - **Transparence** : un conteneur Podman est un simple processus fils, visible dans `ps` sur l'hôte, géré par les outils habituels. L'architecture est *lisible*, ce qui en fait un excellent support pédagogique (on l'a choisi pour cela).
 - **Rootless par défaut** : grâce au namespace **user** (ch. 15, §2.2), Podman s'exécute avec **vos** droits d'utilisateur. Aucun démon root, aucune socket privilégiée. En salle de TP, aucun droit administrateur n'est requis.
@@ -113,20 +109,27 @@ Vous retrouvez **mot pour mot** les concepts du chapitre 2 du S1 : `Restart=on-f
 
 ## Ce qu'il faut retenir
 
+<div className="retenir">
+
 1. L'**OCI** (2015) standardise trois contrats : **image** (format), **runtime** (exécution d'un bundle), **distribution** (API des registres). Grâce à eux, les outils sont interchangeables : Podman remplace Docker sans changer vos images.
 2. Une image s'identifie par un **tag** (mutable) et un **digest** `sha256` (immuable, l'empreinte du contenu). On déploie par digest pour la reproductibilité stricte.
-3. La pile : **runc/crun** (runtime bas niveau OCI, fait les appels systèmes du ch. 15) < **containerd/CRI-O** (haut niveau) < **Docker/Podman** (moteur) < **Kubernetes** (via l'interface CRI).
+3. La pile : **runc/crun** (runtime bas niveau OCI, fait les appels systèmes du ch. 15) &lt; **containerd/CRI-O** (haut niveau) &lt; **Docker/Podman** (moteur) &lt; **Kubernetes** (via l'interface CRI).
 4. **Docker** = client-**démon** root permanent (SPOF + surface de sécurité). **Podman** = **fork-exec sans démon**, **rootless** (namespace user), transparent, intégré à systemd. Commandes identiques (OCI) : la compétence est transférable.
 5. Sans démon, **systemd** supervise les conteneurs (Quadlet, fichiers `.container`) : on retrouve `Restart=`, `WantedBy=` du S1.
 
+</div>
+
 ## Regard recherche
 
-!!! quote "Pour aller vers la recherche"
-    - **The Open Container Initiative, spécifications** (image-spec, runtime-spec, distribution-spec) sur [github.com/opencontainers](https://github.com/opencontainers). Lire une spécification est un exercice formateur : c'est un texte normatif, précis, sans marketing. Comparez la *image-spec* à la structure réelle d'une image (TP 12, `podman image inspect`).
-    - **Brendan Burns, Joe Beda, Kelsey Hightower, *Kubernetes: Up and Running*** (chapitre sur les runtimes) pour la place de CRI. Et surtout, le billet de l'équipe Kubernetes « Don't Panic: Kubernetes and Docker » (2020) sur la dépréciation de dockershim : un cas d'étude sur la valeur des interfaces standardisées.
-    - Sur l'**économie des standards ouverts** : les travaux en gestion de l'innovation sur les *platform standards* (par ex. les analyses autour de la fondation Linux et de la CNCF) montrent pourquoi la coopétition (coopérer sur le standard, se concurrencer sur le produit) accélère un secteur. Un angle « sciences de gestion » pour un étudiant curieux d'innovation.
+:::recherche
+- **The Open Container Initiative, spécifications** (image-spec, runtime-spec, distribution-spec) sur [github.com/opencontainers](https://github.com/opencontainers). Lire une spécification est un exercice formateur : c'est un texte normatif, précis, sans marketing. Comparez la *image-spec* à la structure réelle d'une image (TP 12, `podman image inspect`).
+- **Brendan Burns, Joe Beda, Kelsey Hightower, *Kubernetes: Up and Running*** (chapitre sur les runtimes) pour la place de CRI. Et surtout, le billet de l'équipe Kubernetes « Don't Panic: Kubernetes and Docker » (2020) sur la dépréciation de dockershim : un cas d'étude sur la valeur des interfaces standardisées.
+- Sur l'**économie des standards ouverts** : les travaux en gestion de l'innovation sur les *platform standards* (par ex. les analyses autour de la fondation Linux et de la CNCF) montrent pourquoi la coopétition (coopérer sur le standard, se concurrencer sur le produit) accélère un secteur. Un angle « sciences de gestion » pour un étudiant curieux d'innovation.
+:::
 
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -143,3 +146,5 @@ Vous retrouvez **mot pour mot** les concepts du chapitre 2 du S1 : `Restart=on-f
 
 - Le blog de Dan Walsh (mainteneur Podman/SELinux chez Red Hat) : de nombreux billets sur le rootless et la sécurité, à la source.
 - L'histoire de la dépréciation de dockershim et de l'interface CRI : documentation Kubernetes, section « Container Runtimes ».
+
+</div>

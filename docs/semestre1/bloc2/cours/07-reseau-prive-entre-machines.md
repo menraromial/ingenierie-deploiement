@@ -1,14 +1,27 @@
-# Chapitre 7 : Réseau privé entre machines
+---
+title: "Ch. 7 : Réseau privé entre machines"
+sidebar_label: "Ch. 7 : Réseau privé entre machines"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
 
-    - choisir le bon mode réseau VirtualBox pour chaque besoin (NAT, host-only, interne, pont) et expliquer ce que chacun simule du monde réel ;
-    - concevoir et documenter un plan d'adressage privé ;
-    - configurer une interface statique sur Ubuntu avec netplan ;
-    - organiser la résolution de noms interne d'un petit parc, et en connaître les limites.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 2 · Chapitre 7"
+  title="Réseau privé entre machines"
+  lecture="10 min"
+/>
 
-    C'est le chapitre d'outillage du [TP 5](../tp/tp5-eclater-application.md) : tout ce qui s'y câble se décide ici.
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- choisir le bon mode réseau VirtualBox pour chaque besoin (NAT, host-only, interne, pont) et expliquer ce que chacun simule du monde réel ;
+- concevoir et documenter un plan d'adressage privé ;
+- configurer une interface statique sur Ubuntu avec netplan ;
+- organiser la résolution de noms interne d'un petit parc, et en connaître les limites.
+
+C'est le chapitre d'outillage du [TP 5](../tp/tp5-eclater-application.md) : tout ce qui s'y câble se décide ici.
+:::
 
 ## 1. Le besoin : un réseau qui n'appartient qu'au système
 
@@ -39,8 +52,9 @@ Notre choix pour le bloc, et sa justification :
 - **Carte 1 : NAT** sur chaque VM, inchangée depuis le TP 1 : elle fournit Internet (APT) et rien d'autre. Les VM n'y sont pas joignables, c'est très bien ainsi.
 - **Carte 2 : host-only** : le réseau privé du système, *et* le chemin d'administration depuis l'hôte. Fini les redirections de ports : vous ferez `ssh deploy@192.168.56.11` directement, et le navigateur atteindra `https://listify.local` sans numéro de port exotique. La friction du NAT (TP 1 et 3) prend fin, et vous savez désormais exactement ce qu'elle valait.
 
-!!! note "Pourquoi pas le mode interne, plus « pur » ?"
-    Le mode interne isolerait aussi les VM de l'hôte : plus de SSH direct, plus de navigateur, retour aux redirections de ports pour chaque machine. Le host-only est le compromis pédagogique standard : réseau privé pour le système, accessible à l'administrateur (vous). En production, ce double rôle existe aussi : on parle de **réseau de management**. Le mode pont, lui, est interdit en salle de TP : il exposerait vos VM, à peine durcies, à tout le réseau de l'école.
+:::note[Pourquoi pas le mode interne, plus « pur » ?]
+Le mode interne isolerait aussi les VM de l'hôte : plus de SSH direct, plus de navigateur, retour aux redirections de ports pour chaque machine. Le host-only est le compromis pédagogique standard : réseau privé pour le système, accessible à l'administrateur (vous). En production, ce double rôle existe aussi : on parle de **réseau de management**. Le mode pont, lui, est interdit en salle de TP : il exposerait vos VM, à peine durcies, à tout le réseau de l'école.
+:::
 
 ## 3. Le plan d'adressage
 
@@ -62,8 +76,9 @@ Un plan d'adressage n'est pas une liste, c'est une **convention** qui rend les a
 
 Le numéro **encode la zone** : croiser `192.168.56.22` dans un journal vous dit immédiatement « un backend ». Ce réflexe de conception paraît superflu à 4 machines ; à 40, il sépare les équipes qui s'y retrouvent de celles qui grep au hasard. Dans les organisations, ce travail a un nom et des outils : l'**IPAM** (*IP Address Management*) ; à notre échelle, un tableau dans le README du dépôt suffit, et il est **exigé** dans les livrables du TP 5.
 
-!!! warning "Désactivez le DHCP du réseau host-only"
-    VirtualBox propose un serveur DHCP sur vboxnet0. Nous le **désactivons** (TP 5, étape 0) : des serveurs doivent avoir des adresses **statiques et connues**, pas des baux qui changent au gré des redémarrages ; et un DHCP concurrent de vos adresses statiques produit des conflits difficiles à diagnostiquer.
+:::warning[Désactivez le DHCP du réseau host-only]
+VirtualBox propose un serveur DHCP sur vboxnet0. Nous le **désactivons** (TP 5, étape 0) : des serveurs doivent avoir des adresses **statiques et connues**, pas des baux qui changent au gré des redémarrages ; et un DHCP concurrent de vos adresses statiques produit des conflits difficiles à diagnostiquer.
+:::
 
 ## 4. Configurer l'interface sur Ubuntu : netplan
 
@@ -124,13 +139,19 @@ Même discipline que pour les adresses : un nom encode le rôle (`listify-app1`,
 
 ## Ce qu'il faut retenir
 
+<div className="retenir">
+
 1. Le réseau privé inter-machines est un invariant d'architecture : VLAN au datacenter, VPC au cloud, host-only en TP. Carte NAT = Internet sortant ; carte host-only = trafic interne + administration ; mode pont interdit en salle.
 2. Un plan d'adressage est une **convention documentée** : plages par zone, adresses statiques pour les serveurs, DHCP host-only désactivé. Le tableau du plan fait partie des livrables.
 3. netplan : YAML déclaratif dans `/etc/netplan/`, permissions 600, **`netplan try`** en SSH, pas de gateway sur l'interface privée, indentation à l'espace.
 4. Résolution interne : `/etc/hosts` identique partout à notre échelle ; ses oublis de synchronisation sont des pannes vicieuses et la première leçon de *drift* ; au-delà, DNS interne.
 5. Les services se parlent **par noms**, configurés dans l'environnement, jamais par adresses en dur dans le code.
 
+</div>
+
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -148,3 +169,5 @@ Même discipline que pour les adresses : un nom encode le rôle (`listify-app1`,
 
 - dnsmasq (documentation officielle) : le DNS+DHCP interne des petits parcs, montré en TD ; comparez son coût de mise en place à la maintenance de N fichiers hosts.
 - AWS, « VPC and subnets » (documentation) : retrouvez chaque concept de ce chapitre (sous-réseau privé, plan d'adressage, résolution interne) dans le vocabulaire d'un cloud réel.
+
+</div>

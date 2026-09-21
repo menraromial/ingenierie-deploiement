@@ -1,4 +1,18 @@
-# Bloc 1 : la conteneurisation
+---
+title: "Présentation du bloc"
+sidebar_label: "Présentation du bloc"
+hide_title: true
+---
+
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
+
+<ChapterHead
+  kicker="Semestre 2 · Bloc 1"
+  title="Bloc 1 : la conteneurisation"
+  lecture="5 min"
+  competences={['C1']}
+/>
 
 **Semaines 1 à 5.** Vous allez découvrir ce qu'est *réellement* un conteneur, non pas en récitant « c'est une VM légère » (raccourci faux qui vous handicapera), mais en **construisant un conteneur à la main**, avec les seules primitives du noyau Linux, avant même de lancer Podman. Puis vous conteneuriserez les trois tiers de Listify, les composerez, les scannerez, et les regrouperez dans un *pod* : la passerelle conceptuelle vers Kubernetes.
 
@@ -10,19 +24,9 @@ C'est aussi le prolongement direct du S1 : la colonne « isolation » de votre t
 
 ## L'architecture cible du bloc
 
-```mermaid
-flowchart TB
-    subgraph POD["Pod Listify (podman kube generate → passerelle K8s)"]
-        F["Conteneur frontend<br/>Nginx + statiques"]
-        B["Conteneur backend<br/>Gunicorn"]
-        D[("Conteneur db<br/>PostgreSQL + volume")]
-    end
-    REG["Registre local<br/>(conteneur registry:2)"]
-    TRIVY["Trivy<br/>scan de vulnérabilités"]
-    F -->|"/api/"| B --> D
-    B -.push/pull.-> REG
-    REG -.scan.-> TRIVY
-```
+<Figure src="s2b1-architecture" alt="Un pod Listify regroupe les conteneurs frontend, backend et db ; le backend est poussé dans un registre local, dont les images sont analysées par Trivy.">
+  L'architecture cible du bloc : les trois services dans un pod, un registre local pour distribuer les images et un scanner de vulnérabilités.
+</Figure>
 
 À la fin du bloc, Listify tourne **entièrement en conteneurs** sur votre poste, sans aucune VM, composé par un fichier déclaratif, avec ses images construites, versionnées, scannées et servies depuis un registre local.
 

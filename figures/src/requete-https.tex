@@ -1,0 +1,31 @@
+% Ch. 3 : anatomie d'une requête HTTPS (séquence)
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \def\N{0} \def\D{62} \def\S{134}
+  \node[seqhead=Enc]  (hn) at (\N,0) {\ico[Enc]{globe}\enspace Navigateur};
+  \node[seqhead=Plum] (hd) at (\D,0) {\ico[Plum]{address-book}\enspace Résolveur DNS};
+  \node[seqhead=Sea]  (hs) at (\S,0) {\ico[Sea]{server}\enspace Serveur (Nginx)};
+  \foreach \x/\h in {\N/hn,\D/hd,\S/hs} \draw[lifeline] (\h.south) -- (\x,-106);
+
+  % #1 y, #2 de, #3 vers, #4 style, #5 numéro, #6 texte
+  \newcommand{\m}[6]{%
+    \draw[#4] (#2,#1) -- node[mlabel]{#6} (#3,#1);
+    \node[step, left=1.5mm] at (\N,#1) {#5};}
+  \m{-14}{\N}{\D}{msg}{1}{résolution : \cmd{listify.example.com} ?}
+  \m{-24}{\D}{\N}{ret}{2}{réponse : \cmd{203.0.113.10}}
+  \m{-38}{\N}{\S}{msg}{3}{SYN vers \cmd{203.0.113.10:443}}
+  \m{-48}{\S}{\N}{ret}{4}{SYN-ACK : le port est ouvert et écouté}
+  \m{-58}{\N}{\S}{msg}{5}{ACK : connexion établie}
+  \m{-72}{\N}{\S}{msg=Ocre}{6}{poignée de main TLS : certificat, clés de session}
+  \m{-86}{\N}{\S}{msg}{7}{requête HTTP : \cmd{GET /api/tasks}}
+  \m{-96}{\S}{\N}{ret}{8}{réponse HTTP : \cmd{200 OK} + JSON}
+
+  % couches
+  \foreach \a/\b/\t/\c in {-10/-27/DNS/Plum, -34/-61/TCP/Enc, -68/-75/TLS/Ocre, -82/-99/HTTP/Sea}{
+    \draw[draw=\c, line width=1.2pt] (\S+8,\a) -- (\S+8,\b);
+    \node[font=\sffamily\normalsize\bfseries, text=\c, anchor=west] at (\S+10,{(\a+\b)/2}) {\t};
+  }
+\end{tikzpicture}
+\end{document}

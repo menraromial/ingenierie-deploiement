@@ -1,12 +1,25 @@
-# TP 13 : Composer l'application, et générer un manifeste Kubernetes
+---
+title: "TP 13 : Composer l'application et générer un manifeste K8s"
+sidebar_label: "TP 13 : Composer l'application et générer un manifeste K8s"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 4 h
-    - **Prérequis** : TP 12 (images construites) ; chapitre 18
-    - **Livrables** : le `compose.yaml` de Listify committé ; le manifeste Kubernetes généré depuis un pod ; runbook
-    - **Compétences travaillées** : C3 (cœur)
+import ChapterHead from '@site/src/components/ChapterHead';
 
-    Vous passez des `podman run` manuels à une **description déclarative** de l'application entière, puis vous découvrirez le **pod** et générerez votre premier fichier au format Kubernetes. Toutes les commandes ont été validées sous Podman 5 et podman-compose.
+<ChapterHead
+  kicker="Semestre 2 · Bloc 1 · Travaux pratiques 13"
+  title="Composer l'application, et générer un manifeste Kubernetes"
+  competences={['C3']}
+/>
+
+:::fiche
+- **Durée** : 4 h
+- **Prérequis** : TP 12 (images construites) ; chapitre 18
+- **Livrables** : le `compose.yaml` de Listify committé ; le manifeste Kubernetes généré depuis un pod ; runbook
+- **Compétences travaillées** : C3 (cœur)
+
+Vous passez des `podman run` manuels à une **description déclarative** de l'application entière, puis vous découvrirez le **pod** et générerez votre premier fichier au format Kubernetes. Toutes les commandes ont été validées sous Podman 5 et podman-compose.
+:::
 
 ## Étape 1 : la composition déclarative (1 h 30)
 
@@ -71,15 +84,16 @@ volumes:
 
 Chaque ligne fait écho au parcours (ch. 18 §3.2) : les services se joignent **par nom** (`DB_HOST: db`), le **volume** persiste la base, `${DB_PASSWORD}` porte la **configuration** (facteur III), le **schéma** est chargé automatiquement au premier démarrage via le répertoire d'init de l'image postgres, et surtout `depends_on: condition: service_healthy` résout **déclarativement** l'ordre de démarrage qui nous poursuit depuis le S1.
 
-!!! danger "Pourquoi monter un répertoire et non des fichiers un par un"
-    On aurait pu monter chaque script séparément (`./db/schema.sql:/docker-entrypoint-initdb.d/00-schema.sql`). **Évitez-le** : bind-monter **un fichier seul** est un piège classique de Podman/Docker. Si le fichier source est introuvable au moment de créer le conteneur (par exemple si vous lancez `podman-compose` depuis le **mauvais répertoire**, ou après un montage raté), Podman ne renvoie **pas** d'erreur : il crée un **répertoire vide** à la place du fichier. La cascade est vicieuse :
+:::danger[Pourquoi monter un répertoire et non des fichiers un par un]
+On aurait pu monter chaque script séparément (`./db/schema.sql:/docker-entrypoint-initdb.d/00-schema.sql`). **Évitez-le** : bind-monter **un fichier seul** est un piège classique de Podman/Docker. Si le fichier source est introuvable au moment de créer le conteneur (par exemple si vous lancez `podman-compose` depuis le **mauvais répertoire**, ou après un montage raté), Podman ne renvoie **pas** d'erreur : il crée un **répertoire vide** à la place du fichier. La cascade est vicieuse :
 
-    - PostgreSQL tente d'exécuter un script qui est devenu un dossier → `could not read from input file: Is a directory` → l'**init échoue** → la base n'atteint **jamais** `healthy` ;
-    - comme le backend attend `depends_on: condition: service_healthy`, `podman-compose up` **se bloque indéfiniment** (le symptôme « ça reste figé »).
+- PostgreSQL tente d'exécuter un script qui est devenu un dossier → `could not read from input file: Is a directory` → l'**init échoue** → la base n'atteint **jamais** `healthy` ;
+- comme le backend attend `depends_on: condition: service_healthy`, `podman-compose up` **se bloque indéfiniment** (le symptôme « ça reste figé »).
 
-    Monter un **répertoire** (`./db/initdb`) évite ce piège : si le dossier manque, Podman crée un dossier vide, PostgreSQL démarre sans script (base saine mais sans table) et vous obtenez un 500 clair, jamais un blocage.
+Monter un **répertoire** (`./db/initdb`) évite ce piège : si le dossier manque, Podman crée un dossier vide, PostgreSQL démarre sans script (base saine mais sans table) et vous obtenez un 500 clair, jamais un blocage.
 
-    **Règles d'or associées :** lancez toujours `podman-compose` **depuis la racine du dépôt** (pour que `./db/initdb` se résolve), et si un fichier a déjà été transformé en dossier parasite, réparez-le : `rm -rf db/le-fichier && git checkout db/le-fichier`. Enfin, quand un `up` se fige, le réflexe est `podman logs <projet>_db_1 | tail` : un `service_healthy` qui ne se satisfait jamais est **toujours** un problème de la base, pas du backend.
+**Règles d'or associées :** lancez toujours `podman-compose` **depuis la racine du dépôt** (pour que `./db/initdb` se résolve), et si un fichier a déjà été transformé en dossier parasite, réparez-le : `rm -rf db/le-fichier && git checkout db/le-fichier`. Enfin, quand un `up` se fige, le réflexe est `podman logs <projet>_db_1 | tail` : un `service_healthy` qui ne se satisfait jamais est **toujours** un problème de la base, pas du backend.
+:::
 
 ### 1.2 Lancer toute l'application en une commande
 
@@ -99,18 +113,20 @@ curl -s -X POST http://localhost:8080/api/tasks \
 curl -s http://localhost:8080/api/tasks
 ```
 
-!!! warning "`/api/tasks` renvoie 500 alors que `/api/health` dit ok/ok ?"
-    Deux causes possibles, toutes deux liées au **chargement du schéma** :
+:::warning[`/api/tasks` renvoie 500 alors que `/api/health` dit ok/ok ?]
+Deux causes possibles, toutes deux liées au **chargement du schéma** :
 
-    - **Volume déjà existant.** Les scripts de `/docker-entrypoint-initdb.d/` ne s'exécutent qu'au **premier** démarrage, quand le volume est vide. Si vous aviez déjà un volume `listify-data` (d'un essai précédent ou du TP 12), le schéma n'a pas été chargé. Repartez propre : `podman-compose down -v` (le `-v` supprime le volume) puis `podman-compose up -d`.
-    - **Migration oubliée.** Si l'erreur exacte est `column "done" does not exist` (visible dans `podman-compose logs backend`), c'est que la migration n'a pas été jouée. Vérifiez que `db/initdb/` contient bien **les deux** fichiers (`00-schema.sql` ET `01-add-done.sql`, voir §1.0). Le code déployé est en v1.1 (colonne `done`, TP 4 du S1) ; la base doit l'être aussi.
+- **Volume déjà existant.** Les scripts de `/docker-entrypoint-initdb.d/` ne s'exécutent qu'au **premier** démarrage, quand le volume est vide. Si vous aviez déjà un volume `listify-data` (d'un essai précédent ou du TP 12), le schéma n'a pas été chargé. Repartez propre : `podman-compose down -v` (le `-v` supprime le volume) puis `podman-compose up -d`.
+- **Migration oubliée.** Si l'erreur exacte est `column "done" does not exist` (visible dans `podman-compose logs backend`), c'est que la migration n'a pas été jouée. Vérifiez que `db/initdb/` contient bien **les deux** fichiers (`00-schema.sql` ET `01-add-done.sql`, voir §1.0). Le code déployé est en v1.1 (colonne `done`, TP 4 du S1) ; la base doit l'être aussi.
 
-    Si le port **8080** est déjà pris sur votre poste (`address already in use`), changez le mapping du frontend dans `compose.yaml` (`"8090:80"`) et adaptez l'URL.
+Si le port **8080** est déjà pris sur votre poste (`address already in use`), changez le mapping du frontend dans `compose.yaml` (`"8090:80"`) et adaptez l'URL.
+:::
 
 Ouvrez `http://localhost:8080` au navigateur : Listify fonctionne, entièrement conteneurisé, **sans une seule VM**, décrit par un fichier de trente lignes. Comparez au S1 : quatre machines, des dizaines de fichiers Ansible, pour la même application. Mesurez le chemin parcouru.
 
-!!! warning "Le `:z` sur le montage du schéma"
-    Le suffixe `:ro,z` sur le montage de `db/initdb` gère les étiquettes SELinux (systèmes Fedora/RHEL) et rend le contenu lisible par le conteneur ; `ro` le monte en lecture seule. Sur un système sans SELinux (Ubuntu par défaut), le `z` est inoffensif. Notez ce genre de détail : la portabilité des montages entre distributions est un vrai sujet.
+:::warning[Le `:z` sur le montage du schéma]
+Le suffixe `:ro,z` sur le montage de `db/initdb` gère les étiquettes SELinux (systèmes Fedora/RHEL) et rend le contenu lisible par le conteneur ; `ro` le monte en lecture seule. Sur un système sans SELinux (Ubuntu par défaut), le `z` est inoffensif. Notez ce genre de détail : la portabilité des montages entre distributions est un vrai sujet.
+:::
 
 ### 1.3 Arrêter, et observer la persistance
 
@@ -122,8 +138,12 @@ podman-compose up -d           # tout revient, avec les données
 
 `down` détruit les conteneurs (jetables) mais **pas le volume** (précieux) : la distinction stateless/stateful, opérationnalisée. Pour tout supprimer, volume compris : `podman-compose down -v`.
 
-??? question "Point de contrôle n° 1 : l'ordre de démarrage géré déclarativement"
-    Regardez les logs au démarrage : le backend **attend** que la base soit `healthy` avant de démarrer (grâce à `depends_on: condition: service_healthy`). Au S1, cet ordre reposait sur la discipline (le play `db` avant le play `backend`) et sur la tolérance de l'application (503 propre). Ici, il est **déclaré**. Notez la progression, elle mène droit aux *probes* de Kubernetes (bloc 2).
+<details className="controle">
+<summary>Point de contrôle n° 1 : l'ordre de démarrage géré déclarativement</summary>
+
+Regardez les logs au démarrage : le backend **attend** que la base soit `healthy` avant de démarrer (grâce à `depends_on: condition: service_healthy`). Au S1, cet ordre reposait sur la discipline (le play `db` avant le play `backend`) et sur la tolérance de l'application (503 propre). Ici, il est **déclaré**. Notez la progression, elle mène droit aux *probes* de Kubernetes (bloc 2).
+
+</details>
 
 ## Étape 2 : le pod, unité de Kubernetes (1 h)
 
@@ -179,8 +199,12 @@ podman pod ps
 
 `podman kube play` lit le même format que `kubectl apply` consommera au bloc 2. Vous tenez la continuité : le YAML que vous venez de générer se rejouera, presque tel quel, sur un vrai cluster Kubernetes.
 
-??? question "Point de contrôle n° 2 : lire l'objet Pod"
-    Dans `listify-pod.yaml`, identifiez et notez : le `kind`, le nombre de `containers`, comment le port est publié (`hostPort`/`containerPort`), où sont les variables d'environnement. Comparez mentalement avec le `compose.yaml` de l'étape 1 : qu'est-ce qui se ressemble, qu'est-ce qui diffère ? (Le pod ne gère pas le *build* des images ni les `depends_on` : Kubernetes a d'autres mécanismes pour cela, au bloc 2.)
+<details className="controle">
+<summary>Point de contrôle n° 2 : lire l'objet Pod</summary>
+
+Dans `listify-pod.yaml`, identifiez et notez : le `kind`, le nombre de `containers`, comment le port est publié (`hostPort`/`containerPort`), où sont les variables d'environnement. Comparez mentalement avec le `compose.yaml` de l'étape 1 : qu'est-ce qui se ressemble, qu'est-ce qui diffère ? (Le pod ne gère pas le *build* des images ni les `depends_on` : Kubernetes a d'autres mécanismes pour cela, au bloc 2.)
+
+</details>
 
 ## Étape 3 : nettoyage et synthèse (30 min)
 

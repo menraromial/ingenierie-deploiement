@@ -1,0 +1,23 @@
+% Ch. 2 : cycle de vie d'une unité systemd
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[initial dot] (i) at (-26,0) {};
+  \node[state=Rule, fill=Paper] (in) at (0,0)   {inactive};
+  \node[state=Ocre] (ac) at (62,0)  {activating};
+  \node[state=Sea]  (on) at (124,0) {active};
+  \node[state=Brick] (fa) at (62,-42) {failed};
+
+  \draw[flow] (i) -- (in);
+  \draw[flow] (in) -- node[elabelc, above=1mm]{systemctl start} (ac);
+  \draw[flow] (ac) -- node[elabel, above=1mm]{ExecStart réussit} (on);
+  \draw[flow] (on.north) to[out=150, in=30] node[elabelc, above]{systemctl stop} (in.north);
+  \draw[flow=Brick] (on.south) to[out=-100, in=0] node[elabel, right=2mm, pos=.35, text=Brick]{le processus\\crashe} (fa.east);
+  \draw[flow] (fa.north) -- node[elabelc, right=1.5mm, fill=none, align=left]{Restart=on-failure\\[-.5mm]{\sffamily\normalsize\color{Muted}(après RestartSec)}} (ac.south);
+  \draw[flow] (fa.west) to[out=180, in=-80] node[elabelc, left=2mm, pos=.65]{systemctl\\reset-failed} (in.south);
+
+  \node[note, draw=Rule, fill=white, rounded corners=2pt, inner sep=2.5mm, anchor=north west, text width=44mm]
+       at (136,-24) {\textbf{enable / disable} agit sur un autre axe : démarrer ou non automatiquement au boot.};
+\end{tikzpicture}
+\end{document}

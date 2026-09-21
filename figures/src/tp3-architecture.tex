@@ -1,0 +1,33 @@
+% TP 3 : ce que vous allez construire
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Rule, fill=white, text width=36mm, minimum height=22mm] (b) at (0,0)
+       {\ico[Muted]{globe}\\[1mm]\textbf{Navigateur}\sub{du poste hôte}\\[.5mm]{\small\ttfamily https://listify.local:8443}};
+  \node[box=Ocre, text width=18mm] (r1) at (46,6) {\cmd{8443$\rightarrow$443}};
+  \node[box=Ocre, text width=18mm] (r2) at (46,-8) {\cmd{8080$\rightarrow$80}};
+  \node[box=Brick, text width=20mm, minimum height=22mm] (u) at (86,0) {\ico[Brick]{shield-alt}\\[1mm]\textbf{ufw}\sub{22, 80, 443}};
+  \node[box=Ocre, text width=32mm, minimum height=22mm] (n) at (126,0)
+       {\textbf{Nginx}\\[.5mm]\cmd{:443} TLS\\\cmd{:80} $\rightarrow$ 301};
+  \node[box=Ocre, fill=white, text width=40mm, minimum height=14mm] (st) at (184,14)
+       {\cmd{/} $\rightarrow$ statiques\\[-.3mm]{\small\ttfamily /opt/listify/frontend}};
+  \node[box=Enc, fill=white, text width=40mm, minimum height=14mm] (a) at (184,-14)
+       {\cmd{/api/} $\rightarrow$ proxy\\[-.3mm]{\small\ttfamily 127.0.0.1:8000}};
+  \node[box=Enc, text width=30mm, minimum height=14mm] (g) at (184,-40) {\textbf{Gunicorn}\sub{(TP 2)}};
+
+  \begin{scope}[on background layer]
+    \node[dframe=Ocre, fit=(r1)(r2), inner sep=3mm, yshift=3mm, inner ysep=6.5mm] (nat) {};
+    \node[dframe=Muted, fit=(u)(n)(st)(g), inner sep=5mm, yshift=3mm, inner ysep=8mm] (vm) {};
+  \end{scope}
+  \node[ftitle, text=Ocre, anchor=north] at (nat.north) {NAT};
+  \node[ftitle, anchor=north west] at (vm.north west) {VM LISTIFY-S1};
+
+  \draw[flow] (b) -- (b -| nat.west);
+  \draw[flow] (nat.east |- u) -- (u);
+  \draw[flow] (u) -- (n);
+  \draw[flow=Ocre] (n.east) -- ++(6,0) |- (st.west);
+  \draw[flow=Enc]  (n.east) -- ++(6,0) |- (a.west);
+  \draw[flow=Enc] (a) -- (g);
+\end{tikzpicture}
+\end{document}

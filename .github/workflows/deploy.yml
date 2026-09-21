@@ -21,21 +21,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.12"
-          cache: pip
+          node-version: 22
+          cache: npm
 
-      - name: Installer les dépendances
-        run: pip install -r requirements.txt
+      - name: Installer les dépendances (versions figées du package-lock)
+        run: npm ci
 
-      - name: Construire le site (mode strict)
-        run: mkdocs build --strict
+      # Les figures TikZ sont compilées en local (make -C figures) et versionnées
+      # dans static/figures : la CI n'a pas besoin de LaTeX.
+      - name: Construire le site (liens cassés = échec)
+        run: npm run build
 
       - name: Publier l'artefact Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: build
 
   deploy:
     needs: build

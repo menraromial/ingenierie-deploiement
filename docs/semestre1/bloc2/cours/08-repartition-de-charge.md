@@ -1,13 +1,29 @@
-# Chapitre 8 : Répartition de charge
+---
+title: "Ch. 8 : Répartition de charge"
+sidebar_label: "Ch. 8 : Répartition de charge"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-    - expliquer ce qu'est un répartiteur de charge, en distinguant niveau 4 et niveau 7 ;
-    - choisir un algorithme de répartition en connaissant les hypothèses de chacun ;
-    - expliquer pourquoi l'horizontal exige le *stateless*, et où mettre l'état sinon ;
-    - distinguer health checks passifs et actifs, configurer les premiers dans Nginx, et raisonner les *retries* (et leur lien avec l'idempotence) ;
-    - lire une configuration équivalente en Nginx et en HAProxy.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 2 · Chapitre 8"
+  title="Répartition de charge"
+  lecture="10 min"
+  competences={['C1']}
+/>
+
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- expliquer ce qu'est un répartiteur de charge, en distinguant niveau 4 et niveau 7 ;
+- choisir un algorithme de répartition en connaissant les hypothèses de chacun ;
+- expliquer pourquoi l'horizontal exige le *stateless*, et où mettre l'état sinon ;
+- distinguer health checks passifs et actifs, configurer les premiers dans Nginx, et raisonner les *retries* (et leur lien avec l'idempotence) ;
+- lire une configuration équivalente en Nginx et en HAProxy.
+:::
 
 ## 1. Le problème et l'abstraction
 
@@ -60,11 +76,20 @@ Listify est *déjà* stateless : chaque requête ouvre sa transaction PostgreSQL
 
 Un LB qui répartit « en aveugle » enverra une requête sur deux vers un backend mort. Deux stratégies pour l'éviter :
 
-Vérification **passive**
-:   Le LB observe le trafic réel : les requêtes qui échouent (connexion refusée, timeout, 5xx) comptent contre le serveur ; au-delà d'un seuil, il est **exclu temporairement** du pool, puis retenté après un délai. Aucun trafic supplémentaire, mais il faut « sacrifier » quelques vraies requêtes pour détecter la panne. C'est le mécanisme de Nginx open source : `max_fails` et `fail_timeout`.
+<dl>
+<dt>Vérification <strong>passive</strong></dt>
+<dd>
 
-Vérification **active**
-:   Le LB sonde lui-même chaque serveur à intervalle régulier (une connexion TCP, ou une requête HTTP sur une URL de santé, votre `/api/health` du TP 2 trouve ici sa vraie vocation), et sort du pool quiconque échoue N fois. Détection plus rapide et sans sacrifier de clients, au prix d'un trafic de sonde. C'est le mode standard de HAProxy (`check inter 2s fall 3 rise 2`) ; dans Nginx, les sondes actives sont réservées à la version commerciale.
+Le LB observe le trafic réel : les requêtes qui échouent (connexion refusée, timeout, 5xx) comptent contre le serveur ; au-delà d'un seuil, il est **exclu temporairement** du pool, puis retenté après un délai. Aucun trafic supplémentaire, mais il faut « sacrifier » quelques vraies requêtes pour détecter la panne. C'est le mécanisme de Nginx open source : `max_fails` et `fail_timeout`.
+
+</dd>
+<dt>Vérification <strong>active</strong></dt>
+<dd>
+
+Le LB sonde lui-même chaque serveur à intervalle régulier (une connexion TCP, ou une requête HTTP sur une URL de santé, votre `/api/health` du TP 2 trouve ici sa vraie vocation), et sort du pool quiconque échoue N fois. Détection plus rapide et sans sacrifier de clients, au prix d'un trafic de sonde. C'est le mode standard de HAProxy (`check inter 2s fall 3 rise 2`) ; dans Nginx, les sondes actives sont réservées à la version commerciale.
+
+</dd>
+</dl>
 
 Les deux se combinent en production. Retenez aussi la nuance du TP 4 : une sonde `/api/health` ne vaut que ce qu'elle vérifie réellement (la vôtre teste la connexion à la base, pas l'existence des tables...).
 
@@ -78,66 +103,76 @@ Non, et le critère a un nom que vous connaissez : l'**idempotence**. Rejouer un
 
 Les deux outils dominants, sur le même besoin (notre TP 6), pour apprendre à lire l'un et l'autre :
 
-=== "Nginx (utilisé au TP 6)"
+<Tabs>
+<TabItem value="nginx-utilis-au-tp-6" label="Nginx (utilisé au TP 6)">
 
-    ```nginx
-    # Dans /etc/nginx/sites-available/listify
-    upstream listify_backend {
-        # round-robin par défaut ; décommenter pour least connections :
-        # least_conn;
-        server 192.168.56.21:8000 max_fails=3 fail_timeout=10s;
-        server 192.168.56.22:8000 max_fails=3 fail_timeout=10s;
+```nginx
+# Dans /etc/nginx/sites-available/listify
+upstream listify_backend {
+    # round-robin par défaut ; décommenter pour least connections :
+    # least_conn;
+    server 192.168.56.21:8000 max_fails=3 fail_timeout=10s;
+    server 192.168.56.22:8000 max_fails=3 fail_timeout=10s;
+}
+
+server {
+    # ... (TLS et statiques inchangés)
+    location /api/ {
+        proxy_pass http://listify_backend;
+        # rejouer sur le serveur suivant si échec de connexion/5xx :
+        proxy_next_upstream error timeout http_502 http_503;
+        # diagnostic TP : savoir QUI a répondu
+        add_header X-Upstream $upstream_addr always;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
+}
+```
 
-    server {
-        # ... (TLS et statiques inchangés)
-        location /api/ {
-            proxy_pass http://listify_backend;
-            # rejouer sur le serveur suivant si échec de connexion/5xx :
-            proxy_next_upstream error timeout http_502 http_503;
-            # diagnostic TP : savoir QUI a répondu
-            add_header X-Upstream $upstream_addr always;
-            proxy_set_header Host              $host;
-            proxy_set_header X-Real-IP         $remote_addr;
-            proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
-    }
-    ```
+`max_fails=3 fail_timeout=10s` se lit : 3 échecs dans une fenêtre de 10 s → serveur exclu 10 s, puis retenté. C'est la vérification passive du §4.1.
 
-    `max_fails=3 fail_timeout=10s` se lit : 3 échecs dans une fenêtre de 10 s → serveur exclu 10 s, puis retenté. C'est la vérification passive du §4.1.
+</TabItem>
+</Tabs>
 
-=== "HAProxy (équivalent, bonus du TP 6)"
+<Tabs>
+<TabItem value="haproxy-quivalent-bonus-du-tp-6" label="HAProxy (équivalent, bonus du TP 6)">
 
-    ```text
-    # /etc/haproxy/haproxy.cfg (extrait)
-    defaults
-        mode http
-        timeout connect 5s
-        timeout client  30s
-        timeout server  30s
+```text
+# /etc/haproxy/haproxy.cfg (extrait)
+defaults
+    mode http
+    timeout connect 5s
+    timeout client  30s
+    timeout server  30s
 
-    frontend listify_front
-        bind *:8000
-        default_backend listify_backend
+frontend listify_front
+    bind *:8000
+    default_backend listify_backend
 
-    backend listify_backend
-        balance roundrobin
-        option httpchk GET /api/health        # sonde ACTIVE sur notre endpoint
-        server app1 192.168.56.21:8000 check inter 2s fall 3 rise 2
-        server app2 192.168.56.22:8000 check inter 2s fall 3 rise 2
+backend listify_backend
+    balance roundrobin
+    option httpchk GET /api/health        # sonde ACTIVE sur notre endpoint
+    server app1 192.168.56.21:8000 check inter 2s fall 3 rise 2
+    server app2 192.168.56.22:8000 check inter 2s fall 3 rise 2
 
-    listen stats                               # tableau de bord intégré
-        bind *:8404
-        stats enable
-        stats uri /
-    ```
+listen stats                               # tableau de bord intégré
+    bind *:8404
+    stats enable
+    stats uri /
+```
 
-    `check inter 2s fall 3 rise 2` : sonde toutes les 2 s, exclu après 3 échecs, réintégré après 2 succès. La page `stats` montre l'état du pool en direct : le meilleur outil pédagogique du bonus TP 6.
+`check inter 2s fall 3 rise 2` : sonde toutes les 2 s, exclu après 3 échecs, réintégré après 2 succès. La page `stats` montre l'état du pool en direct : le meilleur outil pédagogique du bonus TP 6.
+
+</TabItem>
+</Tabs>
 
 Comment choisir, en une règle : **Nginx** quand on a déjà Nginx (TLS + statiques + un peu de LB : notre cas exactement) ; **HAProxy** quand la répartition est le métier principal du composant (finesse des checks, observabilité intégrée, niveau 4 et 7). Les deux se rencontrent partout en production, souvent ensemble.
 
 ## Ce qu'il faut retenir
+
+<div className="retenir">
 
 1. Le LB expose une adresse pour un pool ; il rend l'échelle **et les pannes** invisibles. Niveau 4 = connexions ; niveau 7 = requêtes HTTP (routage, TLS, retries). Le LB lui-même est un SPOF : VRRP/keepalived, DNS, anycast en notions.
 2. Algorithmes = hypothèses : round-robin (coûts homogènes), pondéré (capacités connues), least_conn (connexions ≈ charge), ip_hash (affinité, presque toujours un pis-aller).
@@ -145,7 +180,11 @@ Comment choisir, en une règle : **Nginx** quand on a déjà Nginx (TLS + statiq
 4. Health checks passifs (Nginx : `max_fails`/`fail_timeout`, sacrifie quelques requêtes) vs actifs (HAProxy : `check`, sonde `/api/health`). Les retries (`proxy_next_upstream`) ne sont sûrs que pour les requêtes **idempotentes** : l'idempotence est ici une propriété de protocole.
 5. Savoir lire les deux configurations de référence ; Nginx si le LB est accessoire, HAProxy s'il est central.
 
+</div>
+
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -163,3 +202,5 @@ Comment choisir, en une règle : **Nginx** quand on a déjà Nginx (TLS + statiq
 
 - Le *consistent hashing* (hachage cohérent) : l'algorithme qui corrige le défaut de redistribution d'`ip_hash` ; papier d'origine Karger et al., STOC 1997, et son usage dans les caches distribués.
 - keepalived et VRRP (RFC 5798) : montez en bonus une IP virtuelle entre deux Nginx et tuez le maître.
+
+</div>

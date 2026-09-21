@@ -1,14 +1,28 @@
-# Chapitre 18 : Réseau, stockage et composition des conteneurs
+---
+title: "Ch. 18 : Réseau, stockage et composition"
+sidebar_label: "Ch. 18 : Réseau, stockage et composition"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    - expliquer les modes réseau des conteneurs (bridge, port mapping, réseaux définis par l'utilisateur) et les spécificités du rootless ;
-    - distinguer volumes et bind mounts, et raisonner le cycle de vie des données ;
-    - composer plusieurs services avec un fichier Compose (réseaux, volumes, healthchecks, dépendances) ;
-    - expliquer le **pod** Podman et `podman kube generate` comme passerelle conceptuelle vers Kubernetes.
+<ChapterHead
+  kicker="Semestre 2 · Bloc 1 · Chapitre 18"
+  title="Réseau, stockage et composition des conteneurs"
+  lecture="10 min"
+/>
 
-    Ce chapitre prépare directement le [TP 13](../tp/tp13-composition-pod.md), où vous composerez les trois tiers de Listify.
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- expliquer les modes réseau des conteneurs (bridge, port mapping, réseaux définis par l'utilisateur) et les spécificités du rootless ;
+- distinguer volumes et bind mounts, et raisonner le cycle de vie des données ;
+- composer plusieurs services avec un fichier Compose (réseaux, volumes, healthchecks, dépendances) ;
+- expliquer le **pod** Podman et `podman kube generate` comme passerelle conceptuelle vers Kubernetes.
+
+Ce chapitre prépare directement le [TP 13](../tp/tp13-composition-pod.md), où vous composerez les trois tiers de Listify.
+:::
 
 ## 1. Le réseau des conteneurs
 
@@ -39,7 +53,7 @@ C'est le `DB_HOST=listify-db` du S1, mais fourni gratuitement par le moteur : la
 
 ### 1.3 Les spécificités du rootless
 
-Le rootless a une contrainte à connaître : un utilisateur non privilégié **ne peut pas** ouvrir les ports **< 1024** (la règle du S1, chapitre 3). En rootless, `podman run -p 80:80` échoue donc par défaut ; on publie sur un port élevé (`-p 8080:80`) ou on lève la restriction du noyau. De plus, le trafic réseau rootless passe par un composant en espace utilisateur (**pasta** ou **slirp4netns**) plutôt que par le noyau : léger surcoût, transparent pour nous. Ces détails (à connaître en notions) sont le prix, minime, de la sécurité du rootless.
+Le rootless a une contrainte à connaître : un utilisateur non privilégié **ne peut pas** ouvrir les ports **&lt; 1024** (la règle du S1, chapitre 3). En rootless, `podman run -p 80:80` échoue donc par défaut ; on publie sur un port élevé (`-p 8080:80`) ou on lève la restriction du noyau. De plus, le trafic réseau rootless passe par un composant en espace utilisateur (**pasta** ou **slirp4netns**) plutôt que par le noyau : léger surcoût, transparent pour nous. Ces détails (à connaître en notions) sont le prix, minime, de la sécurité du rootless.
 
 ## 2. Le stockage : la persistance face à l'éphémère
 
@@ -117,8 +131,9 @@ volumes:
 
 Chaque élément fait écho au parcours : un **réseau** implicite relie les services (ils se joignent par nom : `DB_HOST: db`) ; un **volume** persiste la base ; les **variables** portent la configuration (facteur III du S1) ; le **healthcheck** et `depends_on: condition: service_healthy` résolvent, enfin proprement, le problème d'ordre de démarrage qui nous poursuit depuis le S1 (« attendre que la base soit prête »). Le fichier Compose est, littéralement, l'**Infrastructure as Code du poste de développeur**.
 
-!!! note "Le healthcheck, une vieille question enfin bien posée"
-    Au S1, votre backend savait attendre la base (503 propre) parce que systemd ne pouvait pas garantir l'ordre entre machines. Ici, `condition: service_healthy` exprime la dépendance de disponibilité de façon **déclarative**. Au bloc 2, Kubernetes généralisera cela avec les *probes* (liveness/readiness). Suivez ce fil : c'est l'un des plus instructifs du parcours.
+:::note[Le healthcheck, une vieille question enfin bien posée]
+Au S1, votre backend savait attendre la base (503 propre) parce que systemd ne pouvait pas garantir l'ordre entre machines. Ici, `condition: service_healthy` exprime la dépendance de disponibilité de façon **déclarative**. Au bloc 2, Kubernetes généralisera cela avec les *probes* (liveness/readiness). Suivez ce fil : c'est l'un des plus instructifs du parcours.
+:::
 
 ## 4. Le pod : la passerelle vers Kubernetes
 
@@ -126,14 +141,9 @@ Chaque élément fait écho au parcours : un **réseau** implicite relie les ser
 
 Podman introduit une notion que Docker n'a pas et que Kubernetes place au centre de tout : le **pod**. Un pod est un **groupe de conteneurs qui partagent certains namespaces** (notamment le **réseau** : ils partagent la même adresse IP et se joignent par `localhost`) et un cycle de vie commun. L'idée : certains conteneurs sont si étroitement liés qu'ils forment une unité de déploiement indivisible.
 
-```mermaid
-flowchart TB
-    subgraph POD["Pod (namespace réseau PARTAGÉ, une seule IP)"]
-        A["Conteneur principal<br/>(l'application)"]
-        B["Conteneur annexe (sidecar)<br/>(logs, proxy, métriques...)"]
-    end
-    A <-->|"localhost"| B
-```
+<Figure src="pod-sidecar" num="18.1" alt="Un pod contient le conteneur principal et un conteneur annexe ; ils partagent le même namespace réseau et une seule adresse IP, et communiquent par localhost.">
+  Le pod : un groupe de conteneurs qui partagent un namespace réseau. C'est la notion que Kubernetes placera au centre de tout au bloc suivant.
+</Figure>
 
 Que Podman propose exactement le concept central de Kubernetes n'est pas un hasard : c'est **délibéré**, pour offrir une transition en douceur. Ce que vous apprenez du pod ici se transposera directement au bloc 2.
 
@@ -152,19 +162,26 @@ Vous obtenez ainsi, **sans installer Kubernetes**, un premier fichier au format 
 
 ## Ce qu'il faut retenir
 
-1. **Réseau** : chaque conteneur a son namespace réseau ; le **port mapping** (`-p`) l'expose à l'hôte (comme le NAT VirtualBox du S1). Sur un **réseau défini par l'utilisateur**, les conteneurs se joignent **par nom** (DNS interne) : la résolution de noms du S1, native. Rootless : pas de ports < 1024, trafic via pasta/slirp4netns.
+<div className="retenir">
+
+1. **Réseau** : chaque conteneur a son namespace réseau ; le **port mapping** (`-p`) l'expose à l'hôte (comme le NAT VirtualBox du S1). Sur un **réseau défini par l'utilisateur**, les conteneurs se joignent **par nom** (DNS interne) : la résolution de noms du S1, native. Rootless : pas de ports &lt; 1024, trafic via pasta/slirp4netns.
 2. **Stockage** : la couche du conteneur est **éphémère** ; les **volumes** (gérés par le moteur) persistent les données précieuses (la base), les **bind mounts** montent un répertoire de l'hôte (le code en dev). Données dans un volume, conteneur jetable.
 3. **Composition** : le fichier **Compose** décrit déclarativement services, réseaux, volumes, variables, **healthchecks** et dépendances (`condition: service_healthy` règle l'ordre de démarrage). C'est l'IaC du poste de développeur.
 4. Le **pod** groupe des conteneurs partageant le namespace réseau (même IP, `localhost`) : le concept central de Kubernetes, offert d'avance par Podman. `podman kube generate` produit un **manifeste Kubernetes** : la passerelle vers le bloc 2.
 
+</div>
+
 ## Regard recherche
 
-!!! quote "Pour aller vers la recherche"
-    - **Brendan Burns, David Oppenheimer, « Design Patterns for Container-based Distributed Systems », USENIX HotCloud, 2016.** Écrit par un des créateurs de Kubernetes, ce court article **théorise le pod** : il formalise les patterns *sidecar*, *ambassador*, *adapter* qui justifient de regrouper des conteneurs. C'est la lecture idéale pour comprendre *pourquoi* le pod existe, juste avant le bloc 2. Fortement recommandé.
-    - **Sur les systèmes de fichiers en réseau et le stockage conteneurisé** : la question « base de données dans un conteneur ? » renvoie à des décennies de recherche sur la persistance et la cohérence. Le chapitre correspondant de Kleppmann (*Designing Data-Intensive Applications*, vu au S3) en est la meilleure porte d'entrée.
-    - Piste : comparez les implémentations réseau (Netavark de Podman, CNI de Kubernetes) ; le modèle **CNI** (Container Network Interface) est un standard dont l'étude ouvre sur la recherche en réseaux définis par logiciel (SDN).
+:::recherche
+- **Brendan Burns, David Oppenheimer, « Design Patterns for Container-based Distributed Systems », USENIX HotCloud, 2016.** Écrit par un des créateurs de Kubernetes, ce court article **théorise le pod** : il formalise les patterns *sidecar*, *ambassador*, *adapter* qui justifient de regrouper des conteneurs. C'est la lecture idéale pour comprendre *pourquoi* le pod existe, juste avant le bloc 2. Fortement recommandé.
+- **Sur les systèmes de fichiers en réseau et le stockage conteneurisé** : la question « base de données dans un conteneur ? » renvoie à des décennies de recherche sur la persistance et la cohérence. Le chapitre correspondant de Kleppmann (*Designing Data-Intensive Applications*, vu au S3) en est la meilleure porte d'entrée.
+- Piste : comparez les implémentations réseau (Netavark de Podman, CNI de Kubernetes) ; le modèle **CNI** (Container Network Interface) est un standard dont l'étude ouvre sur la recherche en réseaux définis par logiciel (SDN).
+:::
 
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -181,3 +198,5 @@ Vous obtenez ainsi, **sans installer Kubernetes**, un premier fichier au format 
 
 - Le Container Network Interface (CNI), spécification : [github.com/containernetworking/cni](https://github.com/containernetworking/cni). Le standard réseau que Kubernetes utilise.
 - Sur la persistance : la Container Storage Interface (CSI), pendant de CNI pour le stockage, qui reviendra au bloc 2 avec les StorageClass.
+
+</div>

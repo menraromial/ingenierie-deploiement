@@ -1,26 +1,32 @@
-# TP 8 : Configurer avec Ansible, les quatre rôles
+---
+title: "TP 8 : Configurer avec Ansible, les quatre rôles"
+sidebar_label: "TP 8 : Configurer avec Ansible, les quatre rôles"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 6 h (3 séances : inventaire + rôle common + database ; backend ; loadbalancer + preuve d'idempotence)
-    - **Prérequis** : TP 7 terminé (parc Vagrant fonctionnel) ; chapitre 12
-    - **Livrables** : le projet Ansible complet dans `deploy/ansible/`, les 4 rôles, l'inventaire, le vault ; la **preuve d'idempotence** (`changed=0` au 2ᵉ passage) ; runbook à jour
-    - **Compétences travaillées** : C2 (cœur), C6
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    Tout ce que vous avez tapé à la main aux TP 2-6 devient ici du code rejouable. Gardez vos runbooks ouverts : ce TP est leur traduction, ligne à ligne, en modules idempotents.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 3 · Travaux pratiques 8"
+  title="Configurer avec Ansible, les quatre rôles"
+  competences={['C2', 'C6']}
+/>
+
+:::fiche
+- **Durée** : 6 h (3 séances : inventaire + rôle common + database ; backend ; loadbalancer + preuve d'idempotence)
+- **Prérequis** : TP 7 terminé (parc Vagrant fonctionnel) ; chapitre 12
+- **Livrables** : le projet Ansible complet dans `deploy/ansible/`, les 4 rôles, l'inventaire, le vault ; la **preuve d'idempotence** (`changed=0` au 2ᵉ passage) ; runbook à jour
+- **Compétences travaillées** : C2 (cœur), C6
+
+Tout ce que vous avez tapé à la main aux TP 2-6 devient ici du code rejouable. Gardez vos runbooks ouverts : ce TP est leur traduction, ligne à ligne, en modules idempotents.
+:::
 
 ## Ce que vous allez construire
 
-```mermaid
-flowchart TB
-    A["ansible-playbook site.yml"] --> C["Rôle common<br/>(toutes machines)"]
-    A --> D["Rôle database<br/>(db)"]
-    A --> B["Rôle backend<br/>(app1, app2)"]
-    A --> L["Rôle loadbalancer<br/>(lb)"]
-    C -.->|"paquets, /etc/hosts, ufw base"| ALL["les 4 VM"]
-    D -.->|"PostgreSQL, rôle SQL, pg_hba, ufw"| DB[("listify-db")]
-    B -.->|"venv, code, listify.env, systemd, ufw"| APP["app1, app2"]
-    L -.->|"nginx, TLS, statiques, upstream calculé"| LB["listify-lb"]
-```
+<Figure src="tp8-roles" num="TP8.1" alt="ansible-playbook site.yml applique quatre rôles : common sur les quatre VM, database sur listify-db, backend sur app1 et app2, loadbalancer sur listify-lb.">
+  Ce que vous allez construire : quatre rôles Ansible, chacun ciblant un groupe de l'inventaire. Ce que vous faisiez à la main aux TP 5 et 6 devient une description rejouable.
+</Figure>
 
 ## Étape 0 : installer Ansible et brancher l'inventaire sur Vagrant (45 min)
 
@@ -84,17 +90,18 @@ ansible -i inventories/vagrant/hosts.ini all -m ping
 # db | SUCCESS => {"ping": "pong"} ... pour les 4 machines
 ```
 
-!!! tip "Un ansible.cfg pour ne plus répéter `-i`"
-    Créez `deploy/ansible/ansible.cfg` :
+:::tip[Un ansible.cfg pour ne plus répéter `-i`]
+Créez `deploy/ansible/ansible.cfg` :
 
-    ```ini
-    [defaults]
-    inventory = inventories/vagrant/hosts.ini
-    host_key_checking = False
-    roles_path = roles
-    ```
+```ini
+[defaults]
+inventory = inventories/vagrant/hosts.ini
+host_key_checking = False
+roles_path = roles
+```
 
-    Désormais `ansible all -m ping` suffit depuis ce dossier. Ce fichier fait partie du projet (committé).
+Désormais `ansible all -m ping` suffit depuis ce dossier. Ce fichier fait partie du projet (committé).
+:::
 
 ## Étape 1 : le rôle `common` (1 h)
 
@@ -155,8 +162,9 @@ mkdir -p roles/common/tasks roles/common/handlers
 
 Arrêtez-vous sur `blockinfile` : ses **marqueurs** (`# BEGIN/END LISTIFY HOSTS`) délimitent le bloc géré ; rejouer la tâche remplace le bloc entre marqueurs sans jamais dupliquer, et modifier le contenu met à jour proprement. L'idempotence *par structure* du chapitre 12.
 
-!!! note "Pourquoi gérer /etc/hosts ici alors que hostmanager le fait déjà ?"
-    Au TP 7, le plugin `vagrant-hostmanager` peuple `/etc/hosts` sur les VM **et** sur votre poste : pratique pour la boucle de développement locale. Mais ce plugin est une commodité **propre à Vagrant** : il n'existe pas quand Ansible déploie sur de vraies machines (le cas de production, cf. bonus 1 du TP 9). Le rôle `common` gère donc `/etc/hosts` de son côté pour que la configuration Ansible soit **complète et autonome**, indépendamment de Vagrant. Les deux coexistent sans conflit (marqueurs distincts) : hostmanager pour le confort local, Ansible comme source de vérité du déployé.
+:::note[Pourquoi gérer /etc/hosts ici alors que hostmanager le fait déjà ?]
+Au TP 7, le plugin `vagrant-hostmanager` peuple `/etc/hosts` sur les VM **et** sur votre poste : pratique pour la boucle de développement locale. Mais ce plugin est une commodité **propre à Vagrant** : il n'existe pas quand Ansible déploie sur de vraies machines (le cas de production, cf. bonus 1 du TP 9). Le rôle `common` gère donc `/etc/hosts` de son côté pour que la configuration Ansible soit **complète et autonome**, indépendamment de Vagrant. Les deux coexistent sans conflit (marqueurs distincts) : hostmanager pour le confort local, Ansible comme source de vérité du déployé.
+:::
 
 Ajoutez `common` au playbook et testez immédiatement (on construit rôle par rôle, on ne écrit pas tout d'un coup) :
 
@@ -315,8 +323,9 @@ mkdir -p roles/database/tasks roles/database/handlers
 
 Le moment fort du TP est la double boucle `loop: "{{ groups['backend'] }}"` : les autorisations pg_hba **et** ufw sont générées **une par backend, depuis l'inventaire**. Ajoutez app3 à l'inventaire un jour, et les deux entrées apparaissent toutes seules. Le « coût de app3 » que vous aviez chiffré au TP 6 (éditer pg_hba, éditer ufw, sur la bonne machine, sans oubli) vient de tomber à zéro. Relisez la synthèse du TP 6 : c'est ici, concrètement, que sa promesse est tenue.
 
-!!! note "Le chargement du schéma, et son idempotence"
-    Créer la base ne crée pas les **tables** : sans la tâche de chargement du schéma, `/api/tasks` renverrait 500 (`relation "tasks" does not exist`). On charge donc `db/schema.sql` **et** la migration `001-add-done.sql` du TP 4 (le code déployé est en v1.1, il attend la colonne `done`). Deux finesses : (1) la connexion se fait **en tant que `listify`** (via `login_host: 127.0.0.1`) pour que les tables lui appartiennent, sans quoi le backend, qui se connecte en `listify`, n'y aurait pas accès ; (2) une **garde** (`when: not schema_state...ok`) n'exécute le chargement que si l'état final manque, ce qui préserve le `changed=0` au second passage. Si vous ajoutez d'autres migrations plus tard, ajoutez-les à la liste `loop` (ou remplacez-la par un `fileglob` trié sur `db/migrations/`).
+:::note[Le chargement du schéma, et son idempotence]
+Créer la base ne crée pas les **tables** : sans la tâche de chargement du schéma, `/api/tasks` renverrait 500 (`relation "tasks" does not exist`). On charge donc `db/schema.sql` **et** la migration `001-add-done.sql` du TP 4 (le code déployé est en v1.1, il attend la colonne `done`). Deux finesses : (1) la connexion se fait **en tant que `listify`** (via `login_host: 127.0.0.1`) pour que les tables lui appartiennent, sans quoi le backend, qui se connecte en `listify`, n'y aurait pas accès ; (2) une **garde** (`when: not schema_state...ok`) n'exécute le chargement que si l'état final manque, ce qui préserve le `changed=0` au second passage. Si vous ajoutez d'autres migrations plus tard, ajoutez-les à la liste `loop` (ou remplacez-la par un `fileglob` trié sur `db/migrations/`).
+:::
 
 Ajoutez maintenant le play `database` à la suite de votre `site.yml` (qui ne contenait que `common`) :
 
@@ -342,8 +351,9 @@ ansible database -m command -a "systemctl is-active postgresql" --become   # vé
 ansible-playbook site.yml          # relancer : PLAY RECAP doit montrer changed=0
 ```
 
-!!! note "Le cycle « exécuter, vérifier, relancer » se répète à chaque rôle"
-    Pour les rôles suivants (`backend`, `loadbalancer`), on résumera par « ajoutez le play, exécutez, vérifiez, relancez pour l'idempotence » : c'est exactement les trois commandes ci-dessus, avec le nouveau play ajouté au `site.yml`. Le `changed=0` au rejeu est à chaque fois la preuve que le rôle est idempotent.
+:::note[Le cycle « exécuter, vérifier, relancer » se répète à chaque rôle]
+Pour les rôles suivants (`backend`, `loadbalancer`), on résumera par « ajoutez le play, exécutez, vérifiez, relancez pour l'idempotence » : c'est exactement les trois commandes ci-dessus, avec le nouveau play ajouté au `site.yml`. Le `changed=0` au rejeu est à chaque fois la preuve que le rôle est idempotent.
+:::
 
 ## Étape 3 : le rôle `backend` (1 h 30)
 
@@ -658,8 +668,9 @@ ansible-playbook site.yml          # 2ᵉ exécution, sans rien changer
 
 Le `PLAY RECAP` doit afficher **`changed=0`** sur les quatre machines. C'est la démonstration formelle que votre infrastructure est décrite par un état désiré idempotent (ch. 10). Si une tâche passe `changed` au 2ᵉ tour, c'est un défaut à corriger : le suspect n° 1 est la tâche `command`/`openssl` (vérifiez que la garde `creates:` fait son travail).
 
-!!! note "Aucun `--ask-vault-pass` nécessaire"
-    Grâce au `vault_password_file = .vault-pass` déclaré dans `ansible.cfg` à l'étape 2, toutes ces commandes (playbooks **et** commandes ad-hoc `ansible`) déchiffrent le vault automatiquement. Rappel : `.vault-pass` est dans le `.gitignore` et ne quitte jamais votre poste ; en production, il viendrait d'un gestionnaire de secrets, pas du disque.
+:::note[Aucun `--ask-vault-pass` nécessaire]
+Grâce au `vault_password_file = .vault-pass` déclaré dans `ansible.cfg` à l'étape 2, toutes ces commandes (playbooks **et** commandes ad-hoc `ansible`) déchiffrent le vault automatiquement. Rappel : `.vault-pass` est dans le `.gitignore` et ne quitte jamais votre poste ; en production, il viendrait d'un gestionnaire de secrets, pas du disque.
+:::
 
 ## Point de contrôle final
 

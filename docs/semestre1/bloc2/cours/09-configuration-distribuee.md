@@ -1,13 +1,26 @@
-# Chapitre 9 : Le problème de la configuration distribuée
+---
+title: "Ch. 9 : Le problème de la configuration distribuée"
+sidebar_label: "Ch. 9 : Le problème de la configuration distribuée"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
 
-    - définir le *configuration drift* et en citer les causes et les symptômes ;
-    - expliquer les métaphores fondatrices du domaine : serveurs « flocons de neige », *pets vs cattle*, serveurs phénix ;
-    - formuler le cahier des charges d'une gestion de configuration digne de ce nom, celui que le bloc 3 remplira.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 2 · Chapitre 9"
+  title="Le problème de la configuration distribuée"
+  lecture="10 min"
+/>
 
-    C'est le chapitre-charnière du semestre : court en pages, décisif en idées. Il donne des noms à ce que les TP 5 et 6 vous auront fait vivre.
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- définir le *configuration drift* et en citer les causes et les symptômes ;
+- expliquer les métaphores fondatrices du domaine : serveurs « flocons de neige », *pets vs cattle*, serveurs phénix ;
+- formuler le cahier des charges d'une gestion de configuration digne de ce nom, celui que le bloc 3 remplira.
+
+C'est le chapitre-charnière du semestre : court en pages, décisif en idées. Il donne des noms à ce que les TP 5 et 6 vous auront fait vivre.
+:::
 
 ## 1. L'inventaire honnête du bloc 2
 
@@ -30,8 +43,14 @@ Deux observations, qui sont tout le chapitre :
 
 ### 2.1 Définition
 
-**Dérive de configuration** (*configuration drift*)
-:   Divergence progressive entre l'état réel des serveurs et leur état supposé (ce que dit la documentation, ce que croit l'équipe, ce qu'il y a sur les autres serveurs du même rôle). Terme popularisé par la littérature Infrastructure as Code, notamment Kief Morris.[^1]
+<dl>
+<dt><strong>Dérive de configuration</strong> (<em>configuration drift</em>)</dt>
+<dd>
+
+Divergence progressive entre l'état réel des serveurs et leur état supposé (ce que dit la documentation, ce que croit l'équipe, ce qu'il y a sur les autres serveurs du même rôle). Terme popularisé par la littérature Infrastructure as Code, notamment Kief Morris.[^1]
+
+</dd>
+</dl>
 
 [^1]: Kief Morris, *Infrastructure as Code*, 2ᵉ éd., O'Reilly, 2020, chapitre 1 ; la formule voisine de « snowflake server » vient de Martin Fowler (bliki, 2012).
 
@@ -61,11 +80,20 @@ La métaphore la plus célèbre du domaine, popularisée au début des années 2
 
 [^2]: Randy Bias, « The History of Pets vs Cattle and How to Use the Analogy Properly », billet, 2016 : l'histoire de l'expression par celui qui l'a répandue.
 
-**Animaux de compagnie** (*pets*)
-:   Chaque serveur a un nom, une histoire, des soins individuels ; quand il est malade, **on le soigne**, aussi longtemps qu'il faut. C'est le mode d'exploitation du bloc 1... et encore du bloc 2.
+<dl>
+<dt><strong>Animaux de compagnie</strong> (<em>pets</em>)</dt>
+<dd>
 
-**Bétail** (*cattle*)
-:   Les serveurs sont numérotés, identiques, produits en série depuis une définition commune ; quand l'un est malade, **on le remplace** et le troupeau n'a rien senti. Soigner un individu n'a plus de sens économique : le reconstruire coûte moins cher que le diagnostiquer.
+Chaque serveur a un nom, une histoire, des soins individuels ; quand il est malade, **on le soigne**, aussi longtemps qu'il faut. C'est le mode d'exploitation du bloc 1... et encore du bloc 2.
+
+</dd>
+<dt><strong>Bétail</strong> (<em>cattle</em>)</dt>
+<dd>
+
+Les serveurs sont numérotés, identiques, produits en série depuis une définition commune ; quand l'un est malade, **on le remplace** et le troupeau n'a rien senti. Soigner un individu n'a plus de sens économique : le reconstruire coûte moins cher que le diagnostiquer.
+
+</dd>
+</dl>
 
 Le passage de l'un à l'autre n'est pas une question de goût mais de **nombre et d'exigence de disponibilité** : on ne soigne pas individuellement 200 machines. Et il a une condition d'entrée stricte : le mode bétail exige de savoir **reconstruire une machine à l'identique, vite, sans humain**. Ce que, précisément, vous ne savez pas encore faire.
 
@@ -88,12 +116,18 @@ Relisez la liste : chaque propriété répond à une douleur précise et datée 
 
 ## Ce qu'il faut retenir
 
+<div className="retenir">
+
 1. La configuration multi-machines duplique l'information ; toute duplication non synchronisée mécaniquement diverge : c'est le **configuration drift**, produit de l'exploitation normale, pas de la négligence.
 2. Symptôme canonique : « ça marche sur app1, pas sur app2 » ; coût réel : serveurs non interchangeables, mises à jour risquées, reconstruction impossible.
 3. Métaphores à connaître et savoir expliquer : **snowflake** (l'irreproductible qu'on n'ose plus toucher), **pets vs cattle** (soigner vs remplacer ; le mode bétail exige la reconstruction automatique), **phénix / infrastructure immuable** (reconstruire plutôt que modifier).
 4. Le cahier des charges de la solution : configuration **écrite, versionnée, exécutable, idempotente, déclarative, factorisée**. C'est la définition de l'IaC et le programme du bloc 3.
 
+</div>
+
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -110,3 +144,5 @@ Relisez la liste : chaque propriété répond à une douleur précise et datée 
 
 - Mark Burgess, *A Site Configuration Engine* (USENIX Computing Systems, 1995) : le papier de CFEngine, ancêtre de tous les gestionnaires de configuration ; l'idempotence et la convergence y sont déjà centrales, vingt ans avant vos TP.
 - Chad Fowler, « Trash Your Servers and Burn Your Code: Immutable Infrastructure and Disposable Components », billet, 2013 : le manifeste de l'infrastructure immuable.
+
+</div>

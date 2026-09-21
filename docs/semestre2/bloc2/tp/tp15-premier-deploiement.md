@@ -1,12 +1,25 @@
-# TP 15 : Premier déploiement et auto-réparation en direct
+---
+title: "TP 15 : Premier déploiement et auto-réparation"
+sidebar_label: "TP 15 : Premier déploiement et auto-réparation"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 4 h
-    - **Prérequis** : bloc 1 du S2 ; chapitres 19 et 20
-    - **Livrables** : un cluster kind fonctionnel ; un Deployment + Service ; le compte rendu de l'auto-réparation et du scaling observés ; runbook
-    - **Compétences travaillées** : C3 (cœur), C6
+import ChapterHead from '@site/src/components/ChapterHead';
 
-    Vous montez votre premier cluster Kubernetes local et vous **voyez la boucle de réconciliation (ch. 20) fonctionner en direct** : vous tuez des Pods, le cluster les recrée. C'est le TP qui rend le modèle mental concret. Commandes validées sur kind + Podman.
+<ChapterHead
+  kicker="Semestre 2 · Bloc 2 · Travaux pratiques 15"
+  title="Premier déploiement et auto-réparation en direct"
+  competences={['C3', 'C6']}
+/>
+
+:::fiche
+- **Durée** : 4 h
+- **Prérequis** : bloc 1 du S2 ; chapitres 19 et 20
+- **Livrables** : un cluster kind fonctionnel ; un Deployment + Service ; le compte rendu de l'auto-réparation et du scaling observés ; runbook
+- **Compétences travaillées** : C3 (cœur), C6
+
+Vous montez votre premier cluster Kubernetes local et vous **voyez la boucle de réconciliation (ch. 20) fonctionner en direct** : vous tuez des Pods, le cluster les recrée. C'est le TP qui rend le modèle mental concret. Commandes validées sur kind + Podman.
+:::
 
 ## Étape 0 : faire de la place (10 min)
 
@@ -43,38 +56,44 @@ kubectl cluster-info
 kubectl get nodes
 ```
 
-!!! danger "kind rootless : `requires setting systemd property Delegate=yes`"
-    En **rootless**, kind a besoin que les contrôleurs cgroup (cpu, memory, pids) soient **délégués** à votre utilisateur par systemd. Votre terminal interactif tourne dans une `session.scope` qui **n'hérite pas** de cette délégation, d'où l'erreur `running kind with rootless provider requires setting systemd property "Delegate=yes"`. Deux remèdes :
+:::danger[kind rootless : `requires setting systemd property Delegate=yes`]
+En **rootless**, kind a besoin que les contrôleurs cgroup (cpu, memory, pids) soient **délégués** à votre utilisateur par systemd. Votre terminal interactif tourne dans une `session.scope` qui **n'hérite pas** de cette délégation, d'où l'erreur `running kind with rootless provider requires setting systemd property "Delegate=yes"`. Deux remèdes :
 
-    - **Immédiat, sans droits root** (recommandé) : lancez la création dans un scope délégué, comme ci-dessus :
+- **Immédiat, sans droits root** (recommandé) : lancez la création dans un scope délégué, comme ci-dessus :
 
-        ```bash
-        systemd-run --user --scope --property=Delegate=yes kind create cluster --name listify
-        ```
+    ```bash
+    systemd-run --user --scope --property=Delegate=yes kind create cluster --name listify
+    ```
 
-        Seule la **création** du cluster l'exige ; ensuite, `kubectl` fonctionne normalement.
+    Seule la **création** du cluster l'exige ; ensuite, `kubectl` fonctionne normalement.
 
-    - **Permanent, une fois pour toutes (droits root)** : déléguer explicitement au gestionnaire utilisateur, puis se reconnecter :
+- **Permanent, une fois pour toutes (droits root)** : déléguer explicitement au gestionnaire utilisateur, puis se reconnecter :
 
-        ```bash
-        sudo mkdir -p /etc/systemd/system/user@.service.d
-        printf '[Service]\nDelegate=cpu cpuset io memory pids\n' | \
-          sudo tee /etc/systemd/system/user@.service.d/delegate.conf
-        sudo systemctl daemon-reload
-        # puis DÉCONNEXION/RECONNEXION (ou reboot) ; ensuite `kind create` marche seul
-        ```
+    ```bash
+    sudo mkdir -p /etc/systemd/system/user@.service.d
+    printf '[Service]\nDelegate=cpu cpuset io memory pids\n' | \
+      sudo tee /etc/systemd/system/user@.service.d/delegate.conf
+    sudo systemctl daemon-reload
+    # puis DÉCONNEXION/RECONNEXION (ou reboot) ; ensuite `kind create` marche seul
+    ```
 
-    **Attention : c'est valable pour `create` ET `delete`.** Le processus réseau du nœud est lancé dans le scope délégué à la création ; une `kind delete cluster` depuis un shell non délégué échouera sur `rootless netns: kill network process: permission denied`. Préfixez donc **toute** commande `kind` par `systemd-run --user --scope --property=Delegate=yes`. Le remède permanent (le drop-in ci-dessus), lui, fait fonctionner `kind` nu dans n'importe quel shell après reconnexion, sans `systemd-run` : sur les postes de TP, le guide d'installation l'applique en amont ; sinon, `systemd-run` dépanne à tout moment.
+**Attention : c'est valable pour `create` ET `delete`.** Le processus réseau du nœud est lancé dans le scope délégué à la création ; une `kind delete cluster` depuis un shell non délégué échouera sur `rootless netns: kill network process: permission denied`. Préfixez donc **toute** commande `kind` par `systemd-run --user --scope --property=Delegate=yes`. Le remède permanent (le drop-in ci-dessus), lui, fait fonctionner `kind` nu dans n'importe quel shell après reconnexion, sans `systemd-run` : sur les postes de TP, le guide d'installation l'applique en amont ; sinon, `systemd-run` dépanne à tout moment.
+:::
 
 Vous obtenez un nœud `listify-control-plane` en `Ready`. Ce nœud est un conteneur Podman (`podman ps` le montre) qui fait tourner un Kubernetes complet à l'intérieur. Kubernetes **dans** un conteneur **dans** votre poste : l'emboîtement des abstractions du parcours.
 
-!!! note "kubectl : votre nouvelle ligne de commande"
-    `kubectl` (prononcé « cube-ceu-t-l » ou « cube-control ») parle à l'**API server** (ch. 20). Chaque commande est une interaction avec l'unique porte d'entrée du cluster. Les verbes de base : `get` (lister), `describe` (détailler + événements), `apply` (soumettre un état désiré), `delete`, `logs`. Ajoutez `alias k=kubectl` à votre shell, vous le taperez des centaines de fois.
+:::note[kubectl : votre nouvelle ligne de commande]
+`kubectl` (prononcé « cube-ceu-t-l » ou « cube-control ») parle à l'**API server** (ch. 20). Chaque commande est une interaction avec l'unique porte d'entrée du cluster. Les verbes de base : `get` (lister), `describe` (détailler + événements), `apply` (soumettre un état désiré), `delete`, `logs`. Ajoutez `alias k=kubectl` à votre shell, vous le taperez des centaines de fois.
+:::
 
-??? question "Point de contrôle n° 1"
-    - `kubectl get nodes` : un nœud `Ready`.
-    - `podman ps | grep listify` : le nœud est bien un conteneur Podman.
-    - `kubectl get pods -A` : les Pods du **plan de contrôle** (api-server, etcd, scheduler, controller-manager, coredns...) tournent dans le namespace `kube-system`. Retrouvez chaque composant du chapitre 20 dans cette liste, et notez-les au runbook.
+<details className="controle">
+<summary>Point de contrôle n° 1</summary>
+
+- `kubectl get nodes` : un nœud `Ready`.
+- `podman ps | grep listify` : le nœud est bien un conteneur Podman.
+- `kubectl get pods -A` : les Pods du **plan de contrôle** (api-server, etcd, scheduler, controller-manager, coredns...) tournent dans le namespace `kube-system`. Retrouvez chaque composant du chapitre 20 dans cette liste, et notez-les au runbook.
+
+</details>
 
 ## Étape 2 : le premier Deployment, la réconciliation vue en direct (1 h 30)
 
@@ -104,8 +123,9 @@ kubectl delete pod <un-nom-de-pod-web>
 
 Regardez le premier terminal : le Pod passe en `Terminating`, et **presque instantanément un nouveau Pod apparaît** et démarre. Vous n'avez rien demandé de tel. Le ReplicaSet controller a **observé** l'écart (2 réels ≠ 3 désirés) et **agi** (créer 1 Pod), exactement la boucle du chapitre 20, §2. Consignez au runbook : le nom du Pod détruit, le nom du nouveau (différent), le délai. C'est l'**auto-réparation**, et elle est *gratuite* : conséquence directe de la réconciliation, pas un mécanisme ajouté.
 
-!!! tip "Poussez l'expérience"
-    Essayez `kubectl delete pod -l app=web` (le sélecteur suffit pour tuer les trois d'un coup ; ne pas y ajouter `--all`, incompatible avec un sélecteur) : le cluster en recrée trois. Puis `kubectl scale deployment/web --replicas=0` : là, ils disparaissent et **ne reviennent pas**, car l'état désiré est maintenant zéro. La différence est capitale : supprimer un Pod ne change pas l'état désiré (le Deployment le recrée) ; changer `replicas` **change l'état désiré**. Notez cette distinction, elle est au cœur du modèle.
+:::tip[Poussez l'expérience]
+Essayez `kubectl delete pod -l app=web` (le sélecteur suffit pour tuer les trois d'un coup ; ne pas y ajouter `--all`, incompatible avec un sélecteur) : le cluster en recrée trois. Puis `kubectl scale deployment/web --replicas=0` : là, ils disparaissent et **ne reviennent pas**, car l'état désiré est maintenant zéro. La différence est capitale : supprimer un Pod ne change pas l'état désiré (le Deployment le recrée) ; changer `replicas` **change l'état désiré**. Notez cette distinction, elle est au cœur du modèle.
+:::
 
 ## Étape 3 : le Service, une adresse stable (45 min)
 

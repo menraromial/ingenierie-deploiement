@@ -1,12 +1,25 @@
-# TP 12 : Conteneuriser les trois services de Listify
+---
+title: "TP 12 : Conteneuriser les trois services"
+sidebar_label: "TP 12 : Conteneuriser les trois services"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 4 h
-    - **Prérequis** : TP 11 ; chapitres 16 et 17
-    - **Livrables** : les `Containerfile` des trois tiers dans le dépôt `listify`, les images construites, la mesure des tailles avant/après optimisation ; runbook
-    - **Compétences travaillées** : C3 (cœur)
+import ChapterHead from '@site/src/components/ChapterHead';
 
-    Vous emballez le code de Listify (inchangé) en **images immuables**. À la fin, chaque tier est une image lancée par un simple `podman run`. Toutes les commandes de ce TP ont été validées sous Podman 5.
+<ChapterHead
+  kicker="Semestre 2 · Bloc 1 · Travaux pratiques 12"
+  title="Conteneuriser les trois services de Listify"
+  competences={['C3']}
+/>
+
+:::fiche
+- **Durée** : 4 h
+- **Prérequis** : TP 11 ; chapitres 16 et 17
+- **Livrables** : les `Containerfile` des trois tiers dans le dépôt `listify`, les images construites, la mesure des tailles avant/après optimisation ; runbook
+- **Compétences travaillées** : C3 (cœur)
+
+Vous emballez le code de Listify (inchangé) en **images immuables**. À la fin, chaque tier est une image lancée par un simple `podman run`. Toutes les commandes de ce TP ont été validées sous Podman 5.
+:::
 
 ## Étape 1 : le backend, et la découverte du cache (1 h 30)
 
@@ -61,36 +74,40 @@ podman build -t listify-backend:1.1 ./backend
 
 Observez : les couches `pip install` sont marquées **`Using cache`** ; seule la couche `COPY app.py` et les suivantes sont refaites. Le build est quasi instantané. Maintenant, modifiez `requirements.txt` (même trivialement) et reconstruisez : cette fois `pip install` **est** refait. Vous venez de vérifier de vos yeux la règle « dépendances avant code » (ch. 17 §2). Consignez les deux durées : l'écart est l'argument.
 
-??? question "Point de contrôle n° 1 : le backend tourne, isolé"
-    Le backend a besoin d'une base. Lancez un PostgreSQL jetable et testez :
+<details className="controle">
+<summary>Point de contrôle n° 1 : le backend tourne, isolé</summary>
 
-    ```bash
-    podman network create listify-net
-    podman run -d --name db --network listify-net \
-      -e POSTGRES_DB=listify -e POSTGRES_USER=listify -e POSTGRES_PASSWORD=secret \
-      docker.io/library/postgres:16-alpine
+Le backend a besoin d'une base. Lancez un PostgreSQL jetable et testez :
 
-    # ATTENDRE que la base soit prête (au 1er démarrage, initdb prend quelques
-    # secondes ; sans cette attente, le health renverrait 503 "database error").
-    for i in $(seq 1 20); do podman exec db pg_isready -U listify >/dev/null 2>&1 && break; sleep 1; done
+```bash
+podman network create listify-net
+podman run -d --name db --network listify-net \
+  -e POSTGRES_DB=listify -e POSTGRES_USER=listify -e POSTGRES_PASSWORD=secret \
+  docker.io/library/postgres:16-alpine
 
-    # charger le schéma :
-    podman exec -i db psql -U listify -d listify < db/schema.sql
+# ATTENDRE que la base soit prête (au 1er démarrage, initdb prend quelques
+# secondes ; sans cette attente, le health renverrait 503 "database error").
+for i in $(seq 1 20); do podman exec db pg_isready -U listify >/dev/null 2>&1 && break; sleep 1; done
 
-    # lancer le backend, qui joint "db" PAR SON NOM (DNS de réseau, ch. 18) :
-    podman run -d --name backend --network listify-net \
-      -e DB_HOST=db -e DB_PASSWORD=secret listify-backend:1.0
-    sleep 2
-    podman exec backend python3 -c "import urllib.request as u; print(u.urlopen('http://127.0.0.1:8000/api/health').read().decode())"
-    # {"api":"ok","database":"ok"}
-    ```
+# charger le schéma :
+podman exec -i db psql -U listify -d listify < db/schema.sql
 
-    Notez : `DB_HOST=db` fonctionne sans connaître d'adresse IP, c'est le DNS interne du réseau Podman (ch. 18 §1.2). Et si le health renvoie **503** (`database error`), ce n'est pas un bug : c'est que la base n'était pas encore prête, exactement le problème d'ordre de démarrage que le `depends_on: condition: service_healthy` du TP 13 résout **déclarativement**. Nettoyez ensuite les conteneurs **et le réseau** (sinon `network create` échouera au prochain passage avec « network already exists ») :
+# lancer le backend, qui joint "db" PAR SON NOM (DNS de réseau, ch. 18) :
+podman run -d --name backend --network listify-net \
+  -e DB_HOST=db -e DB_PASSWORD=secret listify-backend:1.0
+sleep 2
+podman exec backend python3 -c "import urllib.request as u; print(u.urlopen('http://127.0.0.1:8000/api/health').read().decode())"
+# {"api":"ok","database":"ok"}
+```
 
-    ```bash
-    podman rm -f db backend
-    podman network rm listify-net
-    ```
+Notez : `DB_HOST=db` fonctionne sans connaître d'adresse IP, c'est le DNS interne du réseau Podman (ch. 18 §1.2). Et si le health renvoie **503** (`database error`), ce n'est pas un bug : c'est que la base n'était pas encore prête, exactement le problème d'ordre de démarrage que le `depends_on: condition: service_healthy` du TP 13 résout **déclarativement**. Nettoyez ensuite les conteneurs **et le réseau** (sinon `network create` échouera au prochain passage avec « network already exists ») :
+
+```bash
+podman rm -f db backend
+podman network rm listify-net
+```
+
+</details>
 
 ## Étape 2 : le frontend et Nginx (1 h)
 
@@ -129,8 +146,9 @@ podman build -t listify-frontend:1.0 ./frontend
 podman images | grep listify-frontend       # ~50 Mo, grâce à la base alpine
 ```
 
-!!! note "Pourquoi le proxy pointe vers `backend` et non une adresse IP"
-    Comme au S1 avec `/etc/hosts`, le frontend doit joindre le backend par un **nom stable**, pas par une IP qui changera. Sur le réseau Podman, le nom du conteneur/service (`backend`) est résolu automatiquement. C'est la même idée qu'au S1, fournie nativement (ch. 18 §1.2). Attention : Nginx résout ce nom au **démarrage** ; le conteneur `backend` doit donc exister quand le frontend démarre (l'ordre sera géré déclarativement au TP 13 avec `depends_on`).
+:::note[Pourquoi le proxy pointe vers `backend` et non une adresse IP]
+Comme au S1 avec `/etc/hosts`, le frontend doit joindre le backend par un **nom stable**, pas par une IP qui changera. Sur le réseau Podman, le nom du conteneur/service (`backend`) est résolu automatiquement. C'est la même idée qu'au S1, fournie nativement (ch. 18 §1.2). Attention : Nginx résout ce nom au **démarrage** ; le conteneur `backend` doit donc exister quand le frontend démarre (l'ordre sera géré déclarativement au TP 13 avec `depends_on`).
+:::
 
 ## Étape 3 : la base et le volume (45 min)
 
@@ -149,20 +167,24 @@ podman exec -i db psql -U listify -d listify < db/schema.sql
 
 (Cette étape isole la base : pas besoin du réseau nommé, aucun autre conteneur ne la joint par son nom ici.)
 
-??? question "Point de contrôle n° 2 : la persistance"
-    Prouvez que le volume survit au conteneur :
+<details className="controle">
+<summary>Point de contrôle n° 2 : la persistance</summary>
 
-    ```bash
-    podman exec db psql -U listify -d listify -c "INSERT INTO tasks (title) VALUES ('survivra');"
-    podman rm -f db                                   # le conteneur MEURT
-    podman run -d --name db \
-      -e POSTGRES_DB=listify -e POSTGRES_USER=listify -e POSTGRES_PASSWORD=secret \
-      -v listify-data:/var/lib/postgresql/data docker.io/library/postgres:16-alpine
-    for i in $(seq 1 20); do podman exec db pg_isready -U listify >/dev/null 2>&1 && break; sleep 1; done
-    podman exec db psql -U listify -d listify -c "SELECT title FROM tasks;"   # 'survivra' est là
-    ```
+Prouvez que le volume survit au conteneur :
 
-    Le conteneur est jetable ; le **volume** garde les données. C'est la distinction stateless/stateful du S1, au niveau du stockage (ch. 18 §2). Nettoyez : `podman rm -f db && podman volume rm listify-data`.
+```bash
+podman exec db psql -U listify -d listify -c "INSERT INTO tasks (title) VALUES ('survivra');"
+podman rm -f db                                   # le conteneur MEURT
+podman run -d --name db \
+  -e POSTGRES_DB=listify -e POSTGRES_USER=listify -e POSTGRES_PASSWORD=secret \
+  -v listify-data:/var/lib/postgresql/data docker.io/library/postgres:16-alpine
+for i in $(seq 1 20); do podman exec db pg_isready -U listify >/dev/null 2>&1 && break; sleep 1; done
+podman exec db psql -U listify -d listify -c "SELECT title FROM tasks;"   # 'survivra' est là
+```
+
+Le conteneur est jetable ; le **volume** garde les données. C'est la distinction stateless/stateful du S1, au niveau du stockage (ch. 18 §2). Nettoyez : `podman rm -f db && podman volume rm listify-data`.
+
+</details>
 
 ## Étape 4 : mesurer et optimiser (45 min)
 

@@ -1,14 +1,28 @@
-# Chapitre 4 : Architecture d'une application web déployée
+---
+title: "Ch. 4 : Architecture d'une application web déployée"
+sidebar_label: "Ch. 4 : Architecture d'une application web déployée"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    - expliquer pourquoi on place un reverse proxy (Nginx) devant un serveur d'application (Gunicorn) ;
-    - décrire le modèle processus/workers et dimensionner un pool de workers ;
-    - justifier la séparation fichiers statiques / API ;
-    - appliquer les facteurs 1 à 5 des « 12-factor apps », en particulier la configuration par l'environnement.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 1 · Chapitre 4"
+  title="Architecture d'une application web déployée"
+  lecture="10 min"
+/>
 
-    C'est le chapitre d'architecture du bloc : il explique le **pourquoi** de tout ce que vous câblerez au [TP 3](../tp/tp3-frontend-nginx-tls.md).
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- expliquer pourquoi on place un reverse proxy (Nginx) devant un serveur d'application (Gunicorn) ;
+- décrire le modèle processus/workers et dimensionner un pool de workers ;
+- justifier la séparation fichiers statiques / API ;
+- appliquer les facteurs 1 à 5 des « 12-factor apps », en particulier la configuration par l'environnement.
+
+C'est le chapitre d'architecture du bloc : il explique le **pourquoi** de tout ce que vous câblerez au [TP 3](../tp/tp3-frontend-nginx-tls.md).
+:::
 
 ## 1. Du code au processus : que déploie-t-on exactement ?
 
@@ -23,17 +37,9 @@ En développement, vous lancez `flask run` et tout semble simple. Ce serveur de 
 
 La réponse de l'industrie est une **chaîne de trois rôles**, chacun faisant ce qu'il fait le mieux :
 
-```mermaid
-flowchart LR
-    C["Clients<br/>(navigateurs)"] -->|"HTTPS :443"| N
-    subgraph VM["Votre serveur"]
-        N["Nginx<br/>reverse proxy<br/>+ fichiers statiques"] -->|"HTTP 127.0.0.1:8000"| G["Gunicorn<br/>serveur d'application<br/>(master + workers)"]
-        G --> W1["worker 1 : Flask"]
-        G --> W2["worker 2 : Flask"]
-        G --> W3["worker 3 : Flask"]
-        W1 & W2 & W3 -->|"SQL 127.0.0.1:5432"| P[("PostgreSQL")]
-    end
-```
+<Figure src="trois-roles" num="4.1" alt="Les clients joignent Nginx en HTTPS ; Nginx relaie vers le master Gunicorn qui répartit sur trois workers Flask, lesquels interrogent PostgreSQL.">
+  La chaîne de trois rôles : reverse proxy, serveur d'application, base de données. Seul Nginx est exposé ; Gunicorn et PostgreSQL n'écoutent que sur l'interface locale.
+</Figure>
 
 ## 2. Le serveur d'application : Gunicorn et le modèle workers
 
@@ -59,8 +65,9 @@ Combien de workers ? La recommandation Gunicorn : **(2 × nombre de cœurs) + 1*
 
 [^2]: Documentation Gunicorn, « How Many Workers? » : [docs.gunicorn.org/en/stable/design.html](https://docs.gunicorn.org/en/stable/design.html).
 
-!!! example "Exemple travaillé : la VM du TP"
-    Notre VM a 2 vCPU : (2 × 2) + 1 = **5 workers** maximum raisonnable ; nous en configurons 3 pour laisser du CPU à PostgreSQL et Nginx qui partagent la machine. Chaque worker Flask consomme ~60 Mo : 3 × 60 = 180 Mo, tenable dans nos 2 Go. À l'inverse, calibrer 20 workers « pour être large » consommerait 1,2 Go pour rien et provoquerait une contention CPU : **plus de workers n'est pas plus de performance** au-delà du point d'équilibre. Chaque worker ouvre aussi ses connexions PostgreSQL : le pool de connexions de la base (par défaut `max_connections=100`) devient une limite système à l'échelle du bloc 2, quand plusieurs backends se la partageront.
+:::exemple[Exemple travaillé : la VM du TP]
+Notre VM a 2 vCPU : (2 × 2) + 1 = **5 workers** maximum raisonnable ; nous en configurons 3 pour laisser du CPU à PostgreSQL et Nginx qui partagent la machine. Chaque worker Flask consomme ~60 Mo : 3 × 60 = 180 Mo, tenable dans nos 2 Go. À l'inverse, calibrer 20 workers « pour être large » consommerait 1,2 Go pour rien et provoquerait une contention CPU : **plus de workers n'est pas plus de performance** au-delà du point d'équilibre. Chaque worker ouvre aussi ses connexions PostgreSQL : le pool de connexions de la base (par défaut `max_connections=100`) devient une limite système à l'échelle du bloc 2, quand plusieurs backends se la partageront.
+:::
 
 ## 3. Le reverse proxy : pourquoi Nginx devant ?
 
@@ -127,33 +134,23 @@ En 2011, les ingénieurs de Heroku publient *The Twelve-Factor App*[^3] : douze 
 
 **V. Build, release, run** : séparer strictement **build** (compiler, empaqueter : produit un artefact), **release** (artefact + configuration d'un environnement) et **run** (exécuter la release). On ne modifie jamais le code au stade run : on reconstruit. Cette séparation, embryonnaire au bloc 1 (notre « build » est un `git clone` + `pip install`), deviendra physique au S2 : l'image de conteneur est l'artefact de build, immuable par construction.
 
-!!! example "Exemple travaillé : l'anti-pattern et sa correction"
-    Anti-pattern vu dans d'innombrables projets étudiants : `DB_PASSWORD = "supersecret"` dans `settings.py`, commité dans Git. Conséquences en chaîne : le secret est dans l'historique Git pour toujours (même « supprimé » au commit suivant) ; impossible d'avoir un mot de passe différent en dev et en prod sans deux versions du code ; toute personne ayant accès au dépôt a accès à la production. Correction 12-factor, celle du TP 2 : le code lit `os.environ["DB_PASSWORD"]` ; la valeur vit dans `/etc/listify/listify.env` (permissions 640, root:listify), référencé par l'unité systemd via `EnvironmentFile=`. Le dépôt Git ne contient que le code et un `listify.env.example` sans valeurs réelles.
+:::exemple[Exemple travaillé : l'anti-pattern et sa correction]
+Anti-pattern vu dans d'innombrables projets étudiants : `DB_PASSWORD = "supersecret"` dans `settings.py`, commité dans Git. Conséquences en chaîne : le secret est dans l'historique Git pour toujours (même « supprimé » au commit suivant) ; impossible d'avoir un mot de passe différent en dev et en prod sans deux versions du code ; toute personne ayant accès au dépôt a accès à la production. Correction 12-factor, celle du TP 2 : le code lit `os.environ["DB_PASSWORD"]` ; la valeur vit dans `/etc/listify/listify.env` (permissions 640, root:listify), référencé par l'unité systemd via `EnvironmentFile=`. Le dépôt Git ne contient que le code et un `listify.env.example` sans valeurs réelles.
+:::
 
 ## 5. Vue d'ensemble : le déploiement complet du bloc 1
 
 Le schéma-bilan à savoir redessiner de mémoire (il tombe à l'examen sous la forme « dessinez et justifiez chaque composant ») :
 
-```mermaid
-flowchart TB
-    subgraph Internet
-        C["Client HTTPS"]
-    end
-    subgraph VM["VM Ubuntu : listify.local"]
-        direction TB
-        F["ufw : 22, 80, 443 uniquement"]
-        N["Nginx (www-data)<br/>:443 TLS, statiques /opt/listify/frontend<br/>proxy /api/ → 127.0.0.1:8000"]
-        G["Gunicorn master + 3 workers (listify)<br/>bind 127.0.0.1:8000<br/>EnvironmentFile /etc/listify/listify.env"]
-        P[("PostgreSQL (postgres)<br/>bind 127.0.0.1:5432<br/>base listify, user listify")]
-        S["systemd : nginx.service, listify.service,<br/>postgresql.service : Restart, journaux"]
-    end
-    C --> F --> N --> G --> P
-    S -.surveille.- N & G & P
-```
+<Figure src="schema-bilan" num="4.2" alt="Pile verticale dans la VM : pare-feu ufw, Nginx, Gunicorn, PostgreSQL, avec systemd qui surveille les trois services sur le côté.">
+  Le schéma-bilan du bloc 1, à savoir redessiner de mémoire. Chaque couche porte son utilisateur système et son adresse d'écoute : ce sont les deux informations qu'on vous demandera de justifier.
+</Figure>
 
 Trois utilisateurs système distincts, trois services systemd, un seul port applicatif exposé, zéro secret dans le code : chaque choix de ce schéma découle d'un principe vu dans les chapitres 2 à 4.
 
 ## Ce qu'il faut retenir
+
+<div className="retenir">
 
 1. Le serveur de développement n'est pas déployable ; la production sépare **reverse proxy** (exposition, TLS, statiques, protection) et **serveur d'application** (exécuter le code), reliés par l'interface standard **WSGI**.
 2. Modèle **pre-fork** : un master qui surveille, N workers qui traitent ; dimensionnement ≈ 2×cœurs+1, borné par la RAM et les connexions à la base. Auto-réparation à trois étages : master → workers, systemd → master, (bientôt) orchestrateur → machines.
@@ -161,7 +158,11 @@ Trois utilisateurs système distincts, trois services systemd, un seul port appl
 4. `X-Forwarded-For`/`-Proto` transmettent la réalité du client à travers le proxy ; ne s'y fier que depuis le proxy.
 5. 12-factor I-V : une codebase, dépendances déclarées et isolées, **configuration dans l'environnement** (test : « open-sourçable à l'instant ? »), services externes = ressources attachées, build/release/run séparés.
 
+</div>
+
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -180,3 +181,5 @@ Trois utilisateurs système distincts, trois services systemd, un seul port appl
 
 - L'attaque Slowloris expliquée par son auteur (RSnake, 2009) et la parade par bufferisation : cherchez « slowloris nginx mitigation ». Reliez-la à la raison n° 3 du reverse proxy.
 - Comparaison des modèles de concurrence serveur : le classique « The C10K problem » de Dan Kegel (1999-2011), à l'origine des architectures événementielles comme celle de Nginx.
+
+</div>

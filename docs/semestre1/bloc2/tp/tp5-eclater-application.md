@@ -1,35 +1,42 @@
-# TP 5 : Éclater l'application sur trois machines
+---
+title: "TP 5 : Éclater l'application sur trois machines"
+sidebar_label: "TP 5 : Éclater l'application sur trois machines"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 6 h (3 séances de 2 h : réseau + VM de base et clones ; base de données ; backend + load balancer)
-    - **Prérequis** : bloc 1 terminé (dont la copie de sauvegarde hors-VM du TP 4) ; chapitres 6 et 7
-    - **Livrables** : l'application répartie sur `listify-lb`, `listify-app1` et `listify-db`, accessible en `https://listify.local` (sans numéro de port !) ; le **tableau du plan d'adressage** dans le README du dépôt ; les données du bloc 1 migrées ; runbook à jour
-    - **Compétences travaillées** : C1, C6
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-    À la fin de ce TP, chaque tier vit sur sa machine, le réseau est segmenté au pare-feu, et vos tâches du bloc 1 ont déménagé avec la base.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 2 · Travaux pratiques 5"
+  title="Éclater l'application sur trois machines"
+  competences={['C1', 'C6']}
+/>
+
+:::fiche
+- **Durée** : 6 h (3 séances de 2 h : réseau + VM de base et clones ; base de données ; backend + load balancer)
+- **Prérequis** : bloc 1 terminé (dont la copie de sauvegarde hors-VM du TP 4) ; chapitres 6 et 7
+- **Livrables** : l'application répartie sur `listify-lb`, `listify-app1` et `listify-db`, accessible en `https://listify.local` (sans numéro de port !) ; le **tableau du plan d'adressage** dans le README du dépôt ; les données du bloc 1 migrées ; runbook à jour
+- **Compétences travaillées** : C1, C6
+
+À la fin de ce TP, chaque tier vit sur sa machine, le réseau est segmenté au pare-feu, et vos tâches du bloc 1 ont déménagé avec la base.
+:::
 
 ## Ce que vous allez construire
 
-```mermaid
-flowchart TB
-    H["Poste hôte (.1)<br/>navigateur + SSH direct"]
-    subgraph HO["vboxnet0 : 192.168.56.0/24 (DHCP désactivé)"]
-        LB["listify-lb (.10)<br/>Nginx : TLS, statiques,<br/>proxy /api/"]
-        A1["listify-app1 (.21)<br/>Gunicorn 192.168.56.21:8000"]
-        DB[("listify-db (.31)<br/>PostgreSQL<br/>listen .31 + localhost")]
-    end
-    H -->|"https://listify.local:443"| LB
-    LB -->|"8000 (seul flux autorisé)"| A1
-    A1 -->|"5432 (seul flux autorisé)"| DB
-    S1["listify-s1 (bloc 1)<br/>un dernier pg_dump,<br/>puis extinction"] -.->|"migration des données"| DB
-```
+<Figure src="tp5-architecture" num="TP5.1" alt="Le poste hôte joint listify-lb, qui relaie vers listify-app1 sur le port 8000, qui interroge listify-db sur le port 5432 ; l'ancienne VM listify-s1 fournit un dernier dump avant extinction.">
+  Ce que vous allez construire : l'application éclatée sur trois machines, chaque flux réduit à un seul port autorisé, et les données migrées depuis la VM du bloc 1.
+</Figure>
 
 Chaque VM garde sa carte NAT (Internet pour APT) ; tout le trafic applicatif passe par le réseau privé.
 
-!!! danger "Règle de manipulation : connectez-vous d'abord, collez ensuite"
-    Dans tout ce TP, les blocs qui commencent par une ligne `ssh listify-xxx` se déroulent **en deux temps** : lancez la connexion **seule**, attendez l'invite `deploy@listify-xxx`, et **seulement alors** collez la suite des commandes. Si vous collez le bloc entier d'un coup, la connexion s'ouvre pendant que le reste du texte arrive encore : des lignes se perdent ou fusionnent (vous verrez des commandes hybrides absurdes, du type `...443/tcpetc/nginx/...`), et vous passerez du temps à diagnostiquer un problème qui n'existe pas.
+:::danger[Règle de manipulation : connectez-vous d'abord, collez ensuite]
+Dans tout ce TP, les blocs qui commencent par une ligne `ssh listify-xxx` se déroulent **en deux temps** : lancez la connexion **seule**, attendez l'invite `deploy@listify-xxx`, et **seulement alors** collez la suite des commandes. Si vous collez le bloc entier d'un coup, la connexion s'ouvre pendant que le reste du texte arrive encore : des lignes se perdent ou fusionnent (vous verrez des commandes hybrides absurdes, du type `...443/tcpetc/nginx/...`), et vous passerez du temps à diagnostiquer un problème qui n'existe pas.
 
-    Réflexe associé, avant chaque bloc : `hostname`. Une commande juste sur la mauvaise machine reste une commande fausse, et c'est l'erreur la plus fréquente d'un TP multi-machines.
+Réflexe associé, avant chaque bloc : `hostname`. Une commande juste sur la mauvaise machine reste une commande fausse, et c'est l'erreur la plus fréquente d'un TP multi-machines.
+:::
 
 ## Étape 0 : le réseau host-only, côté hôte (15 min)
 
@@ -62,8 +69,9 @@ Créez `listify-base` comme au TP 1, avec ces différences :
 | Réseau, carte 1 | NAT | Internet (APT) |
 | **Réseau, carte 2** | **Réseau privé hôte (host-only), vboxnet0** | Le réseau du chapitre 7 |
 
-!!! note "La carte 2 pendant l'installation : ne rien configurer"
-    À l'écran réseau de l'installateur, seule `enp0s3` doit être configurée (automatique/DHCP : c'est la carte NAT, laissez-la telle quelle). Si `enp0s8` apparaît, laissez-la **non configurée** : la base n'a volontairement aucun réglage host-only, chaque clone recevra le sien. Si `enp0s8` n'apparaît **pas du tout**, c'est que la carte 2 n'était pas activée au démarrage (l'assistant de création ne règle que la carte 1) : terminez l'installation normalement, puis, VM éteinte, activez-la dans Configuration → Réseau → Carte 2 → « Activer la carte réseau » → Réseau privé hôte (vboxnet0). Aucune réinstallation n'est nécessaire. Vérification depuis l'hôte : `VBoxManage showvminfo listify-base | grep -i "NIC 2"`.
+:::note[La carte 2 pendant l'installation : ne rien configurer]
+À l'écran réseau de l'installateur, seule `enp0s3` doit être configurée (automatique/DHCP : c'est la carte NAT, laissez-la telle quelle). Si `enp0s8` apparaît, laissez-la **non configurée** : la base n'a volontairement aucun réglage host-only, chaque clone recevra le sien. Si `enp0s8` n'apparaît **pas du tout**, c'est que la carte 2 n'était pas activée au démarrage (l'assistant de création ne règle que la carte 1) : terminez l'installation normalement, puis, VM éteinte, activez-la dans Configuration → Réseau → Carte 2 → « Activer la carte réseau » → Réseau privé hôte (vboxnet0). Aucune réinstallation n'est nécessaire. Vérification depuis l'hôte : `VBoxManage showvminfo listify-base | grep -i "NIC 2"`.
+:::
 
 Installez Ubuntu Server 24.04 (procédure du TP 1, étape 2), hostname `listify-base`, utilisateur `deploy`, **OpenSSH coché**. Puis configurez la base par SSH : ajoutez temporairement la redirection NAT `ssh` (TCP, 127.0.0.1, 2222 → 22, comme au TP 1) et déroulez :
 
@@ -75,22 +83,23 @@ ssh-copy-id -i ~/.ssh/id_ed25519.pub \
 ssh -p 2222 -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 deploy@127.0.0.1
 ```
 
-!!! danger "« REMOTE HOST IDENTIFICATION HAS CHANGED! » : attendu ici, et instructif"
-    Vous avez utilisé `127.0.0.1:2222` au bloc 1 pour joindre `listify-s1`. Ce même guichet mène désormais à `listify-base`, une **autre machine**, avec d'autres clés d'hôte : SSH refuse la connexion, exactement comme il le doit (ch. 5, §1.3). À cause du NAT, `127.0.0.1:2222` ne désigne pas une machine mais une **redirection**, qui a changé d'occupant : l'adresse ne fait pas l'identité. Le réseau host-only de ce bloc supprimera ce piège en donnant à chaque VM sa propre adresse.
+:::danger[« REMOTE HOST IDENTIFICATION HAS CHANGED! » : attendu ici, et instructif]
+Vous avez utilisé `127.0.0.1:2222` au bloc 1 pour joindre `listify-s1`. Ce même guichet mène désormais à `listify-base`, une **autre machine**, avec d'autres clés d'hôte : SSH refuse la connexion, exactement comme il le doit (ch. 5, §1.3). À cause du NAT, `127.0.0.1:2222` ne désigne pas une machine mais une **redirection**, qui a changé d'occupant : l'adresse ne fait pas l'identité. Le réseau host-only de ce bloc supprimera ce piège en donnant à chaque VM sa propre adresse.
 
-    Ne supprimez pas l'entrée à l'aveugle : prenez le réflexe de **vérifier l'empreinte**. Dans la console VirtualBox de la VM, affichez la sienne et comparez-la à celle qu'annonce le message d'erreur :
+Ne supprimez pas l'entrée à l'aveugle : prenez le réflexe de **vérifier l'empreinte**. Dans la console VirtualBox de la VM, affichez la sienne et comparez-la à celle qu'annonce le message d'erreur :
 
-    ```bash
-    sudo ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
-    ```
+```bash
+sudo ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
+```
 
-    Si elle correspond, supprimez l'ancienne entrée depuis l'hôte, puis relancez la commande (SSH proposera d'accepter la nouvelle empreinte) :
+Si elle correspond, supprimez l'ancienne entrée depuis l'hôte, puis relancez la commande (SSH proposera d'accepter la nouvelle empreinte) :
 
-    ```bash
-    ssh-keygen -f ~/.ssh/known_hosts -R '[127.0.0.1]:2222'
-    ```
+```bash
+ssh-keygen -f ~/.ssh/known_hosts -R '[127.0.0.1]:2222'
+```
 
-    Vous rejouerez ce geste à l'étape 2.2, après la régénération volontaire des clés des clones : ce sera alors la preuve que chaque machine a bien reçu sa propre identité.
+Vous rejouerez ce geste à l'étape 2.2, après la régénération volontaire des clés des clones : ce sera alors la preuve que chaque machine a bien reçu sa propre identité.
+:::
 
 ```bash
 # Sur la VM : le socle du TP 1, en accéléré (votre runbook du bloc 1 sert enfin !)
@@ -122,8 +131,9 @@ EOF
 1. **Supprimez la redirection de port 2222** de `listify-base`. Impératif : les clones héritent des réglages de la VM, et trois clones revendiquant le port hôte 2222 entreraient en conflit au premier démarrage simultané.
 2. Prenez un snapshot **`base-prete`**.
 
-!!! note "Ce que la base ne contient volontairement pas"
-    Ni netplan pour `enp0s8` (chaque clone recevra **son** adresse), ni PostgreSQL, ni Nginx, ni le code : la base est un socle **générique**. Tout ce qui est spécifique à un rôle sera posé sur le bon clone, et nulle part ailleurs : c'est la surface d'attaque minimale du ch. 5, appliquée par construction.
+:::note[Ce que la base ne contient volontairement pas]
+Ni netplan pour `enp0s8` (chaque clone recevra **son** adresse), ni PostgreSQL, ni Nginx, ni le code : la base est un socle **générique**. Tout ce qui est spécifique à un rôle sera posé sur le bon clone, et nulle part ailleurs : c'est la surface d'attaque minimale du ch. 5, appliquée par construction.
+:::
 
 ## Étape 2 : cloner et individualiser (45 min)
 
@@ -135,105 +145,119 @@ Pour chaque nom (`listify-lb`, `listify-app1`, `listify-db`) : clic droit sur `l
 
 Un clone est une **copie parfaite**, y compris de tout ce qui devrait être unique. Démarrez chaque clone et, **dans la console VirtualBox** (pas de SSH possible : la carte host-only n'a pas encore d'adresse), déroulez, en remplaçant nom et adresse (`listify-lb` = `.10`, `listify-app1` = `.21`, `listify-db` = `.31`) :
 
-!!! tip "Comment coller du texte dans la console VirtualBox ?"
-    Le presse-papiers partagé (Périphériques → Presse-papiers partagé) **ne fonctionne pas** ici : il exige les Additions invité **et une session graphique**, que notre serveur n'a pas. Trois façons de s'en sortir, du plus confortable au plus rapide :
+:::tip[Comment coller du texte dans la console VirtualBox ?]
+Le presse-papiers partagé (Périphériques → Presse-papiers partagé) **ne fonctionne pas** ici : il exige les Additions invité **et une session graphique**, que notre serveur n'a pas. Trois façons de s'en sortir, du plus confortable au plus rapide :
 
-    1. **La méthode recommandée : éviter la console.** Le clone a toujours sa carte NAT, son sshd et votre clé (héritée de la base). VM éteinte, donnez-lui une redirection NAT temporaire sur un port hôte **distinct** (`listify-lb` → 2210, `listify-app1` → 2221, `listify-db` → 2231), démarrez-la, puis connectez-vous et collez le bloc d'un seul coup :
+1. **La méthode recommandée : éviter la console.** Le clone a toujours sa carte NAT, son sshd et votre clé (héritée de la base). VM éteinte, donnez-lui une redirection NAT temporaire sur un port hôte **distinct** (`listify-lb` → 2210, `listify-app1` → 2221, `listify-db` → 2231), démarrez-la, puis connectez-vous et collez le bloc d'un seul coup :
 
-        ```bash
-        ssh -p 2221 -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 deploy@127.0.0.1
-        ```
+    ```bash
+    ssh -p 2221 -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 deploy@127.0.0.1
+    ```
 
-        Après la régénération des clés d'hôte (étape 3 du bloc), votre PC signalera un changement d'empreinte sur ce port : c'est **attendu**, c'est même la preuve que l'opération a réussi ; nettoyez avec `ssh-keygen -f ~/.ssh/known_hosts -R '[127.0.0.1]:2221'`. Supprimez la redirection une fois l'adresse privée en place.
+    Après la régénération des clés d'hôte (étape 3 du bloc), votre PC signalera un changement d'empreinte sur ce port : c'est **attendu**, c'est même la preuve que l'opération a réussi ; nettoyez avec `ssh-keygen -f ~/.ssh/known_hosts -R '[127.0.0.1]:2221'`. Supprimez la redirection une fois l'adresse privée en place.
 
-    2. **Faire taper VirtualBox**, uniquement pour **une commande courte à la fois** : `VBoxManage controlvm listify-app1 keyboardputstring "sudo hostnamectl set-hostname listify-app1"`. Deux limites à connaître : la touche Entrée n'est **pas** envoyée (tapez-la vous-même), et les frappes suivent la disposition clavier de l'invité, donc relisez la ligne avant de valider. N'essayez **pas** d'y coller un bloc multi-lignes contenant des apostrophes ou un heredoc (`<<'EOF'`) : le guillemet ouvrant ne se refermerait jamais et votre shell resterait bloqué sur une invite `dquote>` (sortez par ++ctrl+c++).
+2. **Faire taper VirtualBox**, uniquement pour **une commande courte à la fois** : `VBoxManage controlvm listify-app1 keyboardputstring "sudo hostnamectl set-hostname listify-app1"`. Deux limites à connaître : la touche Entrée n'est **pas** envoyée (tapez-la vous-même), et les frappes suivent la disposition clavier de l'invité, donc relisez la ligne avant de valider. N'essayez **pas** d'y coller un bloc multi-lignes contenant des apostrophes ou un heredoc (`<<'EOF'`) : le guillemet ouvrant ne se refermerait jamais et votre shell resterait bloqué sur une invite `dquote>` (sortez par <kbd>Ctrl</kbd>+<kbd>C</kbd>).
 
-    3. **Taper à la main** : les commandes ci-dessous sont courtes, et les saisir une fois n'est pas du temps perdu (vous verrez au bloc 3 ce que ce geste répétitif deviendra).
+3. **Taper à la main** : les commandes ci-dessous sont courtes, et les saisir une fois n'est pas du temps perdu (vous verrez au bloc 3 ce que ce geste répétitif deviendra).
+:::
 
 Le bloc est le même sur les trois machines, aux **deux valeurs d'identité** près (le nom et l'adresse) ; l'étape 3, elle, est rigoureusement identique partout. Chaque onglet ci-dessous est prêt à coller sur la machine correspondante :
 
-=== "listify-lb (.10)"
+<Tabs>
+<TabItem value="listify-lb-10" label="listify-lb (.10)">
 
-    ```bash
-    # 1. L'identité : hostname + l'entrée locale 127.0.1.1 d'Ubuntu
-    sudo hostnamectl set-hostname listify-lb
-    sudo sed -i 's/^127\.0\.1\.1.*/127.0.1.1 listify-lb/' /etc/hosts
+```bash
+# 1. L'identité : hostname + l'entrée locale 127.0.1.1 d'Ubuntu
+sudo hostnamectl set-hostname listify-lb
+sudo sed -i 's/^127\.0\.1\.1.*/127.0.1.1 listify-lb/' /etc/hosts
 
-    # 2. L'adresse privée : netplan (ch. 7, §4.2)
-    sudo tee /etc/netplan/60-hostonly.yaml > /dev/null <<'EOF'
-    network:
-      version: 2
-      ethernets:
-        enp0s8:
-          addresses:
-            - 192.168.56.10/24
-    EOF
-    sudo chmod 600 /etc/netplan/60-hostonly.yaml
-    sudo netplan apply        # en console, pas besoin de netplan try
-    ip -brief addr            # enp0s8 doit porter l'adresse
+# 2. L'adresse privée : netplan (ch. 7, §4.2)
+sudo tee /etc/netplan/60-hostonly.yaml > /dev/null <<'EOF'
+network:
+  version: 2
+  ethernets:
+    enp0s8:
+      addresses:
+        - 192.168.56.10/24
+EOF
+sudo chmod 600 /etc/netplan/60-hostonly.yaml
+sudo netplan apply        # en console, pas besoin de netplan try
+ip -brief addr            # enp0s8 doit porter l'adresse
 
-    # 3. Les clés d'hôte SSH : chaque serveur doit avoir les SIENNES
-    sudo rm /etc/ssh/ssh_host_*
-    sudo dpkg-reconfigure openssh-server
-    sudo systemctl restart ssh
-    ```
+# 3. Les clés d'hôte SSH : chaque serveur doit avoir les SIENNES
+sudo rm /etc/ssh/ssh_host_*
+sudo dpkg-reconfigure openssh-server
+sudo systemctl restart ssh
+```
 
-=== "listify-app1 (.21)"
+</TabItem>
+</Tabs>
 
-    ```bash
-    # 1. L'identité : hostname + l'entrée locale 127.0.1.1 d'Ubuntu
-    sudo hostnamectl set-hostname listify-app1
-    sudo sed -i 's/^127\.0\.1\.1.*/127.0.1.1 listify-app1/' /etc/hosts
+<Tabs>
+<TabItem value="listify-app1-21" label="listify-app1 (.21)">
 
-    # 2. L'adresse privée : netplan (ch. 7, §4.2)
-    sudo tee /etc/netplan/60-hostonly.yaml > /dev/null <<'EOF'
-    network:
-      version: 2
-      ethernets:
-        enp0s8:
-          addresses:
-            - 192.168.56.21/24
-    EOF
-    sudo chmod 600 /etc/netplan/60-hostonly.yaml
-    sudo netplan apply        # en console, pas besoin de netplan try
-    ip -brief addr            # enp0s8 doit porter l'adresse
+```bash
+# 1. L'identité : hostname + l'entrée locale 127.0.1.1 d'Ubuntu
+sudo hostnamectl set-hostname listify-app1
+sudo sed -i 's/^127\.0\.1\.1.*/127.0.1.1 listify-app1/' /etc/hosts
 
-    # 3. Les clés d'hôte SSH : chaque serveur doit avoir les SIENNES
-    sudo rm /etc/ssh/ssh_host_*
-    sudo dpkg-reconfigure openssh-server
-    sudo systemctl restart ssh
-    ```
+# 2. L'adresse privée : netplan (ch. 7, §4.2)
+sudo tee /etc/netplan/60-hostonly.yaml > /dev/null <<'EOF'
+network:
+  version: 2
+  ethernets:
+    enp0s8:
+      addresses:
+        - 192.168.56.21/24
+EOF
+sudo chmod 600 /etc/netplan/60-hostonly.yaml
+sudo netplan apply        # en console, pas besoin de netplan try
+ip -brief addr            # enp0s8 doit porter l'adresse
 
-=== "listify-db (.31)"
+# 3. Les clés d'hôte SSH : chaque serveur doit avoir les SIENNES
+sudo rm /etc/ssh/ssh_host_*
+sudo dpkg-reconfigure openssh-server
+sudo systemctl restart ssh
+```
 
-    ```bash
-    # 1. L'identité : hostname + l'entrée locale 127.0.1.1 d'Ubuntu
-    sudo hostnamectl set-hostname listify-db
-    sudo sed -i 's/^127\.0\.1\.1.*/127.0.1.1 listify-db/' /etc/hosts
+</TabItem>
+</Tabs>
 
-    # 2. L'adresse privée : netplan (ch. 7, §4.2)
-    sudo tee /etc/netplan/60-hostonly.yaml > /dev/null <<'EOF'
-    network:
-      version: 2
-      ethernets:
-        enp0s8:
-          addresses:
-            - 192.168.56.31/24
-    EOF
-    sudo chmod 600 /etc/netplan/60-hostonly.yaml
-    sudo netplan apply        # en console, pas besoin de netplan try
-    ip -brief addr            # enp0s8 doit porter l'adresse
+<Tabs>
+<TabItem value="listify-db-31" label="listify-db (.31)">
 
-    # 3. Les clés d'hôte SSH : chaque serveur doit avoir les SIENNES
-    sudo rm /etc/ssh/ssh_host_*
-    sudo dpkg-reconfigure openssh-server
-    sudo systemctl restart ssh
-    ```
+```bash
+# 1. L'identité : hostname + l'entrée locale 127.0.1.1 d'Ubuntu
+sudo hostnamectl set-hostname listify-db
+sudo sed -i 's/^127\.0\.1\.1.*/127.0.1.1 listify-db/' /etc/hosts
+
+# 2. L'adresse privée : netplan (ch. 7, §4.2)
+sudo tee /etc/netplan/60-hostonly.yaml > /dev/null <<'EOF'
+network:
+  version: 2
+  ethernets:
+    enp0s8:
+      addresses:
+        - 192.168.56.31/24
+EOF
+sudo chmod 600 /etc/netplan/60-hostonly.yaml
+sudo netplan apply        # en console, pas besoin de netplan try
+ip -brief addr            # enp0s8 doit porter l'adresse
+
+# 3. Les clés d'hôte SSH : chaque serveur doit avoir les SIENNES
+sudo rm /etc/ssh/ssh_host_*
+sudo dpkg-reconfigure openssh-server
+sudo systemctl restart ssh
+```
+
+</TabItem>
+</Tabs>
 
 Trois fois le même geste, avec deux valeurs qui changent : gardez cette sensation, c'est exactement ce qu'une boucle sur un inventaire Ansible supprimera au bloc 3.
 
-!!! warning "Pourquoi régénérer les clés d'hôte ?"
-    Les trois clones partagent les clés d'hôte de la base : trois serveurs présentant la **même identité** SSH. C'est un problème de sécurité (compromettre une clé = usurper les trois) et une source de confusion pour `known_hosts`. La régénération rend à chacun son identité, celle que vous vérifierez à la première connexion (ch. 5, §1.3). Cas d'école de ce qu'un clonage ne règle pas : l'**identité** ne se copie pas, elle s'attribue. (Dans la même famille, pour les curieux : `/etc/machine-id`, dupliqué aussi ; sans conséquence dans nos TP, mais à savoir pour les parcs réels.)
+:::warning[Pourquoi régénérer les clés d'hôte ?]
+Les trois clones partagent les clés d'hôte de la base : trois serveurs présentant la **même identité** SSH. C'est un problème de sécurité (compromettre une clé = usurper les trois) et une source de confusion pour `known_hosts`. La régénération rend à chacun son identité, celle que vous vérifierez à la première connexion (ch. 5, §1.3). Cas d'école de ce qu'un clonage ne règle pas : l'**identité** ne se copie pas, elle s'attribue. (Dans la même famille, pour les curieux : `/etc/machine-id`, dupliqué aussi ; sans conséquence dans nos TP, mais à savoir pour les parcs réels.)
+:::
 
 ### 2.3 Côté hôte : l'accès direct
 
@@ -254,24 +278,29 @@ Host listify-lb listify-app1 listify-app2 listify-db
     IdentitiesOnly yes
 ```
 
-!!! danger "Purger les empreintes des trois machines, **depuis votre PC**"
-    Vos premières connexions vont déclencher « REMOTE HOST IDENTIFICATION HAS CHANGED! » : c'est le résultat **attendu** de la régénération des clés (et si votre PC avait déjà rencontré ces adresses lors d'une session précédente, à plus forte raison). Purgez les trois d'un coup, puis reconnectez-vous en acceptant les nouvelles empreintes :
+:::danger[Purger les empreintes des trois machines, **depuis votre PC**]
+Vos premières connexions vont déclencher « REMOTE HOST IDENTIFICATION HAS CHANGED! » : c'est le résultat **attendu** de la régénération des clés (et si votre PC avait déjà rencontré ces adresses lors d'une session précédente, à plus forte raison). Purgez les trois d'un coup, puis reconnectez-vous en acceptant les nouvelles empreintes :
 
-    ```bash
-    ssh-keygen -f ~/.ssh/known_hosts -R '192.168.56.10'
-    ssh-keygen -f ~/.ssh/known_hosts -R '192.168.56.21'
-    ssh-keygen -f ~/.ssh/known_hosts -R '192.168.56.31'
-    ```
+```bash
+ssh-keygen -f ~/.ssh/known_hosts -R '192.168.56.10'
+ssh-keygen -f ~/.ssh/known_hosts -R '192.168.56.21'
+ssh-keygen -f ~/.ssh/known_hosts -R '192.168.56.31'
+```
 
-    Deux pièges qui font perdre du temps :
+Deux pièges qui font perdre du temps :
 
-    - **Ces commandes se lancent sur l'hôte, jamais dans la VM.** `known_hosts` est la mémoire du **client** SSH : c'est votre PC qui a mémorisé l'identité des serveurs, donc c'est chez lui qu'il faut corriger. Dans la VM, le fichier n'existe même pas (elle n'a encore joué que le rôle de serveur). Repère général : `ssh`, `scp`, `ssh-copy-id`, `ssh-keygen -R` et `~/.ssh/config` sont des commandes **client** (sur votre PC) ; `sshd`, `/etc/ssh/sshd_config` et `authorized_keys` vivent côté **serveur**, dans la VM.
-    - **Ne mettez pas le `~` entre guillemets** : le shell ne le développe qu'en dehors des quotes. `-f '~/.ssh/known_hosts'` échoue avec « no such file or directory » alors que le fichier existe ; utilisez `~/.ssh/known_hosts` sans quotes, ou le chemin absolu.
+- **Ces commandes se lancent sur l'hôte, jamais dans la VM.** `known_hosts` est la mémoire du **client** SSH : c'est votre PC qui a mémorisé l'identité des serveurs, donc c'est chez lui qu'il faut corriger. Dans la VM, le fichier n'existe même pas (elle n'a encore joué que le rôle de serveur). Repère général : `ssh`, `scp`, `ssh-copy-id`, `ssh-keygen -R` et `~/.ssh/config` sont des commandes **client** (sur votre PC) ; `sshd`, `/etc/ssh/sshd_config` et `authorized_keys` vivent côté **serveur**, dans la VM.
+- **Ne mettez pas le `~` entre guillemets** : le shell ne le développe qu'en dehors des quotes. `-f '~/.ssh/known_hosts'` échoue avec « no such file or directory » alors que le fichier existe ; utilisez `~/.ssh/known_hosts` sans quotes, ou le chemin absolu.
+:::
 
-??? question "Point de contrôle n° 1 : le réseau est câblé"
-    - Depuis l'hôte : `ssh listify-db 'hostname'` répond `listify-db` (idem pour les trois). Première connexion : l'empreinte présentée est **différente** pour chaque machine, preuve que la régénération des clés a fonctionné.
-    - Entre VM : `ssh listify-app1 'ping -c2 listify-db'` fonctionne **par le nom** (le /etc/hosts de la base fait effet).
-    - `ssh listify-app1 'ip -brief addr'` : l'adresse NAT (10.0.2.15) **et** la privée (.21) : deux cartes, deux rôles.
+<details className="controle">
+<summary>Point de contrôle n° 1 : le réseau est câblé</summary>
+
+- Depuis l'hôte : `ssh listify-db 'hostname'` répond `listify-db` (idem pour les trois). Première connexion : l'empreinte présentée est **différente** pour chaque machine, preuve que la régénération des clés a fonctionné.
+- Entre VM : `ssh listify-app1 'ping -c2 listify-db'` fonctionne **par le nom** (le /etc/hosts de la base fait effet).
+- `ssh listify-app1 'ip -brief addr'` : l'adresse NAT (10.0.2.15) **et** la privée (.21) : deux cartes, deux rôles.
+
+</details>
 
 ## Étape 3 : la base de données déménage (1 h)
 
@@ -279,14 +308,15 @@ Host listify-lb listify-app1 listify-app2 listify-db
 
 Démarrez `listify-s1` (bloc 1) une dernière fois, produisez un dump **frais** (celui du TP 4 date d'avant vos dernières tâches), rapatriez-le, éteignez :
 
-!!! warning "Le retour de « host key changed » sur `[127.0.0.1]:2222`, et l'occasion de vérifier une empreinte"
-    Entre-temps, ce même guichet NAT a servi à joindre `listify-base` (étape 1) : votre PC a donc mémorisé l'identité de la base pour `[127.0.0.1]:2222`, et `listify-s1` présente de nouveau la sienne. Nettoyez et reconnectez :
+:::warning[Le retour de « host key changed » sur `(127.0.0.1):2222`, et l'occasion de vérifier une empreinte]
+Entre-temps, ce même guichet NAT a servi à joindre `listify-base` (étape 1) : votre PC a donc mémorisé l'identité de la base pour `[127.0.0.1]:2222`, et `listify-s1` présente de nouveau la sienne. Nettoyez et reconnectez :
 
-    ```bash
-    ssh-keygen -f ~/.ssh/known_hosts -R '[127.0.0.1]:2222'
-    ```
+```bash
+ssh-keygen -f ~/.ssh/known_hosts -R '[127.0.0.1]:2222'
+```
 
-    Profitez-en pour faire ce que la sécurité réclame et qu'on néglige toujours : l'empreinte que SSH vous présente maintenant doit être **exactement celle que vous avez acceptée au TP 1** pour cette machine (elle est dans votre runbook : c'est précisément à cela que sert de la consigner). Si elle correspond, vous avez la preuve formelle que c'est bien votre ancienne VM. Un guichet NAT change d'occupant ; une clé d'hôte, non.
+Profitez-en pour faire ce que la sécurité réclame et qu'on néglige toujours : l'empreinte que SSH vous présente maintenant doit être **exactement celle que vous avez acceptée au TP 1** pour cette machine (elle est dans votre runbook : c'est précisément à cela que sert de la consigner). Si elle correspond, vous avez la preuve formelle que c'est bien votre ancienne VM. Un guichet NAT change d'occupant ; une clé d'hôte, non.
+:::
 
 ```bash
 ssh -t listify-s1 'sudo -u postgres pg_dump -Fc -f /tmp/listify-final.dump listify'
@@ -363,16 +393,20 @@ sudo ufw allow from 192.168.56.21 to any port 5432 proto tcp
 sudo ufw status verbose
 ```
 
-??? question "Point de contrôle n° 2 : la segmentation est réelle"
-    Trois tests, **deux doivent échouer** (à consigner : ce sont les preuves) :
+<details className="controle">
+<summary>Point de contrôle n° 2 : la segmentation est réelle</summary>
 
-    ```bash
-    ssh listify-app1 'nc -zvw 3 listify-db 5432'   # OK : le flux autorisé
-    ssh listify-lb   'nc -zvw 3 listify-db 5432'   # timeout : le LB n'a rien à faire là
-    nc -zvw 3 192.168.56.31 5432                    # timeout : l'hôte non plus
-    ```
+Trois tests, **deux doivent échouer** (à consigner : ce sont les preuves) :
 
-    Notez la forme de l'échec : **timeout**, pas *refused* : le pare-feu jette (DENY/DROP), il ne répond pas (ch. 3, §5.2). Et remarquez que la défense est **double** : même sans ufw, pg_hba n'accepterait que `.21` ; c'est la défense en profondeur du ch. 5, en version réseau.
+```bash
+ssh listify-app1 'nc -zvw 3 listify-db 5432'   # OK : le flux autorisé
+ssh listify-lb   'nc -zvw 3 listify-db 5432'   # timeout : le LB n'a rien à faire là
+nc -zvw 3 192.168.56.31 5432                    # timeout : l'hôte non plus
+```
+
+Notez la forme de l'échec : **timeout**, pas *refused* : le pare-feu jette (DENY/DROP), il ne répond pas (ch. 3, §5.2). Et remarquez que la défense est **double** : même sans ufw, pg_hba n'accepterait que `.21` ; c'est la défense en profondeur du ch. 5, en version réseau.
+
+</details>
 
 ## Étape 4 : le backend sur sa machine (45 min)
 
@@ -443,12 +477,16 @@ Les trois différences avec le TP 2, à expliquer dans le runbook :
 2. **`--bind 192.168.56.21:8000`** : le backend écoute sur le réseau privé (le LB doit le joindre), sur son adresse **précise**, pas `0.0.0.0` (la carte NAT n'a pas à porter l'API).
 3. **Plus de `After=postgresql.service`** : PostgreSQL n'est plus une unité locale, c'est un service **distant**. systemd ne peut plus rien ordonnancer : la dépendance est devenue réseau, invisible pour lui. C'est un petit deuil et une grande leçon (ch. 6, §5) ; notre API sait attendre (503 propre), c'est elle qui absorbe.
 
-??? question "Point de contrôle n° 3"
-    ```bash
-    ssh listify-app1 'curl -s http://192.168.56.21:8000/api/health'
-    # {"api":"ok","database":"ok"}  ← ok/ok À TRAVERS le réseau privé
-    curl -m 3 http://192.168.56.21:8000/api/health   # depuis l'hôte : timeout (ufw)
-    ```
+<details className="controle">
+<summary>Point de contrôle n° 3</summary>
+
+```bash
+ssh listify-app1 'curl -s http://192.168.56.21:8000/api/health'
+# {"api":"ok","database":"ok"}  ← ok/ok À TRAVERS le réseau privé
+curl -m 3 http://192.168.56.21:8000/api/health   # depuis l'hôte : timeout (ufw)
+```
+
+</details>
 
 ## Étape 5 : le load balancer, porte d'entrée unique (45 min)
 

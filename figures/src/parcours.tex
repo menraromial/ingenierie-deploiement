@@ -1,0 +1,32 @@
+% Figure 0.1 : les trois semestres comme une suite de problèmes résolus
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[node distance=5mm and 9mm]
+  \tikzset{blk/.style={box=#1, minimum width=52mm, minimum height=15mm, align=center}}
+  % colonne = semestre ; chaque bloc : outil (gras) + problème vécu (italique)
+  \newcommand{\blkt}[2]{\textbf{#1}\\[-.3mm]{\normalsize\itshape\color{Muted}#2}}
+
+  \node[blk=Ocre] (a) {\blkt{Déploiement manuel}{un serveur, tout à la main}};
+  \node[blk=Ocre, below=of a] (b) {\blkt{Multi-machines}{la configuration diverge}};
+  \node[blk=Ocre, below=of b] (c) {\blkt{Infrastructure as Code}{Vagrant, Ansible, Terraform}};
+
+  \node[blk=Enc, right=of a] (d) {\blkt{Conteneurisation}{Podman, images OCI}};
+  \node[blk=Enc, below=of d] (e) {\blkt{Orchestration}{Kubernetes, réconciliation}};
+  \node[blk=Enc, below=of e] (f) {\blkt{CI/CD, GitOps}{observabilité}};
+
+  \node[blk=Sea, right=of d] (g) {\blkt{Reproductibilité}{données et modèles, DVC}};
+  \node[blk=Sea, below=of g] (h) {\blkt{MLflow, Airflow}{pipelines d'entraînement}};
+  \node[blk=Sea, below=of h] (i) {\blkt{Monitoring de dérive}{Spark, Kafka}};
+
+  \foreach \u/\v in {a/b,b/c,d/e,e/f,g/h,h/i} \draw[flow=Muted] (\u) -- (\v);
+  % passage d'un semestre au suivant : du bas d'une colonne au haut de la suivante
+  \draw[flow=Ink, rounded corners=4pt] (c.east) -- ++(4.5mm,0) |- (d.west);
+  \draw[flow=Ink, rounded corners=4pt] (f.east) -- ++(4.5mm,0) |- (g.west);
+
+  \foreach \n/\t/\c/\x in {a/SEMESTRE 1 \textperiodcentered{} FONDATIONS/Ocre/a,
+                            d/{SEMESTRE 2 \textperiodcentered{} CONTENEURS ET CI\slash CD}/Enc/d,
+                            g/SEMESTRE 3 \textperiodcentered{} MLOPS ET BIG DATA/Sea/g}
+     \node[ftitle, text=\c, above=2mm of \x] {\t};
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,21 @@
+.figure { margin: 2.2rem 0 2.4rem; }
+.plate {
+  background: var(--fig-paper);
+  border: 1px solid var(--c-rule);
+  border-radius: 6px;
+  padding: 1.4rem 1.2rem;
+  text-align: center;
+}
+.plate img { width: 100%; height: auto; }
+.caption {
+  font-size: .9rem; line-height: 1.5; color: var(--c-muted);
+  margin-top: .7rem; padding: 0 .2rem;
+}
+.label { font-weight: 700; color: var(--c-ink); }
+.source { font-style: italic; }
+.pdf {
+  float: right; font-size: .78rem; margin-left: 1rem;
+  color: var(--c-muted); text-decoration: underline dotted;
+}
+.caption p { display: inline; margin: 0; }
+.photo img { width: 100%; height: auto; border-radius: 4px; display: block; }

@@ -1,4 +1,17 @@
-# Semestre 1 : Fondations, du serveur unique à l'Infrastructure as Code
+---
+title: "Vue d'ensemble"
+sidebar_label: "Vue d'ensemble"
+hide_title: true
+---
+
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
+
+<ChapterHead
+  kicker="Semestre 1 · Fondations"
+  title="Semestre 1 : Fondations, du serveur unique à l'Infrastructure as Code"
+  lecture="5 min"
+/>
 
 **Objectif général :** comprendre ce qu'est *réellement* un déploiement (les couches système, réseau et applicatives), puis découvrir pourquoi et comment l'automatiser.
 
@@ -6,23 +19,9 @@
 
 ## Vue d'ensemble du semestre
 
-```mermaid
-flowchart TB
-    subgraph B1["Bloc 1 (semaines 1-5) : tout sur une machine"]
-        direction LR
-        T1["TP1<br/>VM + SSH"] --> T2["TP2<br/>BDD + backend"] --> T3["TP3<br/>Nginx + TLS"] --> T4["TP4<br/>Jour 2"]
-    end
-    subgraph B2["Bloc 2 (semaines 6-8) : multi-machines"]
-        direction LR
-        T5["TP5<br/>Éclater l'application"] --> T6["TP6<br/>Load balancer"]
-    end
-    subgraph B3["Bloc 3 (semaines 9-13) : Infrastructure as Code"]
-        direction LR
-        T7["TP7<br/>Vagrant"] --> T8["TP8<br/>Ansible"] --> T9["TP9<br/>Chaîne complète"] --> T10["TP10<br/>Terraform"]
-    end
-    B1 -->|"Défi : redéployer en 30 min → échec"| B2
-    B2 -->|"Le drift devient ingérable"| B3
-```
+<Figure src="s1-vue-ensemble" alt="Trois bandes horizontales : bloc 1 (TP 1 à 4), bloc 2 (TP 5 et 6), bloc 3 (TP 7 à 10), reliées par le défi raté puis la dérive de configuration.">
+  Les dix TP du semestre, regroupés en trois blocs. Le passage d'un bloc au suivant est provoqué par un échec vécu : le défi des 30 minutes, puis la dérive de configuration.
+</Figure>
 
 Le semestre suit une trajectoire en trois temps, chacun se terminant par une prise de conscience qui motive le suivant :
 

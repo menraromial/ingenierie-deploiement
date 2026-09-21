@@ -1,0 +1,38 @@
+% Semestre 1 : trois blocs, dix TP, deux ruptures
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[node distance=7mm]
+  \tikzset{tp/.style={box=#1, text width=34mm, minimum width=38mm, minimum height=14mm}}
+  \newcommand{\tpl}[2]{\textbf{#1}\sub{#2}}
+  % bloc 1
+  \node[tp=Ocre] (t1) at (0,0) {\tpl{TP 1}{VM + SSH}};
+  \node[tp=Ocre, right=of t1] (t2) {\tpl{TP 2}{BDD + backend}};
+  \node[tp=Ocre, right=of t2] (t3) {\tpl{TP 3}{Nginx + TLS}};
+  \node[tp=Ocre, right=of t3] (t4) {\tpl{TP 4}{le jour 2}};
+  % bloc 2
+  \node[tp=Enc] (t5) at (0,-4.4) {\tpl{TP 5}{éclater l'application}};
+  \node[tp=Enc, right=of t5] (t6) {\tpl{TP 6}{load balancer}};
+  % bloc 3
+  \node[tp=Sea] (t7) at (0,-8.8) {\tpl{TP 7}{Vagrant}};
+  \node[tp=Sea, right=of t7] (t8) {\tpl{TP 8}{Ansible}};
+  \node[tp=Sea, right=of t8] (t9) {\tpl{TP 9}{chaîne complète}};
+  \node[tp=Sea, right=of t9] (t10) {\tpl{TP 10}{Terraform}};
+  \foreach \u/\v in {t1/t2,t2/t3,t3/t4,t5/t6,t7/t8,t8/t9,t9/t10} \draw[flow=Muted] (\u) -- (\v);
+
+  \begin{scope}[on background layer]
+    \node[dframe=Ocre, fit=(t1)(t1-|t10.east), inner ysep=7mm, yshift=2.5mm] (b1) {};
+    \node[dframe=Enc,  fit=(t5)(t5-|t10.east), inner ysep=7mm, yshift=2.5mm] (b2) {};
+    \node[dframe=Sea,  fit=(t7)(t10), inner ysep=7mm, yshift=2.5mm] (b3) {};
+  \end{scope}
+  \node[ftitle, text=Ocre, anchor=north west] at (b1.north west) {BLOC 1 \textperiodcentered{} SEMAINES 1-5 \textperiodcentered{} TOUT SUR UNE MACHINE};
+  \node[ftitle, text=Enc,  anchor=north west] at (b2.north west) {BLOC 2 \textperiodcentered{} SEMAINES 6-8 \textperiodcentered{} MULTI-MACHINES};
+  \node[ftitle, text=Sea,  anchor=north west] at (b3.north west) {BLOC 3 \textperiodcentered{} SEMAINES 9-13 \textperiodcentered{} INFRASTRUCTURE AS CODE};
+
+  % ruptures entre blocs : du dernier TP vers le bloc suivant
+  \draw[flow=Brick] (t4.south |- b1.south) -- (t4.south |- b2.north)
+      node[midway, right=2mm, note, text=Brick]{défi : redéployer en 30 min $\rightarrow$ échec};
+  \draw[flow=Brick] (t6.south |- b2.south) -- (t6.south |- b3.north)
+      node[midway, right=2mm, note, text=Brick]{la dérive de configuration devient ingérable};
+\end{tikzpicture}
+\end{document}

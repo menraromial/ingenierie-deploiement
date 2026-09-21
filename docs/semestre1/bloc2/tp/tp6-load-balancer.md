@@ -1,28 +1,32 @@
-# TP 6 : Un deuxième backend et un répartiteur de charge
+---
+title: "TP 6 : Deuxième backend et répartiteur de charge"
+sidebar_label: "TP 6 : Deuxième backend et répartiteur de charge"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 4 h
-    - **Prérequis** : TP 5 terminé ; chapitre 8 (et chapitre 9 pour la synthèse)
-    - **Livrables** : deux backends derrière Nginx en round-robin ; les **mesures chiffrées** du comportement sous panne, avec et sans tolérance ; la liste exhaustive de tout ce qu'il a fallu toucher « juste pour ajouter un backend » ; runbook à jour
-    - **Compétences travaillées** : C1, C6
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    Ce TP contient une panne **prévue par le scénario** : ne la contournez pas, elle est le cœur de la séance.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 2 · Travaux pratiques 6"
+  title="Un deuxième backend et un répartiteur de charge"
+  competences={['C1', 'C6']}
+/>
+
+:::fiche
+- **Durée** : 4 h
+- **Prérequis** : TP 5 terminé ; chapitre 8 (et chapitre 9 pour la synthèse)
+- **Livrables** : deux backends derrière Nginx en round-robin ; les **mesures chiffrées** du comportement sous panne, avec et sans tolérance ; la liste exhaustive de tout ce qu'il a fallu toucher « juste pour ajouter un backend » ; runbook à jour
+- **Compétences travaillées** : C1, C6
+
+Ce TP contient une panne **prévue par le scénario** : ne la contournez pas, elle est le cœur de la séance.
+:::
 
 ## Ce que vous allez construire
 
-```mermaid
-flowchart TB
-    H["Poste hôte"] -->|"https://listify.local"| LB
-    subgraph HO["192.168.56.0/24"]
-        LB["listify-lb (.10)<br/>upstream round-robin<br/>max_fails=3, retries"]
-        A1["listify-app1 (.21)<br/>Gunicorn 0.0.0.0:8000"]
-        A2["listify-app2 (.22)<br/>Gunicorn 0.0.0.0:8000<br/>clone de app1"]
-        DB[("listify-db (.31)")]
-    end
-    LB -->|"50 %"| A1
-    LB -->|"50 %"| A2
-    A1 & A2 --> DB
-```
+<Figure src="tp6-architecture" num="TP6.1" alt="Le poste hôte joint listify-lb, qui répartit à parts égales entre listify-app1 et listify-app2, lesquels partagent la même base listify-db.">
+  Ce que vous allez construire : un second serveur d'application cloné du premier, et un répartiteur qui tolère la panne de l'un des deux.
+</Figure>
 
 ## Étape 1 : cloner app1... et diagnostiquer la panne prévue (45 min)
 
@@ -102,8 +106,12 @@ ssh listify-app2 'curl -s http://localhost:8000/api/health'
 # {"api":"ok","database":"ok"}
 ```
 
-??? question "Point de contrôle n° 1"
-    Les deux backends répondent ok/ok ; `ssh -t listify-app2 'sudo ufw status'` montre les règles **héritées du clone** (8000 depuis .10 : notez que le pare-feu, lui, était clonable tel quel : pourquoi ?) ; et votre compteur de machines touchées est à jour (app2, app1, db... et ce n'est pas fini).
+<details className="controle">
+<summary>Point de contrôle n° 1</summary>
+
+Les deux backends répondent ok/ok ; `ssh -t listify-app2 'sudo ufw status'` montre les règles **héritées du clone** (8000 depuis .10 : notez que le pare-feu, lui, était clonable tel quel : pourquoi ?) ; et votre compteur de machines touchées est à jour (app2, app1, db... et ce n'est pas fini).
+
+</details>
 
 ## Étape 2 : l'upstream Nginx (30 min)
 
@@ -210,8 +218,9 @@ Consignez le tableau (vos chiffres réels) :
 
 Puis **restaurez la configuration tolérante** (scénario A), revérifiez l'alternance `X-Upstream`, et observez une dernière chose : app2 arrêté puis redémarré **revient tout seul dans le pool** après `fail_timeout` : personne n'a touché au LB. Première rencontre avec un système qui **converge** vers son état nominal ; gardez le mot, il fera le S2.
 
-!!! warning "Et les retries sur POST ?"
-    Refaites mentalement le scénario A avec des `POST /api/tasks` : `proxy_next_upstream` par défaut refuse de rejouer les méthodes non idempotentes, et c'est une protection (ch. 8, §4.2 : le POST rejoué peut créer un doublon). Testez si le temps le permet : boucle de POST pendant un stop de backend → quelques 502 **assumés** sur les requêtes non rejouables. Un LB ne remplace pas une conception idempotente ; il la complète.
+:::warning[Et les retries sur POST ?]
+Refaites mentalement le scénario A avec des `POST /api/tasks` : `proxy_next_upstream` par défaut refuse de rejouer les méthodes non idempotentes, et c'est une protection (ch. 8, §4.2 : le POST rejoué peut créer un doublon). Testez si le temps le permet : boucle de POST pendant un stop de backend → quelques 502 **assumés** sur les requêtes non rejouables. Un LB ne remplace pas une conception idempotente ; il la complète.
+:::
 
 ## Étape 4 : synthèse « qu'a coûté un backend de plus ? » (30 min)
 

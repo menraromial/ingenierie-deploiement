@@ -1,0 +1,16 @@
+% Ch. 15 : superposition OverlayFS
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{lay/.style={layer=#1, minimum width=128mm, minimum height=11mm, anchor=south west, align=flush left, inner xsep=4mm}}
+  \node[lay=Rule, fill=white]  (l1) at (0,0)  {\textbf{lowerdir 1} : image de base {\color{Muted}(ex. debian-slim)}};
+  \node[lay=Rule, fill=white]  (l2) at (0,13) {\textbf{lowerdir 2} : dépendances Python};
+  \node[lay=Rule, fill=white]  (l3) at (0,26) {\textbf{lowerdir 3} : votre code applicatif};
+  \node[lay=Sea]  (up) at (0,41) {\textbf{upperdir} : couche \textbf{inscriptible} de ce conteneur {\color{Muted}(vide au départ)}};
+  \node[keybox=Enc, minimum width=128mm, minimum height=12mm, anchor=south west] (m) at (0,64) {Vue fusionnée : la racine \texttt{/} du conteneur};
+  \draw[flow=Enc, line width=1.1pt] (64,52.5) -- (64,63.5) node[midway, right=2mm, elabelc, fill=none]{mount -t overlay};
+  \draw[brace] (131,37) -- node[note, right=3mm]{lecture seule :\\l'image, partagée} (131,0);
+  \draw[brace] (131,52) -- node[note, right=3mm]{écriture :\\propre au conteneur} (131,41);
+\end{tikzpicture}
+\end{document}

@@ -1,15 +1,25 @@
-# L'application fil rouge : « Listify »
+---
+title: "Application fil rouge"
+sidebar_label: "Application fil rouge"
+hide_title: true
+---
+
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
+
+<ChapterHead
+  kicker="Le fil rouge du parcours"
+  title="L'application fil rouge : « Listify »"
+  lecture="5 min"
+/>
 
 Tout le parcours s'appuie sur une même application 3-tiers, volontairement simple sur le plan fonctionnel : **Listify**, un gestionnaire de tâches partagées. Sa simplicité est une décision pédagogique : la difficulté du parcours doit porter sur le **déploiement**, jamais sur le code applicatif.
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    U["Navigateur<br/>de l'utilisateur"] -->|HTTP/HTTPS| N["Tier 1 : Frontend<br/>Pages statiques HTML/JS<br/>(servies par Nginx)"]
-    N -->|"/api/*"| B["Tier 2 : Backend<br/>API REST Flask<br/>(exécutée par Gunicorn)"]
-    B -->|"SQL (port 5432)"| D[("Tier 3 : Base de données<br/>PostgreSQL")]
-```
+<Figure src="listify-architecture" alt="Le navigateur parle en HTTP au frontend servi par Nginx, qui relaie /api vers le backend Flask sous Gunicorn, lequel interroge PostgreSQL sur le port 5432.">
+  Les trois tiers de Listify et les protocoles qui les relient. Cette architecture ne change pas de tout le parcours : seule la manière de la déployer évolue.
+</Figure>
 
 | Tier | Rôle | Technologie | Pourquoi ce choix |
 |---|---|---|---|
@@ -67,7 +77,6 @@ from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-
 def get_conn():
     """Ouvre une connexion à PostgreSQL à partir de l'environnement."""
     return psycopg2.connect(
@@ -78,7 +87,6 @@ def get_conn():
         password=os.environ["DB_PASSWORD"],
         connect_timeout=3,
     )
-
 
 @app.get("/api/health")
 def health():
@@ -93,7 +101,6 @@ def health():
         code = 503
     return jsonify(status), code
 
-
 @app.get("/api/tasks")
 def list_tasks():
     with get_conn() as conn:
@@ -102,7 +109,6 @@ def list_tasks():
                 "SELECT id, title, created_at FROM tasks ORDER BY id"
             )
             return jsonify(cur.fetchall())
-
 
 @app.post("/api/tasks")
 def create_task():
@@ -119,7 +125,6 @@ def create_task():
             )
             return jsonify(cur.fetchone()), 201
 
-
 @app.delete("/api/tasks/<int:task_id>")
 def delete_task(task_id: int):
     with get_conn() as conn:
@@ -130,8 +135,9 @@ def delete_task(task_id: int):
     return "", 204
 ```
 
-!!! note "Pourquoi `RETURNING` et `jsonify` ?"
-    `RETURNING` demande à PostgreSQL de renvoyer la ligne insérée dans la même requête : un aller-retour réseau au lieu de deux. `jsonify` sérialise proprement les types PostgreSQL (dates notamment) et positionne l'en-tête `Content-Type: application/json`. Ces détails comptent : en production, chaque aller-retour et chaque en-tête mal positionné se paie.
+:::note[Pourquoi `RETURNING` et `jsonify` ?]
+`RETURNING` demande à PostgreSQL de renvoyer la ligne insérée dans la même requête : un aller-retour réseau au lieu de deux. `jsonify` sérialise proprement les types PostgreSQL (dates notamment) et positionne l'en-tête `Content-Type: application/json`. Ces détails comptent : en production, chaque aller-retour et chaque en-tête mal positionné se paie.
+:::
 
 ### Backend : `backend/wsgi.py` et `backend/requirements.txt`
 
@@ -146,8 +152,9 @@ gunicorn==22.0.0
 psycopg2-binary==2.9.11
 ```
 
-!!! warning "Versions figées"
-    Les versions sont **épinglées** (`==`) volontairement : c'est la première brique de la reproductibilité, un concept central du parcours. Un `requirements.txt` sans versions produit une application différente selon le jour où on l'installe.
+:::warning[Versions figées]
+Les versions sont **épinglées** (`==`) volontairement : c'est la première brique de la reproductibilité, un concept central du parcours. Un `requirements.txt` sans versions produit une application différente selon le jour où on l'installe.
+:::
 
 ### Base de données : `db/schema.sql`
 
@@ -160,8 +167,9 @@ CREATE TABLE IF NOT EXISTS tasks (
 );
 ```
 
-!!! tip "Premier contact avec l'idempotence"
-    Le `IF NOT EXISTS` rend ce script **idempotent** : on peut l'exécuter une fois ou dix fois, l'état final est le même. Retenez ce mot, c'est le concept le plus important du semestre 1. Un script `CREATE TABLE` sans `IF NOT EXISTS` échoue à la deuxième exécution : il décrit une *action* ; celui-ci décrit un *état voulu*.
+:::tip[Premier contact avec l'idempotence]
+Le `IF NOT EXISTS` rend ce script **idempotent** : on peut l'exécuter une fois ou dix fois, l'état final est le même. Retenez ce mot, c'est le concept le plus important du semestre 1. Un script `CREATE TABLE` sans `IF NOT EXISTS` échoue à la deuxième exécution : il décrit une *action* ; celui-ci décrit un *état voulu*.
+:::
 
 ### Frontend : `frontend/index.html`
 

@@ -1,12 +1,25 @@
-# TP 4 : Le « jour 2 » : mise à jour, sauvegarde, diagnostic
+---
+title: "TP 4 : Le jour 2, mise à jour, sauvegarde, diagnostic"
+sidebar_label: "TP 4 : Le jour 2, mise à jour, sauvegarde, diagnostic"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 4 h
-    - **Prérequis** : TP 3 terminé (application complète en HTTPS)
-    - **Livrables** : application en v1.1 ; sauvegardes automatiques quotidiennes + une restauration prouvée ; diagnostic rédigé d'au moins une panne injectée ; runbook à jour
-    - **Compétences travaillées** : C6 (cœur du TP), C1
+import ChapterHead from '@site/src/components/ChapterHead';
 
-    Dans le jargon de l'exploitation, le **jour 1** est l'installation ; le **jour 2**, c'est tout le reste : mettre à jour, sauvegarder, diagnostiquer, réparer. Un système passe un jour en installation et des années en jour 2 : c'est là que se joue le métier.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 1 · Travaux pratiques 4"
+  title="Le « jour 2 » : mise à jour, sauvegarde, diagnostic"
+  competences={['C1', 'C6']}
+/>
+
+:::fiche
+- **Durée** : 4 h
+- **Prérequis** : TP 3 terminé (application complète en HTTPS)
+- **Livrables** : application en v1.1 ; sauvegardes automatiques quotidiennes + une restauration prouvée ; diagnostic rédigé d'au moins une panne injectée ; runbook à jour
+- **Compétences travaillées** : C6 (cœur du TP), C1
+
+Dans le jargon de l'exploitation, le **jour 1** est l'installation ; le **jour 2**, c'est tout le reste : mettre à jour, sauvegarder, diagnostiquer, réparer. Un système passe un jour en installation et des années en jour 2 : c'est là que se joue le métier.
+:::
 
 ## Partie A : la mise à jour applicative (1 h 15)
 
@@ -32,7 +45,6 @@ from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-
 def get_conn():
     """Ouvre une connexion à PostgreSQL à partir de l'environnement."""
     return psycopg2.connect(
@@ -43,7 +55,6 @@ def get_conn():
         password=os.environ["DB_PASSWORD"],
         connect_timeout=3,
     )
-
 
 @app.get("/api/health")
 def health():
@@ -57,7 +68,6 @@ def health():
         code = 503
     return jsonify(status), code
 
-
 @app.get("/api/tasks")
 def list_tasks():
     with get_conn() as conn:
@@ -67,7 +77,6 @@ def list_tasks():
                 "SELECT id, title, done, created_at FROM tasks ORDER BY id"
             )
             return jsonify(cur.fetchall())
-
 
 @app.post("/api/tasks")
 def create_task():
@@ -84,7 +93,6 @@ def create_task():
             )
             return jsonify(cur.fetchone()), 201
 
-
 @app.patch("/api/tasks/<int:task_id>")   # v1.1 : bascule "terminée"
 def toggle_task(task_id: int):
     with get_conn() as conn:
@@ -98,7 +106,6 @@ def toggle_task(task_id: int):
             if row is None:
                 return jsonify({"error": "not found"}), 404
             return jsonify(row)
-
 
 @app.delete("/api/tasks/<int:task_id>")
 def delete_task(task_id: int):
@@ -176,8 +183,9 @@ formEl.addEventListener("submit", async (event) => {
 refresh();
 ```
 
-!!! note "« API injoignable : ... » ne veut pas toujours dire que l'API est en panne"
-    Le `catch` de `refresh()` intercepte **toute** exception du bloc `try`, y compris une **erreur JavaScript** (par exemple une variable mal placée). Vous pouvez donc lire « API injoignable : box is not defined » alors que l'API répond parfaitement : le vrai coupable est le code de rendu. Réflexe de diagnostic : ouvrez les **outils de développement du navigateur** (onglet Console pour l'erreur JS, onglet Réseau pour voir si les requêtes partent et avec quel code HTTP). C'est la version « frontend » de la méthode ascendante du chapitre 3.
+:::note[« API injoignable : ... » ne veut pas toujours dire que l'API est en panne]
+Le `catch` de `refresh()` intercepte **toute** exception du bloc `try`, y compris une **erreur JavaScript** (par exemple une variable mal placée). Vous pouvez donc lire « API injoignable : box is not defined » alors que l'API répond parfaitement : le vrai coupable est le code de rendu. Réflexe de diagnostic : ouvrez les **outils de développement du navigateur** (onglet Console pour l'erreur JS, onglet Réseau pour voir si les requêtes partent et avec quel code HTTP). C'est la version « frontend » de la méthode ascendante du chapitre 3.
+:::
 
 Appliquez ces changements dans votre dépôt Git local, committez (`git commit -m "v1.1 : tâches terminées"`), et taguez : `git tag v1.1`.
 
@@ -206,13 +214,15 @@ ssh -t listify-s1 'sudo mv /tmp/app.js /opt/listify/frontend/app.js &&
                    sudo chmod a+r /opt/listify/frontend/app.js'
 ```
 
-!!! warning "Pourquoi `ssh -t` devant `sudo` ? (« a terminal is required »)"
-    Une commande lancée en une ligne (`ssh serveur 'sudo ...'`) est **non interactive** : SSH n'alloue pas de pseudo-terminal (TTY). Or `sudo` réclame un TTY pour saisir le mot de passe en le masquant ; sans lui, il refuse avec `sudo: a terminal is required to read the password`. L'option **`-t`** force l'allocation d'un TTY, et le mot de passe de `deploy` est demandé normalement. La ligne 1 (le `psql`) n'a pas de `sudo`, elle n'en a donc pas besoin. Retenez la friction : automatiser des commandes privilégiées à distance bute vite sur cette question du TTY et du mot de passe : Ansible la résout proprement au bloc 3 (option `--ask-become-pass`, ou `sudo` sans mot de passe pour le compte d'automatisation).
+:::warning[Pourquoi `ssh -t` devant `sudo` ? (« a terminal is required »)]
+Une commande lancée en une ligne (`ssh serveur 'sudo ...'`) est **non interactive** : SSH n'alloue pas de pseudo-terminal (TTY). Or `sudo` réclame un TTY pour saisir le mot de passe en le masquant ; sans lui, il refuse avec `sudo: a terminal is required to read the password`. L'option **`-t`** force l'allocation d'un TTY, et le mot de passe de `deploy` est demandé normalement. La ligne 1 (le `psql`) n'a pas de `sudo`, elle n'en a donc pas besoin. Retenez la friction : automatiser des commandes privilégiées à distance bute vite sur cette question du TTY et du mot de passe : Ansible la résout proprement au bloc 3 (option `--ask-become-pass`, ou `sudo` sans mot de passe pour le compte d'automatisation).
+:::
 
 Testez au navigateur (`Ctrl+Maj+R` pour contourner le cache) : les cases à cocher fonctionnent et l'état persiste après rechargement.
 
-!!! warning "Prenez la mesure de ce que vous venez de faire"
-    Pendant `systemctl restart`, l'API était **indisponible** (mesurez : `curl` en boucle pendant un restart : combien de requêtes échouent ?). Vous avez copié des fichiers un par un, avec les bons propriétaires, dans le bon ordre, sans trace automatique de « quelle version tourne ». Si l'étape 2 avait réussi et l'étape 3 échoué, quel état aurait le système ? Ce malaise a des noms : déploiement non atomique, non répétable, avec interruption. Tout le reste du parcours (Ansible au bloc 3, rolling updates de Kubernetes au S2) répond à ce paragraphe précis. Consignez vos mesures.
+:::warning[Prenez la mesure de ce que vous venez de faire]
+Pendant `systemctl restart`, l'API était **indisponible** (mesurez : `curl` en boucle pendant un restart : combien de requêtes échouent ?). Vous avez copié des fichiers un par un, avec les bons propriétaires, dans le bon ordre, sans trace automatique de « quelle version tourne ». Si l'étape 2 avait réussi et l'étape 3 échoué, quel état aurait le système ? Ce malaise a des noms : déploiement non atomique, non répétable, avec interruption. Tout le reste du parcours (Ansible au bloc 3, rolling updates de Kubernetes au S2) répond à ce paragraphe précis. Consignez vos mesures.
+:::
 
 ## Partie B : sauvegarde et restauration (1 h 15)
 
@@ -294,8 +304,9 @@ curl -sk https://127.0.0.1/api/tasks | python3 -c 'import json,sys; print(len(js
 
 Au runbook : le temps de restauration mesuré (c'est votre **RTO**, *Recovery Time Objective*, à l'échelle 1) et la quantité de données perdables entre deux sauvegardes nocturnes (votre **RPO**, *Recovery Point Objective* : jusqu'à 24 h ici). Discussion de séance : pour quelles applications 24 h de RPO sont-elles inacceptables, et qu'est-ce que cela implique (archivage WAL, réplication : hors périmètre, mais nommons les solutions) ?
 
-!!! danger "Où est le trou béant de notre stratégie ?"
-    Les dumps sont **sur le même disque** que la base. Panne du disque = perte des données ET des sauvegardes. La règle professionnelle est **3-2-1** : 3 copies, 2 supports, 1 hors site. En TP, faites au minimum la copie hors-VM : `scp listify-s1:/var/backups/listify/manual.dump ./backups/` depuis le poste hôte. Question bonus : pourquoi ce scp échoue-t-il tel quel, et quelle est la façon propre de le régler ? (Indice : permissions du répertoire, groupe.)
+:::danger[Où est le trou béant de notre stratégie ?]
+Les dumps sont **sur le même disque** que la base. Panne du disque = perte des données ET des sauvegardes. La règle professionnelle est **3-2-1** : 3 copies, 2 supports, 1 hors site. En TP, faites au minimum la copie hors-VM : `scp listify-s1:/var/backups/listify/manual.dump ./backups/` depuis le poste hôte. Question bonus : pourquoi ce scp échoue-t-il tel quel, et quelle est la façon propre de le régler ? (Indice : permissions du répertoire, groupe.)
+:::
 
 ## Partie C : les pannes injectées (1 h 30)
 
@@ -320,16 +331,20 @@ Boîte à outils du diagnostic, en un tableau à garder sous la main :
 | Le disque, la RAM ? | `df -h`, `free -m`, `journalctl -k | grep -i oom` |
 | Qu'est-ce qui a changé récemment ? | `ls -lt /etc/... ` ; historique du runbook ! |
 
-??? note "Banque de pannes du bloc 1 (réservé enseignant : ne lisez pas si vous jouez le jeu)"
-    Chaque panne s'injecte en ~1 minute ; remettre en état avant la panne suivante. Par difficulté croissante :
+<details className="enseignant">
+<summary>Banque de pannes du bloc 1 (réservé enseignant : ne lisez pas si vous jouez le jeu)</summary>
 
-    1. **Service arrêté et désactivé** : `systemctl disable --now listify`. Symptôme : 502 sur /api/. Piège : `start` sans `enable` = re-panne au reboot (rebooter pour vérifier s'ils y ont pensé).
-    2. **Mot de passe BD faux** : éditer `DB_PASSWORD` dans `/etc/listify/listify.env` + `systemctl restart listify`. Symptôme : /api/health → `database: error`, tasks → 500. Chemin attendu : journalctl montre l'`OperationalError`.
-    3. **Pare-feu trop zélé** : `ufw deny 443/tcp` (règle insérée avant l'allow). Symptôme : timeout au navigateur, mais tout marche depuis la VM. Distinction refused/timeout du ch. 3 à l'œuvre.
-    4. **PostgreSQL éteint** : `systemctl stop postgresql`. Facile en apparence ; la valeur est dans la prévention (pourquoi `Wants=` n'a-t-il pas suffi ? parce qu'il ne s'applique qu'au démarrage de listify : première limite de systemd face à une vraie supervision).
-    5. **Disque plein** : `fallocate -l <presque tout> /var/fill`. Symptôme : POST → 500 (PostgreSQL ne peut plus écrire), GET fonctionne. `df -h` doit venir tôt dans leur checklist.
-    6. **Nginx mal configuré au reload** : remplacer `proxy_pass http://127.0.0.1:8000;` par le port 8001 + reload. Symptôme : 502 immédiat, error.log parle (`connect() failed ... 8001`). Vérifie qu'ils lisent error.log et pas seulement journalctl.
-    7. **Permission cassée** : `chmod 600 /etc/listify/listify.env` (root:root). Symptôme : listify en boucle de redémarrage (`status` : activating/auto-restart), journalctl : `Failed to load environment file: Permission denied`. La plus fine : erreur *avant* l'application (ch. 2, §4.5, étape 3).
+Chaque panne s'injecte en ~1 minute ; remettre en état avant la panne suivante. Par difficulté croissante :
+
+1. **Service arrêté et désactivé** : `systemctl disable --now listify`. Symptôme : 502 sur /api/. Piège : `start` sans `enable` = re-panne au reboot (rebooter pour vérifier s'ils y ont pensé).
+2. **Mot de passe BD faux** : éditer `DB_PASSWORD` dans `/etc/listify/listify.env` + `systemctl restart listify`. Symptôme : /api/health → `database: error`, tasks → 500. Chemin attendu : journalctl montre l'`OperationalError`.
+3. **Pare-feu trop zélé** : `ufw deny 443/tcp` (règle insérée avant l'allow). Symptôme : timeout au navigateur, mais tout marche depuis la VM. Distinction refused/timeout du ch. 3 à l'œuvre.
+4. **PostgreSQL éteint** : `systemctl stop postgresql`. Facile en apparence ; la valeur est dans la prévention (pourquoi `Wants=` n'a-t-il pas suffi ? parce qu'il ne s'applique qu'au démarrage de listify : première limite de systemd face à une vraie supervision).
+5. **Disque plein** : `fallocate -l <presque tout> /var/fill`. Symptôme : POST → 500 (PostgreSQL ne peut plus écrire), GET fonctionne. `df -h` doit venir tôt dans leur checklist.
+6. **Nginx mal configuré au reload** : remplacer `proxy_pass http://127.0.0.1:8000;` par le port 8001 + reload. Symptôme : 502 immédiat, error.log parle (`connect() failed ... 8001`). Vérifie qu'ils lisent error.log et pas seulement journalctl.
+7. **Permission cassée** : `chmod 600 /etc/listify/listify.env` (root:root). Symptôme : listify en boucle de redémarrage (`status` : activating/auto-restart), journalctl : `Failed to load environment file: Permission denied`. La plus fine : erreur *avant* l'application (ch. 2, §4.5, étape 3).
+
+</details>
 
 ## Point de contrôle final
 

@@ -1,0 +1,31 @@
+% Bloc 1 : quels chapitres préparent quels TP (matrice)
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  % colonnes (TP) et lignes (chapitres)
+  \def\cx{{0,36,72,108,144}}
+  \foreach \t/\s [count=\i from 0] in {TP 1/VM et SSH, TP 2/BDD et backend, TP 3/Nginx et TLS, TP 4/le jour 2, Défi/30 minutes}{
+    \pgfmathsetmacro{\x}{\cx[\i]}
+    \ifnum\i=4
+      \node[keybox=Brick, minimum width=28mm, minimum height=13mm] (c\i) at (\x,0) {\t\\[-.4mm]{\normalsize\mdseries \s}};
+    \else
+      \node[box=Ocre, minimum width=28mm, minimum height=13mm] (c\i) at (\x,0) {\textbf{\t}\sub{\s}};
+    \fi
+  }
+  \foreach \a/\b in {0/1,1/2,2/3,3/4} \draw[flow=Muted] (c\a) -- (c\b);
+
+  \foreach \t [count=\j from 1] in {Anatomie d'un serveur, Le système d'exploitation serveur, Le réseau pour le déploiement, Architecture d'une application web, Sécurité de base}{
+    \node[anchor=east, align=right] (r\j) at (-18,-10-\j*10) {\textbf{Ch. \j}\quad \t};
+    \draw[draw=Rule, line width=.5pt] (-16,-10-\j*10) -- (156,-10-\j*10);
+  }
+  % colonnes verticales discrètes
+  \foreach \i in {0,...,4}{ \pgfmathsetmacro{\x}{\cx[\i]} \draw[draw=Rule, line width=.5pt] (\x,-8) -- (\x,-64); }
+  % pastilles : le chapitre prépare le TP
+  \foreach \j/\i in {1/0, 2/0, 5/0, 2/1, 3/2, 4/2}{
+    \pgfmathsetmacro{\x}{\cx[\i]}
+    \node[circle, fill=Enc, minimum size=4.5mm, inner sep=0pt] at (\x,-10-\j*10) {};
+  }
+  \node[note, anchor=north west] at (-16,-68) {\tikz\node[circle, fill=Enc, minimum size=3mm, inner sep=0pt]{};\enspace le chapitre prépare directement le TP ; le défi mobilise l'ensemble du bloc};
+\end{tikzpicture}
+\end{document}

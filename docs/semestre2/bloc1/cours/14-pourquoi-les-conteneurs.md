@@ -1,12 +1,27 @@
-# Chapitre 14 : Pourquoi les conteneurs ?
+---
+title: "Ch. 14 : Pourquoi les conteneurs"
+sidebar_label: "Ch. 14 : Pourquoi les conteneurs"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    - énoncer les limites concrètes des machines virtuelles que les conteneurs viennent lever ;
-    - expliquer le problème du « ça marche sur ma machine » et pourquoi ni les VM ni Ansible ne le résolvent complètement ;
-    - définir un conteneur par contraste rigoureux avec une VM (ce que chacun virtualise) ;
-    - situer historiquement l'idée (des chroot aux conteneurs OCI) pour comprendre qu'elle n'est pas née avec Docker.
+<ChapterHead
+  kicker="Semestre 2 · Bloc 1 · Chapitre 14"
+  title="Pourquoi les conteneurs ?"
+  lecture="10 min"
+  competences={['C1']}
+/>
+
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- énoncer les limites concrètes des machines virtuelles que les conteneurs viennent lever ;
+- expliquer le problème du « ça marche sur ma machine » et pourquoi ni les VM ni Ansible ne le résolvent complètement ;
+- définir un conteneur par contraste rigoureux avec une VM (ce que chacun virtualise) ;
+- situer historiquement l'idée (des chroot aux conteneurs OCI) pour comprendre qu'elle n'est pas née avec Docker.
+:::
 
 ## 1. Le point de départ : ce que le S1 laissait ouvert
 
@@ -36,19 +51,17 @@ Ansible décrit l'installation, donc rapproche les environnements. Mais il **dé
 
 L'idée du conteneur est de livrer non plus une recette à exécuter sur la cible, mais un **artefact déjà construit** : une **image** contenant l'application *et tout son environnement utilisateur* (bibliothèques, dépendances, fichiers, configuration par défaut), figé au bit près. On construit l'image **une fois** ; on exécute **exactement ce même artefact** sur le poste du développeur, dans la CI, et en production. Le « chez moi » et le « en prod » deviennent, littéralement, le même fichier. C'est l'aboutissement de l'**immutabilité** entrevue au S1 (le « serveur phénix ») : ici, l'artefact immuable existe pour de bon.
 
-!!! note "Ce que l'image ne contient PAS : le noyau"
-    Une image de conteneur embarque l'espace utilisateur (les programmes et bibliothèques) mais **pas de noyau** : elle utilise celui de la machine hôte. C'est toute la différence avec une VM, et la source à la fois de sa légèreté et de ses limites (section 4). Retenez cette phrase, elle est la clé du chapitre : **une VM virtualise le matériel ; un conteneur virtualise l'espace utilisateur d'un système, en partageant le noyau de l'hôte.**
+:::note[Ce que l'image ne contient PAS : le noyau]
+Une image de conteneur embarque l'espace utilisateur (les programmes et bibliothèques) mais **pas de noyau** : elle utilise celui de la machine hôte. C'est toute la différence avec une VM, et la source à la fois de sa légèreté et de ses limites (section 4). Retenez cette phrase, elle est la clé du chapitre : **une VM virtualise le matériel ; un conteneur virtualise l'espace utilisateur d'un système, en partageant le noyau de l'hôte.**
+:::
 
 ## 3. Qu'est-ce qu'un conteneur, concrètement ?
 
 Contrairement à une intuition répandue, un conteneur n'est **pas** un objet spécial créé par un logiciel magique. C'est un **processus Linux ordinaire**, auquel le noyau applique trois restrictions :
 
-```mermaid
-flowchart TB
-    P["Un processus Linux ordinaire"] --> N["<b>Namespaces</b><br/>ce que le processus VOIT<br/>(ses propres PID, réseau,<br/>points de montage, hostname...)"]
-    P --> C["<b>cgroups</b><br/>ce que le processus PEUT<br/>consommer<br/>(CPU, mémoire, I/O)"]
-    P --> F["<b>Système de fichiers en couches</b><br/>ce que le processus voit<br/>comme SA racine /<br/>(l'image, en lecture seule + une couche R/W)"]
-```
+<Figure src="conteneur-primitives" num="14.1" alt="Un processus Linux ordinaire reçoit trois propriétés : des namespaces (ce qu'il voit), des cgroups (ce qu'il peut consommer) et un système de fichiers en couches (sa racine).">
+  Un conteneur n'est qu'un processus auquel le noyau applique trois mécanismes indépendants. Aucun des trois n'a été inventé par Docker.
+</Figure>
 
 - Les **namespaces** donnent au processus une vue *isolée* du système : il croit avoir ses propres identifiants de processus, sa propre interface réseau, son propre système de fichiers. C'est l'**isolation**.
 - Les **cgroups** (*control groups*) limitent et comptabilisent ses *ressources* : « ce conteneur ne dépassera pas 512 Mo de RAM ni 1 cœur ». C'est la **maîtrise des ressources**.
@@ -58,20 +71,9 @@ Le moteur de conteneurs (Podman, Docker) n'est qu'un **chef d'orchestre** qui co
 
 ## 4. Conteneur vs VM : le tableau qui doit être limpide
 
-```mermaid
-flowchart TB
-    subgraph VM["Machines virtuelles"]
-        HW1["Matériel"] --> H1["Hyperviseur"]
-        H1 --> G1["OS invité 1<br/>(noyau + userland)"] --> A1["App 1"]
-        H1 --> G2["OS invité 2<br/>(noyau + userland)"] --> A2["App 2"]
-    end
-    subgraph CT["Conteneurs"]
-        HW2["Matériel"] --> OS2["OS hôte<br/>(UN seul noyau partagé)"]
-        OS2 --> R["Moteur de conteneurs"]
-        R --> CA["Conteneur 1<br/>(userland)"] --> APP1["App 1"]
-        R --> CB["Conteneur 2<br/>(userland)"] --> APP2["App 2"]
-    end
-```
+<Figure src="vm-vs-conteneurs" num="14.2" alt="Deux piles comparées : à gauche des machines virtuelles, chacune avec son OS invité complet au-dessus d'un hyperviseur ; à droite des conteneurs qui partagent le noyau de l'unique OS hôte.">
+  Machines virtuelles et conteneurs. La VM virtualise le matériel et embarque un noyau ; le conteneur virtualise l'OS et partage le noyau de l'hôte, d'où sa légèreté et son isolation moindre.
+</Figure>
 
 | Critère | Machine virtuelle | Conteneur |
 |---|---|---|
@@ -87,8 +89,9 @@ flowchart TB
 
 Le noyau partagé est la force *et* la faiblesse du conteneur. Force : légèreté extrême. Faiblesse : la surface d'isolation est celle du noyau Linux, un logiciel énorme ; une faille du noyau (une « évasion de conteneur ») peut permettre à un conteneur compromis d'atteindre l'hôte ou ses voisins, ce qu'une frontière matérielle de VM interdit. C'est pourquoi, dans les environnements *multi-locataires* hostiles (un cloud public exécutant le code de clients inconnus côte à côte), on ajoute une couche : des « micro-VM » (Firecracker d'AWS, gVisor de Google) qui redonnent une frontière de noyau à chaque conteneur. À notre échelle (vos propres applications, en confiance), l'isolation par namespaces suffit, mais un ingénieur doit **connaître cette limite** et ne jamais dire « le conteneur isole autant qu'une VM ».
 
-!!! danger "L'erreur d'examen classique"
-    « Un conteneur est une VM légère » : **faux et pénalisé**. Une VM virtualise le matériel et a son noyau ; un conteneur partage le noyau de l'hôte et n'isole que l'espace utilisateur. La bonne réponse mentionne toujours le **noyau**.
+:::danger[L'erreur d'examen classique]
+« Un conteneur est une VM légère » : **faux et pénalisé**. Une VM virtualise le matériel et a son noyau ; un conteneur partage le noyau de l'hôte et n'isole que l'espace utilisateur. La bonne réponse mentionne toujours le **noyau**.
+:::
 
 ### 4.2 Ce n'est pas « l'un ou l'autre »
 
@@ -98,19 +101,15 @@ VM et conteneurs se **combinent** massivement en production : on exécute des co
 
 Docker (2013) a rendu les conteneurs *utilisables par tous*, mais n'a rien inventé des primitives. La lignée est longue et mérite d'être connue, car elle montre que l'innovation est souvent un travail d'**assemblage et d'ergonomie** plus que d'invention pure :
 
-```mermaid
-flowchart LR
-    A["1979<br/>chroot (Unix V7)<br/>changer la racine /"] --> B["2000<br/>FreeBSD Jails<br/>isolation processus + réseau"]
-    B --> C["2004-2007<br/>Solaris Zones,<br/>Linux-VServer, OpenVZ"]
-    C --> D["2002-2008<br/>namespaces + cgroups<br/>intégrés au noyau Linux"]
-    D --> E["2008<br/>LXC<br/>conteneurs Linux 'complets'"]
-    E --> F["2013<br/>Docker<br/>images + ergonomie + partage"]
-    F --> G["2015+<br/>OCI, Podman, containerd<br/>standardisation"]
-```
+<Figure src="conteneurs-chronologie" num="14.3" alt="Frise de 1979 à 2015 : chroot, FreeBSD Jails, Solaris Zones et OpenVZ, namespaces et cgroups dans Linux, LXC, Docker, puis la standardisation OCI.">
+  Quarante ans de lignée du conteneur. Docker (2013) n'invente aucune primitive : il rend l'ensemble utilisable par tous grâce aux images et à leur partage.
+</Figure>
 
 Le tournant technique côté noyau est l'arrivée des **cgroups**, développés chez Google (« process containers », 2006-2007) pour isoler les ressources de leurs services internes, puis fusionnés dans le noyau Linux. L'apport décisif de Docker n'est pas l'isolation (LXC la faisait) mais l'**image** : un format d'empaquetage partageable, versionnable, construit par un simple fichier texte, et un registre pour le distribuer. C'est cette ergonomie qui a fait basculer l'industrie, et c'est le sujet des chapitres 16 et 17.
 
 ## Ce qu'il faut retenir
+
+<div className="retenir">
 
 1. Les VM sont lourdes, lentes à démarrer, et ne règlent qu'à moitié le « ça marche sur ma machine » (elles figent l'OS, pas la façon dont l'app y est installée). Ansible non plus (il décrit un processus qui s'exécute contre un monde mouvant).
 2. La réponse des conteneurs : livrer un **artefact déjà construit** (l'image), figé au bit près, exécuté à l'identique du poste à la production. C'est l'immutabilité du S1, enfin concrète.
@@ -119,16 +118,21 @@ Le tournant technique côté noyau est l'arrivée des **cgroups**, développés 
 5. VM et conteneurs se combinent (conteneurs dans des VM) ; le choix se justifie par l'architecture.
 6. L'idée est ancienne (chroot, jails, zones, LXC) ; l'apport de Docker est l'**image** et l'ergonomie, pas les primitives.
 
+</div>
+
 ## Regard recherche
 
-!!! quote "Pour aller vers la recherche"
-    - **Wes Felter, Alexandre Ferreira, Ram Rajamony, Juan Rubio, « An Updated Performance Comparison of Virtual Machines and Linux Containers », IEEE ISPASS, 2015** (rapport IBM RC25482). L'article de référence qui **mesure** la différence de performance VM (KVM) vs conteneurs (Docker) sur CPU, mémoire, réseau et I/O. Conclusion nuancée et honnête : les conteneurs égalent ou dépassent les VM sur presque tous les axes, mais l'écart dépend fortement de la charge. À lire pour apprendre à *mesurer* plutôt que croire. [Accessible via IBM Research / IEEE.]
-    - **Poul-Henning Kamp, Robert Watson, « Jails: Confining the omnipotent root », SANE, 2000.** Le papier fondateur des FreeBSD Jails : les motivations de l'isolation de processus y sont posées avec une clarté qui n'a pas vieilli.
-    - **Stephen Soltesz et al., « Container-based Operating System Virtualization: A Scalable, High-performance Alternative to Hypervisors », EuroSys, 2007.** L'argument académique pour la virtualisation *au niveau OS* (l'ancêtre conceptuel du conteneur), face aux hyperviseurs. Utile pour situer le débat densité vs isolation.
+:::recherche
+- **Wes Felter, Alexandre Ferreira, Ram Rajamony, Juan Rubio, « An Updated Performance Comparison of Virtual Machines and Linux Containers », IEEE ISPASS, 2015** (rapport IBM RC25482). L'article de référence qui **mesure** la différence de performance VM (KVM) vs conteneurs (Docker) sur CPU, mémoire, réseau et I/O. Conclusion nuancée et honnête : les conteneurs égalent ou dépassent les VM sur presque tous les axes, mais l'écart dépend fortement de la charge. À lire pour apprendre à *mesurer* plutôt que croire. [Accessible via IBM Research / IEEE.]
+- **Poul-Henning Kamp, Robert Watson, « Jails: Confining the omnipotent root », SANE, 2000.** Le papier fondateur des FreeBSD Jails : les motivations de l'isolation de processus y sont posées avec une clarté qui n'a pas vieilli.
+- **Stephen Soltesz et al., « Container-based Operating System Virtualization: A Scalable, High-performance Alternative to Hypervisors », EuroSys, 2007.** L'argument académique pour la virtualisation *au niveau OS* (l'ancêtre conceptuel du conteneur), face aux hyperviseurs. Utile pour situer le débat densité vs isolation.
 
-    Question de recherche à se poser : *où* exactement l'isolation par namespaces est-elle plus faible que celle d'une VM, et quelles défenses (seccomp, gVisor, Kata Containers, micro-VM) referment cet écart ? C'est un domaine de recherche actif.
+Question de recherche à se poser : *où* exactement l'isolation par namespaces est-elle plus faible que celle d'une VM, et quelles défenses (seccomp, gVisor, Kata Containers, micro-VM) referment cet écart ? C'est un domaine de recherche actif.
+:::
 
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -145,3 +149,5 @@ Le tournant technique côté noyau est l'arrivée des **cgroups**, développés 
 
 - L'article de blog historique de Solomon Hykes présentant Docker (dotCloud, 2013) et la fameuse démo qui a lancé l'écosystème.
 - Jérôme Petazzoni, « Anatomy of a Container » (conférence, plusieurs versions en ligne) : une plongée vivante dans les primitives, complémentaire du ch. 15.
+
+</div>

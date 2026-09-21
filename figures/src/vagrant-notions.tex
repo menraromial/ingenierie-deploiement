@@ -1,0 +1,23 @@
+% Ch. 11 : les quatre notions de Vagrant
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Enc, text width=38mm, minimum height=20mm] (vf) at (0,14)
+       {\ico[Enc]{file-code}\enspace\textbf{Vagrantfile}\sub{la définition déclarée}\sub{dans Git}};
+  \node[box=Ocre, text width=38mm, minimum height=20mm] (b) at (0,-14)
+       {\ico[Ocre]{box}\enspace\textbf{Box}\sub{l'image de base}\sub{\cmd{bento/ubuntu-24.04}}};
+  \node[keybox=Ink, text width=24mm, minimum height=12mm, font=\ttfamily\large\bfseries] (up) at (50,0) {vagrant up};
+  \node[box=Sea, text width=34mm, minimum height=20mm] (p) at (96,0)
+       {\textbf{Provider}\sub{l'hyperviseur piloté}\sub{(VirtualBox)}};
+  \node[box=Rule, fill=white, text width=28mm, minimum height=20mm] (vm) at (140,0)
+       {\ico[Muted]{server}\\[1mm]VM créées\\et démarrées};
+  \node[box=Plum, text width=40mm, minimum height=20mm] (pr) at (140,-34)
+       {\textbf{Provisioners}\sub{configuration au premier up}\sub{(shell, ansible)}};
+  \draw[flow] (vf.east) -- (up.west);
+  \draw[flow] (b.east) -- (up.west);
+  \draw[flow] (up) -- (p);
+  \draw[flow] (p) -- (vm);
+  \draw[flow] (vm) -- (pr);
+\end{tikzpicture}
+\end{document}

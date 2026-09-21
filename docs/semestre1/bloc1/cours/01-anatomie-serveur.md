@@ -1,22 +1,46 @@
-# Chapitre 1 : Anatomie d'un serveur
+---
+title: "Ch. 1 : Anatomie d'un serveur"
+sidebar_label: "Ch. 1 : Anatomie d'un serveur"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    - définir ce qu'est un serveur, physiquement et logiquement ;
-    - expliquer la virtualisation et distinguer hyperviseurs de type 1 et de type 2 ;
-    - situer les grands modes d'hébergement (on-premise, mutualisé, dédié, cloud) dans leur contexte historique et économique ;
-    - justifier le choix de VirtualBox pour les TP du semestre.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 1 · Chapitre 1"
+  title="Anatomie d'un serveur"
+  lecture="15 min"
+  competences={['C1']}
+/>
+
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- définir ce qu'est un serveur, physiquement et logiquement ;
+- expliquer la virtualisation et distinguer hyperviseurs de type 1 et de type 2 ;
+- situer les grands modes d'hébergement (on-premise, mutualisé, dédié, cloud) dans leur contexte historique et économique ;
+- justifier le choix de VirtualBox pour les TP du semestre.
+:::
 
 ## 1. Qu'est-ce qu'un serveur ?
 
 Le mot « serveur » désigne deux choses distinctes, et la confusion entre les deux est une source d'erreurs constante chez les débutants :
 
-Un serveur (logiciel)
-:   Un **programme** qui attend des requêtes et y répond : Nginx est un serveur HTTP, PostgreSQL est un serveur de bases de données, sshd est un serveur SSH. Le terme s'oppose à *client*, le programme qui émet la requête.
+<dl>
+<dt>Un serveur (logiciel)</dt>
+<dd>
 
-Un serveur (matériel)
-:   Une **machine** conçue pour exécuter ces programmes en continu : alimentation redondante, disques échangeables à chaud, mémoire ECC (à code correcteur d'erreurs), format rack 19 pouces, et surtout aucun écran ni clavier : on l'administre à distance.
+Un **programme** qui attend des requêtes et y répond : Nginx est un serveur HTTP, PostgreSQL est un serveur de bases de données, sshd est un serveur SSH. Le terme s'oppose à *client*, le programme qui émet la requête.
+
+</dd>
+<dt>Un serveur (matériel)</dt>
+<dd>
+
+Une **machine** conçue pour exécuter ces programmes en continu : alimentation redondante, disques échangeables à chaud, mémoire ECC (à code correcteur d'erreurs), format rack 19 pouces, et surtout aucun écran ni clavier : on l'administre à distance.
+
+</dd>
+</dl>
 
 Dans ce cours, quand le contexte ne précise pas, « serveur » désigne la machine (physique ou virtuelle) sur laquelle on déploie. Un même serveur-machine héberge généralement plusieurs serveurs-logiciels : dans le bloc 1, votre unique VM fera tourner à la fois Nginx, Gunicorn et PostgreSQL.
 
@@ -43,8 +67,9 @@ Tout déploiement consomme quatre ressources, et tout dimensionnement se raisonn
 - **Stockage** : capacité (Go) mais surtout **latence et débit d'entrées/sorties** (IOPS). Une base de données lente est presque toujours un problème d'I/O avant d'être un problème de CPU.
 - **Réseau** : bande passante et latence. Souvent négligé jusqu'au jour où il devient le goulot d'étranglement.
 
-!!! example "Exemple travaillé : dimensionner Listify"
-    L'application fil rouge pour 100 utilisateurs simultanés : Gunicorn avec 4 workers consomme environ 4 × 60 Mo = 240 Mo de RAM ; PostgreSQL avec ses caches, environ 512 Mo pour une petite base ; Nginx est négligeable (quelques Mo) ; le système Ubuntu Server de base, environ 250 Mo. Total ≈ 1 Go : notre VM de TP à 2 Go de RAM est confortable. Le premier facteur limitant en cas de montée en charge ne sera pas la RAM mais le nombre de workers Gunicorn (voir chapitre 4).
+:::exemple[Exemple travaillé : dimensionner Listify]
+L'application fil rouge pour 100 utilisateurs simultanés : Gunicorn avec 4 workers consomme environ 4 × 60 Mo = 240 Mo de RAM ; PostgreSQL avec ses caches, environ 512 Mo pour une petite base ; Nginx est négligeable (quelques Mo) ; le système Ubuntu Server de base, environ 250 Mo. Total ≈ 1 Go : notre VM de TP à 2 Go de RAM est confortable. Le premier facteur limitant en cas de montée en charge ne sera pas la RAM mais le nombre de workers Gunicorn (voir chapitre 4).
+:::
 
 ## 2. La virtualisation
 
@@ -60,32 +85,28 @@ La **virtualisation** répond à ce gaspillage : faire tourner plusieurs **machi
 
 Le logiciel qui crée et exécute les VM s'appelle un **hyperviseur** (*hypervisor*). Son rôle : partager le matériel réel entre plusieurs systèmes invités en leur donnant chacun l'illusion d'un matériel dédié. On distingue deux architectures :
 
-```mermaid
-flowchart TB
-    subgraph T1["Hyperviseur de type 1 (bare metal)"]
-        direction TB
-        M1["Matériel physique"] --> H1["Hyperviseur<br/>(KVM, ESXi, Hyper-V, Xen)"]
-        H1 --> V1["VM 1<br/>OS invité"]
-        H1 --> V2["VM 2<br/>OS invité"]
-        H1 --> V3["VM 3<br/>OS invité"]
-    end
-    subgraph T2["Hyperviseur de type 2 (hébergé)"]
-        direction TB
-        M2["Matériel physique"] --> OS["OS hôte<br/>(votre Linux/Windows/macOS)"]
-        OS --> H2["Hyperviseur<br/>(VirtualBox, VMware Workstation)"]
-        H2 --> V4["VM 1<br/>OS invité"]
-        H2 --> V5["VM 2<br/>OS invité"]
-    end
-```
+<Figure src="hyperviseurs" num="1.1" alt="Deux piles comparées : à gauche l'hyperviseur de type 1 posé directement sur le matériel, portant trois VM ; à droite l'hyperviseur de type 2 posé sur un OS hôte, à côté des applications de l'hôte.">
+  Les deux architectures d'hyperviseur. Dans le type 1, l'hyperviseur est la seule couche entre le matériel et les VM ; dans le type 2, il s'exécute comme une application parmi d'autres, et chaque accès matériel d'une VM traverse l'OS hôte.
+</Figure>
 
-Hyperviseur de type 1 (« bare metal »)
-:   S'exécute **directement sur le matériel**, sans système d'exploitation en dessous. C'est l'architecture des serveurs de production et de tout le cloud : VMware ESXi, Microsoft Hyper-V, Xen (historiquement chez AWS), et **KVM**, le module de virtualisation intégré au noyau Linux (utilisé par AWS depuis 2017, Google Cloud, OpenStack et la quasi-totalité des hébergeurs).
+<dl>
+<dt>Hyperviseur de type 1 (« bare metal »)</dt>
+<dd>
 
-Hyperviseur de type 2 (« hébergé »)
-:   S'exécute **comme une application** au-dessus d'un OS classique. C'est l'outil du poste de travail : VirtualBox, VMware Workstation/Fusion, Parallels. Moins performant (chaque accès matériel traverse l'OS hôte) mais parfait pour développer et apprendre.
+S'exécute **directement sur le matériel**, sans système d'exploitation en dessous. C'est l'architecture des serveurs de production et de tout le cloud : VMware ESXi, Microsoft Hyper-V, Xen (historiquement chez AWS), et **KVM**, le module de virtualisation intégré au noyau Linux (utilisé par AWS depuis 2017, Google Cloud, OpenStack et la quasi-totalité des hébergeurs).
 
-!!! note "Le cas de KVM : la frontière est poreuse"
-    KVM brouille la classification : c'est un module du noyau Linux, donc l'hyperviseur *est* l'OS hôte. On le classe en type 1 parce que le noyau accède directement au matériel, mais un Linux avec KVM reste un système complet capable d'exécuter d'autres applications. Retenez la distinction par l'usage : type 1 = production, type 2 = poste de travail.
+</dd>
+<dt>Hyperviseur de type 2 (« hébergé »)</dt>
+<dd>
+
+S'exécute **comme une application** au-dessus d'un OS classique. C'est l'outil du poste de travail : VirtualBox, VMware Workstation/Fusion, Parallels. Moins performant (chaque accès matériel traverse l'OS hôte) mais parfait pour développer et apprendre.
+
+</dd>
+</dl>
+
+:::note[Le cas de KVM : la frontière est poreuse]
+KVM brouille la classification : c'est un module du noyau Linux, donc l'hyperviseur *est* l'OS hôte. On le classe en type 1 parce que le noyau accède directement au matériel, mais un Linux avec KVM reste un système complet capable d'exécuter d'autres applications. Retenez la distinction par l'usage : type 1 = production, type 2 = poste de travail.
+:::
 
 ### 2.3 Ce que la virtualisation isole, et à quel prix
 
@@ -104,33 +125,17 @@ Gardez cette phrase en tête, elle structurera le débat VM vs conteneurs au sem
 | **Additions invité** (guest additions) | Pilotes installés dans l'invité pour améliorer intégration et performances |
 | **Paravirtualisation** | L'invité *sait* qu'il est virtualisé et coopère avec l'hyperviseur via des pilotes optimisés (virtio) au lieu d'émuler du vrai matériel |
 
-!!! tip "Les snapshots, votre filet de sécurité en TP"
-    Avant chaque manipulation risquée du TP, prenez un snapshot de votre VM. Une commande destructrice, et vous revenez en arrière en dix secondes au lieu de réinstaller. C'est aussi un avant-goût d'un concept clé du parcours : pouvoir revenir à un **état connu**.
+:::tip[Les snapshots, votre filet de sécurité en TP]
+Avant chaque manipulation risquée du TP, prenez un snapshot de votre VM. Une commande destructrice, et vous revenez en arrière en dix secondes au lieu de réinstaller. C'est aussi un avant-goût d'un concept clé du parcours : pouvoir revenir à un **état connu**.
+:::
 
 ## 3. Panorama historique de l'hébergement
 
 Où met-on physiquement le serveur ? La réponse a changé quatre fois en trente ans, et chaque étape est une leçon d'architecture. Ce panorama est à connaître : l'examen comporte régulièrement une question de choix d'hébergement justifié (compétence C1).
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {
-  'fontSize': '22px',
-  'cScale0': '#1a237e', 'cScaleLabel0': '#ffffff',
-  'cScale1': '#283593', 'cScaleLabel1': '#ffffff',
-  'cScale2': '#303f9f', 'cScaleLabel2': '#ffffff',
-  'cScale3': '#3949ab', 'cScaleLabel3': '#ffffff',
-  'cScale4': '#3f51b5', 'cScaleLabel4': '#ffffff',
-  'cScale5': '#5c6bc0', 'cScaleLabel5': '#ffffff',
-  'textColor': '#5c6bc0', 'titleColor': '#5c6bc0'
-}}}%%
-timeline
-    title Évolution des modes d'hébergement
-    1995 : On-premise : le serveur dans le placard de l'entreprise
-    2000 : Hébergement mutualisé : un serveur, des dizaines de sites
-    2003 : Serveur dédié : une machine louée en datacenter
-    2006 : Cloud IaaS : AWS EC2, la VM à l'heure
-    2013 : Conteneurs et PaaS généralisés
-    2015 : Serverless : AWS Lambda, la fonction à la milliseconde
-```
+<Figure src="hebergement-chronologie" num="1.2" alt="Frise chronologique de 1995 à 2015 : on-premise, mutualisé, dédié, cloud IaaS, conteneurs et PaaS, serverless.">
+  Trente ans de modes d'hébergement. À chaque étape, le fournisseur prend en charge une couche de plus, et l'unité facturée devient plus fine : la machine, la VM à l'heure, puis la fonction à la milliseconde.
+</Figure>
 
 ### 3.1 On-premise : le serveur chez soi
 
@@ -167,15 +172,16 @@ Le NIST en donne la définition canonique (cinq caractéristiques : self-service
 | **SaaS** (Software as a Service) | Tout | Vos données, la configuration | Gmail, Office 365 |
 | **FaaS** / serverless | Tout sauf le code de vos fonctions | Le code, découpé en fonctions | AWS Lambda, Cloud Functions |
 
-!!! example "Exemple travaillé : où héberger Listify ?"
-    Étude de cas type examen. Listify pour une PME de 200 employés :
+:::exemple[Exemple travaillé : où héberger Listify ?]
+Étude de cas type examen. Listify pour une PME de 200 employés :
 
-    - **Mutualisé** : impossible, il faut exécuter un processus Python persistant (Gunicorn) et PostgreSQL ; le mutualisé classique n'offre que PHP + MySQL.
-    - **PaaS** : très bon choix réel (on pousse le code, tout est géré), mais pédagogiquement il cache tout ce qu'on veut apprendre.
-    - **IaaS ou dédié** : une VM à ~10 €/mois suffit largement ; c'est le modèle que reproduit notre TP.
-    - **On-premise** : injustifiable pour cette taille, sauf contrainte de données.
+- **Mutualisé** : impossible, il faut exécuter un processus Python persistant (Gunicorn) et PostgreSQL ; le mutualisé classique n'offre que PHP + MySQL.
+- **PaaS** : très bon choix réel (on pousse le code, tout est géré), mais pédagogiquement il cache tout ce qu'on veut apprendre.
+- **IaaS ou dédié** : une VM à ~10 €/mois suffit largement ; c'est le modèle que reproduit notre TP.
+- **On-premise** : injustifiable pour cette taille, sauf contrainte de données.
 
-    Retenez la méthode : partir des **contraintes** (processus persistants ? données sensibles ? charge variable ? budget ? compétences ?) et éliminer, plutôt que partir des modes.
+Retenez la méthode : partir des **contraintes** (processus persistants ? données sensibles ? charge variable ? budget ? compétences ?) et éliminer, plutôt que partir des modes.
+:::
 
 ### 3.5 Et dans ce cours ?
 
@@ -193,12 +199,16 @@ Les notions VirtualBox nécessaires (création de VM, types de réseau, snapshot
 
 ## Ce qu'il faut retenir
 
+<div className="retenir">
+
 1. Un serveur-machine héberge des serveurs-logiciels ; les exigences propres au serveur sont des exigences d'**exploitation** (disponibilité, administration à distance, redondance).
 2. Tout dimensionnement se raisonne sur quatre ressources : CPU, RAM, stockage (IOPS !), réseau.
 3. Un hyperviseur de **type 1** tourne sur le matériel nu (production, cloud) ; un **type 2** tourne sur un OS hôte (poste de travail). KVM est le type 1 du monde Linux.
 4. Une VM virtualise le **matériel** et embarque un OS complet : isolation forte, coût élevé. (Les conteneurs, au S2, virtualiseront l'OS.)
 5. La révolution du cloud est économique et opérationnelle (API self-service, paiement à l'usage, élasticité) plus que technologique. IaaS / PaaS / SaaS se distinguent par la ligne de partage des responsabilités.
 6. Le choix d'un mode d'hébergement se justifie par les contraintes : données, charge, budget, compétences.
+
+</div>
 
 ## Pour préparer le TP 1
 
@@ -207,6 +217,8 @@ Les notions VirtualBox nécessaires (création de VM, types de réseau, snapshot
 - Vérifier dans le BIOS/UEFI que la virtualisation matérielle (Intel VT-x / AMD-V) est activée.
 
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -224,3 +236,5 @@ Les notions VirtualBox nécessaires (création de VM, types de réseau, snapshot
 
 - Keith Adams, Ole Agesen, « A Comparison of Software and Hardware Techniques for x86 Virtualization », *ASPLOS*, 2006 : comment VMware virtualisait le x86 *avant* VT-x, un bijou d'ingénierie.
 - L'histoire d'EC2 racontée par son équipe : Benjamin Black, « EC2 Origins », billet de blog, 2009.
+
+</div>

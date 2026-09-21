@@ -1,0 +1,29 @@
+% Ch. 4 : la chaîne de trois rôles
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Rule, fill=white, text width=24mm, minimum height=22mm] (c) at (-22,0)
+       {\ico[Muted]{users}\\[1mm]Clients\sub{navigateurs}};
+  \node[box=Ocre, text width=32mm, minimum height=26mm] (n) at (46,0)
+       {\textbf{Nginx}\sub{reverse proxy}\sub{+ fichiers statiques}};
+  \node[box=Enc, text width=30mm, minimum height=26mm] (g) at (112,0)
+       {\textbf{Gunicorn}\sub{master}};
+  \foreach \k/\y in {1/16,2/0,3/-16}
+    \node[box=Enc, fill=white, text width=22mm, minimum height=10mm] (w\k) at (158,\y) {worker \k{} {\color{Muted}Flask}};
+  \node[db=Plum, minimum width=28mm, minimum height=24mm] (p) at (222,0) {\textbf{PostgreSQL}};
+
+  \draw[flow] (c) -- node[elabel, above=1mm]{HTTPS} node[elabelc, below=1mm]{:443} (n);
+  \draw[flow] (n) -- node[elabel, above=1mm]{HTTP} node[elabelc, below=1mm]{127.0.0.1:8000} (g);
+  \foreach \k in {1,2,3} {
+    \draw[flow=Enc] (g.east) -- (w\k.west);
+    \draw[flow=Plum] (w\k.east) -- (p.west);
+  }
+  \node[elabel, fill=none] at (190,24) {SQL \cmd{127.0.0.1:5432}};
+
+  \begin{scope}[on background layer]
+    \node[dframe=Muted, fit=(n)(w1)(w3)(p), inner sep=6mm, yshift=3mm] (vm) {};
+  \end{scope}
+  \node[ftitle, anchor=north west] at (vm.north west) {VOTRE SERVEUR};
+\end{tikzpicture}
+\end{document}

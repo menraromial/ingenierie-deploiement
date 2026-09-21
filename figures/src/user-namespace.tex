@@ -1,0 +1,18 @@
+% Ch. 15 : mapping du namespace user
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Brick, text width=52mm, minimum height=24mm] (r) at (0,0)
+       {\textbf{root} {\color{Muted}(UID 0)}\sub{peut installer des paquets,}\sub{écrire dans \cmd{/etc}...}};
+  \node[box=Sea, text width=56mm, minimum height=24mm] (u) at (104,0)
+       {\textbf{UID 100000}\sub{utilisateur \textbf{sans privilège},}\sub{alloué dans \cmd{/etc/subuid}}};
+  \draw[flow, line width=1.1pt] (r) -- node[elabel, above=1mm, fill=none]{mapping du} node[elabel, below=1mm, fill=none]{namespace user} (u);
+  \begin{scope}[on background layer]
+    \node[dframe=Brick, fit=(r), inner sep=5mm, yshift=3mm, inner ysep=8mm] (c) {};
+    \node[dframe=Sea, fit=(u), inner sep=5mm, yshift=3mm, inner ysep=8mm] (h) {};
+  \end{scope}
+  \node[ftitle, text=Brick, anchor=north] at (c.north) {DANS LE CONTENEUR};
+  \node[ftitle, text=Sea, anchor=north] at (h.north) {SUR L'HÔTE};
+\end{tikzpicture}
+\end{document}

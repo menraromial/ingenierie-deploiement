@@ -1,33 +1,32 @@
-# TP 3 : Frontend, Nginx en reverse proxy et TLS
+---
+title: "TP 3 : Frontend, Nginx en reverse proxy et TLS"
+sidebar_label: "TP 3 : Frontend, Nginx en reverse proxy et TLS"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 4 h
-    - **Prérequis** : TP 2 terminé (backend en service) ; chapitres 3 (TLS, pare-feu) et 4 (reverse proxy)
-    - **Livrables** : l'application complète accessible en HTTPS depuis le navigateur du poste hôte à l'adresse `https://listify.local:8443` ; certificat auto-signé documenté ; runbook à jour
-    - **Compétences travaillées** : C1, C6
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    À la fin de ce TP, l'application 3-tiers est **entièrement déployée** : un utilisateur avec un navigateur peut créer et supprimer des tâches.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 1 · Travaux pratiques 3"
+  title="Frontend, Nginx en reverse proxy et TLS"
+  competences={['C1', 'C6']}
+/>
+
+:::fiche
+- **Durée** : 4 h
+- **Prérequis** : TP 2 terminé (backend en service) ; chapitres 3 (TLS, pare-feu) et 4 (reverse proxy)
+- **Livrables** : l'application complète accessible en HTTPS depuis le navigateur du poste hôte à l'adresse `https://listify.local:8443` ; certificat auto-signé documenté ; runbook à jour
+- **Compétences travaillées** : C1, C6
+
+À la fin de ce TP, l'application 3-tiers est **entièrement déployée** : un utilisateur avec un navigateur peut créer et supprimer des tâches.
+:::
 
 ## Ce que vous allez construire
 
-```mermaid
-flowchart LR
-    B["Navigateur du poste hôte<br/>https://listify.local:8443"]
-    subgraph VBox["Redirections NAT"]
-        R1["8443 → 443"]
-        R2["8080 → 80"]
-    end
-    subgraph VM["VM listify-s1"]
-        U["ufw : 22, 80, 443"]
-        N["Nginx :443 TLS<br/>:80 → redirection 301"]
-        S["/ → statiques<br/>/opt/listify/frontend"]
-        A["/api/ → proxy<br/>127.0.0.1:8000"]
-        G["Gunicorn (TP 2)"]
-    end
-    B --> VBox --> U --> N
-    N --> S
-    N --> A --> G
-```
+<Figure src="tp3-architecture" num="TP3.1" alt="Le navigateur de l'hôte passe par les redirections NAT 8443 et 8080, le pare-feu, puis Nginx qui sert les fichiers statiques et relaie /api/ vers Gunicorn.">
+  Ce que vous allez construire : Nginx devient la seule porte d'entrée, en TLS, et aiguille chaque requête vers les fichiers statiques ou vers l'API.
+</Figure>
 
 ## Étape 1 : installer Nginx et comprendre sa structure (30 min)
 
@@ -69,8 +68,12 @@ Côté VirtualBox, ajoutez les redirections NAT (Configuration → Réseau → R
 | http | TCP | 127.0.0.1 | 8080 | *(laisser vide)* | 80 |
 | https | TCP | 127.0.0.1 | 8443 | *(laisser vide)* | 443 |
 
-??? question "Point de contrôle n° 1"
-    Depuis le **poste hôte** : `curl -s http://127.0.0.1:8080 | head -5` affiche la page d'accueil Nginx. Décrivez au runbook le trajet complet du paquet (hôte:8080 → NAT → VM:80 → ufw → nginx), couche par couche : c'est l'exercice de la méthode ascendante du chapitre 3.
+<details className="controle">
+<summary>Point de contrôle n° 1</summary>
+
+Depuis le **poste hôte** : `curl -s http://127.0.0.1:8080 | head -5` affiche la page d'accueil Nginx. Décrivez au runbook le trajet complet du paquet (hôte:8080 → NAT → VM:80 → ufw → nginx), couche par couche : c'est l'exercice de la méthode ascendante du chapitre 3.
+
+</details>
 
 ## Étape 2 : déployer le frontend (20 min)
 
@@ -89,13 +92,15 @@ sudo chmod -R a+rX /opt/listify/frontend
 sudo chmod o+x /opt/listify
 ```
 
-!!! question "Pourquoi root:root et pas listify, ni www-data ?"
-    Réfléchissez avant de lire. Les statiques sont des fichiers que Nginx doit seulement **lire**. S'ils appartenaient à `www-data`, un Nginx compromis pourrait les **modifier** (défiguration). La règle : le propriétaire d'un fichier servi n'est pas celui qui le sert ; `www-data` n'a besoin que de la lecture (`a+rX` : lecture pour tous, traversée des répertoires). Même logique que le `listify.env` en 640 : les permissions expriment une politique.
+:::question[Pourquoi root:root et pas listify, ni www-data ?]
+Réfléchissez avant de lire. Les statiques sont des fichiers que Nginx doit seulement **lire**. S'ils appartenaient à `www-data`, un Nginx compromis pourrait les **modifier** (défiguration). La règle : le propriétaire d'un fichier servi n'est pas celui qui le sert ; `www-data` n'a besoin que de la lecture (`a+rX` : lecture pour tous, traversée des répertoires). Même logique que le `listify.env` en 640 : les permissions expriment une politique.
+:::
 
-!!! danger "Piège Ubuntu : `www-data` ne peut pas traverser `/opt/listify` (erreur 404 / « Permission denied »)"
-    Rendre `frontend/` lisible par tous ne suffit pas : encore faut-il que Nginx puisse **entrer** dans le répertoire parent `/opt/listify` pour l'atteindre. Or vous avez créé `/opt/listify` au TP 2 comme **home** de l'utilisateur `listify`, et Ubuntu crée les répertoires personnels en mode **0750** (`drwxr-x---`, un durcissement plus strict que l'ancien Debian 0755) : les « autres », dont `www-data`, n'ont **aucun** droit dessus. Sans la ligne `sudo chmod o+x /opt/listify` ci-dessus, `GET /` renvoie un 404 et `/var/log/nginx/error.log` affiche `stat("/opt/listify/frontend/") failed (13: Permission denied)`.
+:::danger[Piège Ubuntu : `www-data` ne peut pas traverser `/opt/listify` (erreur 404 / « Permission denied »)]
+Rendre `frontend/` lisible par tous ne suffit pas : encore faut-il que Nginx puisse **entrer** dans le répertoire parent `/opt/listify` pour l'atteindre. Or vous avez créé `/opt/listify` au TP 2 comme **home** de l'utilisateur `listify`, et Ubuntu crée les répertoires personnels en mode **0750** (`drwxr-x---`, un durcissement plus strict que l'ancien Debian 0755) : les « autres », dont `www-data`, n'ont **aucun** droit dessus. Sans la ligne `sudo chmod o+x /opt/listify` ci-dessus, `GET /` renvoie un 404 et `/var/log/nginx/error.log` affiche `stat("/opt/listify/frontend/") failed (13: Permission denied)`.
 
-    On donne `o+x` (traverser) et **non** `o+rx` (lister) : pour servir `/opt/listify/frontend/index.html`, Nginx doit *traverser* `/opt/listify`, pas en *lister* le contenu. C'est la distinction exacte du chapitre 2 (§3.3) : sur un répertoire, `x` = entrer, `r` = lister. Vérifiez avec `ls -ld /opt/listify` (attendu : `drwxr-x--x`, soit 751).
+On donne `o+x` (traverser) et **non** `o+rx` (lister) : pour servir `/opt/listify/frontend/index.html`, Nginx doit *traverser* `/opt/listify`, pas en *lister* le contenu. C'est la distinction exacte du chapitre 2 (§3.3) : sur un répertoire, `x` = entrer, `r` = lister. Vérifiez avec `ls -ld /opt/listify` (attendu : `drwxr-x--x`, soit 751).
+:::
 
 ## Étape 3 : le certificat TLS auto-signé (40 min)
 
@@ -175,8 +180,9 @@ sudo nginx -t                # comme sshd -t : TOUJOURS tester avant de recharge
 sudo systemctl reload nginx  # reload, pas restart : zéro coupure (ch. 2, §4.3)
 ```
 
-!!! note "Détail qui compte : la redirection porte `:8443`"
-    En production, la redirection serait `https://$host$request_uri` (port 443 implicite). Ici, le navigateur du poste hôte passe par la redirection NAT 8443→443 : une redirection vers le 443 « nu » échouerait depuis l'hôte. Notez ce détail au runbook : c'est un exemple minuscule mais réel de **configuration dépendante de l'environnement** (le facteur III frappe même Nginx).
+:::note[Détail qui compte : la redirection porte `:8443`]
+En production, la redirection serait `https://$host$request_uri` (port 443 implicite). Ici, le navigateur du poste hôte passe par la redirection NAT 8443→443 : une redirection vers le 443 « nu » échouerait depuis l'hôte. Notez ce détail au runbook : c'est un exemple minuscule mais réel de **configuration dépendante de l'environnement** (le facteur III frappe même Nginx).
+:::
 
 Côté poste hôte, donnez un nom à votre serveur (ch. 3, §3.2 : `/etc/hosts` passe avant le DNS) :
 
@@ -203,13 +209,14 @@ curl -s  -o /dev/null -w '%{redirect_url}\n' http://listify.local:8080/
 
 Puis **au navigateur** : `https://listify.local:8443`. L'avertissement de sécurité est attendu : lisez-le vraiment (quel est le message exact ? quelle CA manque ?), acceptez l'exception, et utilisez l'application : créez des tâches, supprimez-en. Vous devez voir la tâche `test tp2` créée... au TP 2 : la persistance traverse les tiers.
 
-!!! question "Pourquoi le navigateur affiche-t-il « non sécurisé » malgré le certificat ?"
-    C'est le résultat pédagogique voulu, et il illustre les **deux garanties distinctes** de TLS (ch. 3, §6.1-6.2) que le navigateur, lui, ne confond pas :
+:::question[Pourquoi le navigateur affiche-t-il « non sécurisé » malgré le certificat ?]
+C'est le résultat pédagogique voulu, et il illustre les **deux garanties distinctes** de TLS (ch. 3, §6.1-6.2) que le navigateur, lui, ne confond pas :
 
-    - **Le chiffrement fonctionne.** La session est bien chiffrée : un certificat auto-signé chiffre aussi bien qu'un certificat payant. Contre un espion *passif*, vous êtes protégé.
-    - **L'authentification échoue.** Un certificat ne porte pas qu'une clé publique : il doit être **signé par une autorité de certification (CA) présente dans le magasin de confiance du navigateur**. Cette signature atteste que la clé appartient bien à `listify.local`. Or le vôtre est **signé par lui-même** (`Issuer` = `Subject`, vu à l'étape 3). Aucune CA connue ne le cautionne : le navigateur ne peut donc pas **prouver l'identité** du serveur, et avertit.
+- **Le chiffrement fonctionne.** La session est bien chiffrée : un certificat auto-signé chiffre aussi bien qu'un certificat payant. Contre un espion *passif*, vous êtes protégé.
+- **L'authentification échoue.** Un certificat ne porte pas qu'une clé publique : il doit être **signé par une autorité de certification (CA) présente dans le magasin de confiance du navigateur**. Cette signature atteste que la clé appartient bien à `listify.local`. Or le vôtre est **signé par lui-même** (`Issuer` = `Subject`, vu à l'étape 3). Aucune CA connue ne le cautionne : le navigateur ne peut donc pas **prouver l'identité** du serveur, et avertit.
 
-    Autrement dit, le cadenas barré ne dit pas « on peut lire vos données » (elles sont chiffrées), il dit « **je ne peux pas prouver que vous parlez au bon serveur** ». Contre un attaquant *actif* qui s'interposerait avec son propre certificat auto-signé, le navigateur ne saurait pas faire la différence : d'où l'alerte. Trois façons de la lever, de la moins à la plus propre : (1) accepter l'exception à la main, comme ici (vous jouez vous-même le vérificateur d'identité, acceptable en local seulement) ; (2) créer votre propre CA et l'importer dans le magasin du navigateur, puis signer le certificat avec elle (bonus 1 de l'étape 6, ce que font les entreprises en interne) ; (3) un certificat signé par une CA publique comme Let's Encrypt (impossible en TP faute de domaine public, voir l'étape 6). Retenez la formule : un site HTTPS n'est pas « sûr » dans l'absolu, il est *chiffré et authentifié* ; le vôtre est chiffré mais non authentifié.
+Autrement dit, le cadenas barré ne dit pas « on peut lire vos données » (elles sont chiffrées), il dit « **je ne peux pas prouver que vous parlez au bon serveur** ». Contre un attaquant *actif* qui s'interposerait avec son propre certificat auto-signé, le navigateur ne saurait pas faire la différence : d'où l'alerte. Trois façons de la lever, de la moins à la plus propre : (1) accepter l'exception à la main, comme ici (vous jouez vous-même le vérificateur d'identité, acceptable en local seulement) ; (2) créer votre propre CA et l'importer dans le magasin du navigateur, puis signer le certificat avec elle (bonus 1 de l'étape 6, ce que font les entreprises en interne) ; (3) un certificat signé par une CA publique comme Let's Encrypt (impossible en TP faute de domaine public, voir l'étape 6). Retenez la formule : un site HTTPS n'est pas « sûr » dans l'absolu, il est *chiffré et authentifié* ; le vôtre est chiffré mais non authentifié.
+:::
 
 Enfin, observez le travail du proxy dans les journaux :
 

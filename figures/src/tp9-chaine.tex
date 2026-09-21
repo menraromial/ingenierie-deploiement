@@ -1,0 +1,22 @@
+% TP 9 : la chaîne complète
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Enc, fill=white, text width=40mm, minimum height=13mm] (c) at (0,22) {code applicatif\sub{\cmd{backend/ frontend/}}};
+  \node[box=Enc, fill=white, text width=40mm, minimum height=13mm] (i) at (0,4) {infrastructure\sub{\cmd{deploy/Vagrantfile}}\sub{\cmd{deploy/ansible/}}};
+  \node[keybox=Enc, text width=40mm, minimum height=11mm, font=\ttfamily\large\bfseries] (s) at (0,-16) {deploy.sh};
+  \begin{scope}[on background layer]
+    \node[dframe=Enc, fit=(c)(i)(s), inner sep=5mm, yshift=3mm, inner ysep=8mm] (g) {};
+  \end{scope}
+  \node[ftitle, text=Enc, anchor=north west] at (g.north west) {DÉPÔT GIT \textperiodcentered{} SOURCE DE VÉRITÉ};
+
+  \node[box=Sea, text width=36mm, minimum height=20mm] (p) at (86,-16) {\textbf{4 VM créées}};
+  \node[box=Sea, text width=36mm, minimum height=20mm] (f) at (142,-16) {\textbf{4 VM configurées}};
+  \node[box=Ocre, text width=44mm, minimum height=20mm] (app) at (202,-16) {\ico[Ocre]{globe}\\[1mm]\cmd{https://listify.local}\sub{opérationnel}};
+  \draw[flow] (s) -- node[elabelc, above=1mm, fill=none, pos=.6]{1. vagrant up} (p);
+  \draw[flow] (p) -- (f);
+  \draw[flow] (s.south) -- ++(0,-12) -| node[elabelc, pos=.25, below=1mm, fill=none]{2. ansible-playbook} (f.south);
+  \draw[flow] (f) -- (app);
+\end{tikzpicture}
+\end{document}

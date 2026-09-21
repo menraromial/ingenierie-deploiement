@@ -1,4 +1,17 @@
-# Semestre 2 : Conteneurs, orchestration et livraison continue
+---
+title: "Vue d'ensemble"
+sidebar_label: "Vue d'ensemble"
+hide_title: true
+---
+
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
+
+<ChapterHead
+  kicker="Semestre 2 · Conteneurs, orchestration, CI/CD"
+  title="Semestre 2 : Conteneurs, orchestration et livraison continue"
+  lecture="5 min"
+/>
 
 **Objectif général :** passer de « je déploie des machines » à « je déploie des applications » ; automatiser le chemin du commit à la production.
 
@@ -8,19 +21,9 @@
 
 Au bloc 3 du S1, une commande reconstruisait quatre machines et y déployait Listify. Mais vous avez vous-mêmes listé ce qui restait fragile (TP 9, étape 3, point 4) : l'orchestration était un script, la reconstruction détruisait tout au lieu de faire évoluer en douceur, et surtout **l'unité de déploiement restait la machine**. Ce semestre change d'unité : on ne déploie plus des machines, on déploie des **applications empaquetées** (des conteneurs), et on confie leur cycle de vie à un **orchestrateur** qui les place, les redémarre, les met à l'échelle et les remplace sans coupure. Le fil rouge Listify est repris et conteneurisé.
 
-```mermaid
-flowchart LR
-    subgraph B1["Bloc 1 : conteneurisation"]
-        C["Podman<br/>namespaces, cgroups<br/>images OCI"]
-    end
-    subgraph B2["Bloc 2 : orchestration"]
-        K["Kubernetes<br/>réconciliation<br/>Deployment, Service, Ingress"]
-    end
-    subgraph B3["Bloc 3 : CI/CD + observabilité"]
-        P["Du commit à la prod<br/>GitOps<br/>Prometheus / Grafana"]
-    end
-    C --> K --> P
-```
+<Figure src="s2-parcours" alt="Trois blocs de gauche à droite : conteneurisation avec Podman, orchestration avec Kubernetes, puis CI/CD et observabilité.">
+  Les trois blocs du semestre 2. Chacun s'appuie sur le précédent : on n'orchestre bien que ce qu'on sait conteneuriser, on n'automatise bien que ce qu'on sait orchestrer.
+</Figure>
 
 ## La continuité conceptuelle avec le S1 (à rendre explicite)
 

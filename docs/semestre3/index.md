@@ -1,11 +1,24 @@
-# Semestre 3 : Mise en production des produits d'IA et de la donnée (MLOps & Big Data)
+---
+title: "Vue d'ensemble"
+sidebar_label: "Semestre 3"
+hide_title: true
+---
+
+import ChapterHead from '@site/src/components/ChapterHead';
+
+<ChapterHead
+  kicker="Semestre 3 · MLOps et big data"
+  title="Semestre 3 : Mise en production des produits d'IA et de la donnée (MLOps & Big Data)"
+  lecture="5 min"
+/>
 
 **Objectif général :** appliquer toute la stack des semestres 1-2 au cas particulier, et plus difficile, des produits pilotés par les données et les modèles.
 
 **Prérequis :** S1 + S2 ; bases de Python et de machine learning (un modèle scikit-learn suffit ; ce n'est **pas** un cours de ML, c'est un cours d'industrialisation du ML).
 
-!!! info "Contenu en cours de rédaction"
-    Le contenu détaillé de ce semestre sera publié bloc par bloc, dans l'ordre du parcours. Le plan ci-dessous est contractuel.
+:::info[Contenu en cours de rédaction]
+Le contenu détaillé de ce semestre sera publié bloc par bloc, dans l'ordre du parcours. Le plan ci-dessous est contractuel.
+:::
 
 ## Plan du semestre
 

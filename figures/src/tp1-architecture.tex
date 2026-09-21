@@ -1,0 +1,30 @@
+% TP 1 : ce que vous allez construire
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Rule, fill=white, text width=40mm, minimum height=20mm] (t) at (0,10)
+       {\ico[Muted]{terminal}\\[1mm]\textbf{Terminal}\\[.5mm]\cmd{ssh -p 2222 deploy@127.0.0.1}};
+  \node[box=Ocre, text width=40mm, minimum height=14mm] (k) at (0,-18)
+       {\ico[Ocre]{key}\enspace\textbf{Clé privée}\\[.5mm]\cmd{\textasciitilde/.ssh/id\_ed25519}};
+
+  \node[box=Brick, text width=30mm, minimum height=20mm] (u) at (84,10)
+       {\ico[Brick]{shield-alt}\\[1mm]\textbf{ufw}\sub{deny incoming}\sub{allow 22/tcp}};
+  \node[box=Sea, text width=34mm, minimum height=20mm] (s) at (130,10)
+       {\ico[Sea]{lock}\\[1mm]\textbf{sshd durci}\sub{clés seulement}\sub{root interdit}};
+  \node[box=Enc, text width=30mm, minimum height=20mm] (d) at (176,10)
+       {\ico[Enc]{user}\\[1mm]\textbf{deploy}\sub{membre de sudo}};
+
+  \draw[flow] (t) -- node[elabel, above=1mm, pos=.5]{NAT} node[elabelc, below=1mm, pos=.5]{2222 $\rightarrow$ 22} (u);
+  \draw[flow] (u) -- (s);
+  \draw[flow] (s) -- (d);
+  \draw[dflow=Ocre] (k.east) -| node[elabel, pos=.25, below=1mm]{authentifie} (s.south);
+
+  \begin{scope}[on background layer]
+    \node[frame, fit=(t)(k), inner sep=5mm, yshift=3mm, inner ysep=8mm] (h) {};
+    \node[dframe=Sea, fit=(u)(s)(d)(u|-k.south), inner sep=5mm, yshift=3mm, inner ysep=8mm] (vm) {};
+  \end{scope}
+  \node[ftitle, anchor=north west] at (h.north west) {VOTRE POSTE (HÔTE)};
+  \node[ftitle, text=Sea, anchor=north west] at (vm.north west) {VM LISTIFY-S1 \textperiodcentered{} UBUNTU SERVER 24.04 \textperiodcentered{} 2 GO \textperiodcentered{} 2 VCPU};
+\end{tikzpicture}
+\end{document}

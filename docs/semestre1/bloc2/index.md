@@ -1,4 +1,17 @@
-# Bloc 2 : architecture multi-machines, un service par VM
+---
+title: "Présentation du bloc"
+sidebar_label: "Présentation du bloc"
+hide_title: true
+---
+
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
+
+<ChapterHead
+  kicker="Semestre 1 · Bloc 2"
+  title="Bloc 2 : architecture multi-machines, un service par VM"
+  lecture="5 min"
+/>
 
 **Semaines 6 à 8.** Au bloc 1, les trois tiers de Listify cohabitaient sur une seule machine. Vous allez maintenant les **éclater sur des VM distinctes**, reliées par un réseau privé, puis ajouter un deuxième backend derrière un répartiteur de charge. Toujours à la main : la douleur du bloc 1, multipliée par le nombre de machines, est précisément ce qui rendra l'Infrastructure as Code du bloc 3 désirable.
 
@@ -10,22 +23,9 @@ Et parce que ce bloc fait émerger **le** problème qui justifie la suite du sem
 
 ## L'architecture cible
 
-```mermaid
-flowchart TB
-    H["Poste hôte<br/>navigateur + SSH"]
-    subgraph HO["Réseau privé host-only : 192.168.56.0/24"]
-        LB["listify-lb (.10)<br/>Nginx : TLS, statiques,<br/>répartition de charge"]
-        A1["listify-app1 (.21)<br/>Gunicorn :8000"]
-        A2["listify-app2 (.22)<br/>Gunicorn :8000<br/>(ajouté au TP 6)"]
-        DB[("listify-db (.31)<br/>PostgreSQL :5432")]
-    end
-    H -->|"https://listify.local (443)"| LB
-    H -.->|"SSH direct 192.168.56.x"| HO
-    LB --> A1
-    LB --> A2
-    A1 --> DB
-    A2 --> DB
-```
+<Figure src="bloc2-architecture" alt="Le poste hôte joint listify-lb en HTTPS ; dans le réseau host-only 192.168.56.0/24, listify-lb répartit vers listify-app1 et listify-app2, qui interrogent listify-db.">
+  L'architecture cible du bloc 2 : quatre machines, une par rôle, sur un réseau privé dont le dernier octet de chaque adresse encode la fonction.
+</Figure>
 
 Chaque VM garde en plus sa carte NAT pour accéder à Internet (installation de paquets) : le réseau privé, lui, ne transporte que le trafic entre nos machines. Ce schéma en « tiers » (entrée publique → applicatif → données) est celui que vous retrouverez partout, du datacenter d'entreprise aux VPC des clouds publics.
 

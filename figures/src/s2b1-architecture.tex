@@ -1,0 +1,21 @@
+% S2 Bloc 1 : architecture cible
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Ocre, text width=38mm, minimum height=20mm] (f) at (0,0) {\ico[Ocre]{cube}\enspace\textbf{frontend}\sub{Nginx + statiques}};
+  \node[box=Enc,  text width=38mm, minimum height=20mm] (b) at (58,0) {\ico[Enc]{cube}\enspace\textbf{backend}\sub{Gunicorn}};
+  \node[db=Plum, minimum width=40mm, minimum height=22mm] (d) at (116,0) {\textbf{db}\sub{PostgreSQL + volume}};
+  \draw[flow] (f) -- node[elabelc, above=1mm, fill=none]{/api/} (b);
+  \draw[flow=Plum] (b) -- (d);
+  \begin{scope}[on background layer]
+    \node[dframe=Sea, fit=(f)(b)(d), inner sep=5mm, yshift=3mm, inner ysep=8mm] (pod) {};
+  \end{scope}
+  \node[ftitle, text=Sea, anchor=north west] at (pod.north west) {POD LISTIFY \textperiodcentered{} \texttt{podman kube generate} $\rightarrow$ PASSERELLE VERS KUBERNETES};
+
+  \node[box=Rule, fill=white, text width=44mm, minimum height=16mm] (reg) at (58,-44) {\ico[Muted]{warehouse}\enspace\textbf{Registre local}\sub{conteneur \cmd{registry:2}}};
+  \node[box=Brick, text width=40mm, minimum height=16mm] (tr) at (122,-44) {\ico[Brick]{search}\enspace\textbf{Trivy}\sub{scan de vulnérabilités}};
+  \draw[dflow] (b.south) -- node[elabel, right=1mm, fill=none]{push / pull} (reg.north);
+  \draw[dflow=Brick] (reg) -- node[elabel, above=1mm, fill=none]{scan} (tr);
+\end{tikzpicture}
+\end{document}

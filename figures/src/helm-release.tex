@@ -1,0 +1,14 @@
+% Ch. 22 : chart, valeurs, release
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Enc, text width=42mm, minimum height=18mm] (c) at (0,13) {\textbf{Chart}\sub{templates +}\sub{valeurs par défaut}};
+  \node[box=Ocre, text width=42mm, minimum height=18mm] (v) at (0,-13) {\cmd{values-prod.yaml}\\[.5mm]{\small\ttfamily replicas: 3, tag: 2.1}};
+  \node[keybox=Ink, text width=28mm, minimum height=12mm, font=\ttfamily\large\bfseries] (h) at (56,0) {helm install};
+  \node[box=Sea, text width=50mm, minimum height=22mm] (r) at (118,0) {\textbf{Release} \cmd{listify}\sub{manifestes rendus}\sub{et appliqués au cluster}};
+  \draw[flow] (c.east) -- (h.west);
+  \draw[flow] (v.east) -- (h.west);
+  \draw[flow] (h) -- (r);
+\end{tikzpicture}
+\end{document}

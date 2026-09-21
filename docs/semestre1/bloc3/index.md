@@ -1,4 +1,17 @@
-# Bloc 3 : Infrastructure as Code
+---
+title: "Présentation du bloc"
+sidebar_label: "Présentation du bloc"
+hide_title: true
+---
+
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
+
+<ChapterHead
+  kicker="Semestre 1 · Bloc 3"
+  title="Bloc 3 : Infrastructure as Code"
+  lecture="5 min"
+/>
 
 **Semaines 9 à 13.** Vous avez éprouvé deux fois la même douleur : au défi du bloc 1 (impossible de redéployer en 30 minutes) et aux TP 5-6 (chaque geste répété sur N machines, chaque ajout de serveur touchant N fichiers). Vous avez même écrit vous-mêmes le cahier des charges de la solution (ch. 9, §4). Ce bloc la livre : **l'infrastructure décrite dans des fichiers, versionnée dans Git, appliquée par des outils idempotents**.
 
@@ -6,25 +19,9 @@
 
 ## Les trois problèmes, les trois outils
 
-```mermaid
-flowchart LR
-    subgraph P["Les trois problèmes de l'IaC (ch. 10)"]
-        direction TB
-        P1["<b>Provisionner</b><br/>créer les machines,<br/>réseaux, disques"]
-        P2["<b>Configurer</b><br/>les amener dans<br/>l'état voulu"]
-        P3["<b>Orchestrer</b><br/>dans le bon ordre,<br/>à la bonne échelle"]
-    end
-    subgraph O["Les outils du bloc"]
-        direction TB
-        V["Vagrant (ch. 11, TP 7)<br/>VM locales déclarées"]
-        A["Ansible (ch. 12, TP 8)<br/>rôles idempotents sur SSH"]
-        T["Terraform (ch. 13, TP 10)<br/>état désiré, plan/apply"]
-    end
-    P1 --- V
-    P2 --- A
-    P1 --- T
-    P3 -.->|"S2 : Kubernetes<br/>S3 : Airflow"| O
-```
+<Figure src="iac-problemes-outils" alt="À gauche les trois problèmes de l'IaC (provisionner, configurer, orchestrer), à droite les outils du bloc : Vagrant et Terraform provisionnent, Ansible configure ; l'orchestration est renvoyée aux semestres suivants.">
+  Les trois problèmes de l'Infrastructure as Code et l'outil qui répond à chacun. L'orchestration, laissée de côté ici, reviendra avec Kubernetes au semestre 2 et Airflow au semestre 3.
+</Figure>
 
 L'orchestration, troisième problème, n'a pas d'outil dédié ce semestre : un simple script ordonnera Vagrant puis Ansible. Les orchestrateurs véritables (Kubernetes pour les services, Airflow pour les tâches) sont la matière des semestres 2 et 3 : vous saurez alors exactement quel vide ils comblent.
 

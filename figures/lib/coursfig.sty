@@ -1,0 +1,101 @@
+% =====================================================================
+%  coursfig.sty : style des figures du cours « Ingénierie du Déploiement »
+%  Esthétique de manuel universitaire : traits fins, aplats doux,
+%  typographie Source Sans (identique au site), icônes Font Awesome
+%  employées avec parcimonie. Chaque figure : standalone -> PDF -> SVG.
+% =====================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{coursfig}[2026/09/21 figures du cours]
+
+\RequirePackage{fontspec}
+\setsansfont{Source Sans Pro}[Scale=1.0]
+\renewcommand{\familydefault}{\sfdefault}
+\RequirePackage{fontawesome5}
+\RequirePackage{tikz}
+\usetikzlibrary{positioning,fit,backgrounds,calc,arrows.meta,shapes.geometric,shapes.misc,decorations.pathreplacing,matrix}
+
+% ---------------- Palette (miroir des variables CSS du site) ----------
+\definecolor{Ink}{HTML}{1F2430}      % texte
+\definecolor{Muted}{HTML}{5B6272}    % texte secondaire
+\definecolor{Rule}{HTML}{C9CDD6}     % traits neutres
+\definecolor{Paper}{HTML}{F7F6F2}    % fond papier
+\definecolor{RuleBg}{HTML}{F7F6F2}
+\definecolor{Enc}{HTML}{1F3A68}      % bleu encre (couleur principale)
+\definecolor{EncBg}{HTML}{E6ECF5}
+\definecolor{Sea}{HTML}{1D6F6A}      % sarcelle (couche logicielle)
+\definecolor{SeaBg}{HTML}{E1EFEC}
+\definecolor{Ocre}{HTML}{A8680C}     % ocre (accent, matériel)
+\definecolor{OcreBg}{HTML}{F6ECDB}
+\definecolor{Brick}{HTML}{A33A2B}    % brique (pannes, danger)
+\definecolor{BrickBg}{HTML}{F6E3DF}
+\definecolor{Plum}{HTML}{5E3F7A}     % prune (données, recherche)
+\definecolor{PlumBg}{HTML}{ECE5F2}
+
+% ---------------- Styles de base ---------------------------------------
+\tikzset{
+  every picture/.style={line cap=round, line join=round, font=\sffamily\large, text=Ink},
+  % boîte : aplat doux + bord de la couleur
+  box/.style={draw=#1, fill=#1Bg, line width=.7pt, rounded corners=2pt,
+              minimum height=10mm, inner xsep=3mm, align=flush center, text=Ink},
+  box/.default=Enc,
+  % boîte appuyée (élément central de la figure)
+  keybox/.style={draw=#1, fill=#1, line width=.7pt, rounded corners=2pt,
+              minimum height=9mm, inner xsep=3mm, align=flush center, text=white, font=\sffamily\large\bfseries},
+  keybox/.default=Enc,
+  % couche d'une pile (figures en strates)
+  layer/.style={draw=#1, fill=#1Bg, line width=.7pt, minimum height=9mm,
+                align=center, text=Ink},
+  layer/.default=Enc,
+  % cadre de regroupement
+  frame/.style={draw=Rule, line width=.6pt, rounded corners=3pt, inner sep=4mm},
+  dframe/.style={draw=#1, dash pattern=on 3pt off 2pt, line width=.6pt,
+                 rounded corners=3pt, inner sep=4mm},
+  dframe/.default=Muted,
+  % titre de cadre (petites capitales discrètes)
+  ftitle/.style={font=\sffamily\normalsize\bfseries, text=Muted, inner sep=1mm},
+  % annotation en marge
+  note/.style={font=\sffamily\normalsize\itshape, text=Muted, align=flush left},
+  % flèches
+  flow/.style={-{Stealth[length=2.2mm,width=1.6mm]}, draw=#1, line width=.8pt},
+  flow/.default=Ink,
+  dflow/.style={flow=#1, dash pattern=on 3pt off 2pt},
+  dflow/.default=Muted,
+  % accolade d'annotation
+  brace/.style={decorate, decoration={brace, amplitude=4pt}, draw=Muted, line width=.6pt},
+  % pastille numérotée (étapes)
+  step/.style={circle, fill=#1, text=white, font=\sffamily\scriptsize\bfseries,
+               inner sep=0pt, minimum size=4.2mm},
+  step/.default=Ocre,
+}
+
+\tikzset{
+  % base de données (cylindre)
+  db/.style={cylinder, shape border rotate=90, aspect=.22, draw=#1, fill=#1Bg,
+             line width=.7pt, minimum width=24mm, minimum height=16mm, align=center, text=Ink},
+  db/.default=Plum,
+  % état d'un automate
+  state/.style={rounded rectangle, draw=#1, fill=#1Bg, line width=.8pt,
+                minimum height=10mm, minimum width=26mm, font=\sffamily\large\bfseries, text=Ink},
+  state/.default=Enc,
+  initial dot/.style={circle, fill=Ink, minimum size=3mm, inner sep=0pt},
+  elabel/.style={font=\sffamily\normalsize, text=Ink, fill=Paper, inner sep=1.2pt, align=center},
+  elabelc/.style={font=\ttfamily\normalsize, text=Ink, fill=Paper, inner sep=1.2pt, align=center},
+  % diagrammes de séquence
+  seqhead/.style={box=#1, minimum width=34mm, minimum height=11mm, font=\sffamily\large\bfseries},
+  seqhead/.default=Enc,
+  lifeline/.style={draw=Rule, line width=.8pt, dash pattern=on 4pt off 3pt},
+  msg/.style={flow=#1},
+  msg/.default=Ink,
+  ret/.style={-{Stealth[length=2.2mm,width=1.6mm,open]}, draw=#1, line width=.8pt, dash pattern=on 4pt off 2.5pt},
+  ret/.default=Muted,
+  mlabel/.style={font=\sffamily\normalsize, text=Ink, above=.4mm, align=center},
+  % police à chasse fixe dans une boîte
+  code/.style={font=\ttfamily\normalsize},
+}
+% texte à chasse fixe dans une étiquette
+\newcommand{\cmd}[1]{{\ttfamily\small #1}}
+% sous-titre discret dans une boîte (2e ligne)
+\newcommand{\sub}[1]{\\[-.4mm]{\normalsize\color{Muted}#1}}
+% icône alignée sur la ligne de base
+\newcommand{\ico}[2][Ink]{\textcolor{#1}{\faIcon{#2}}}
+\endinput

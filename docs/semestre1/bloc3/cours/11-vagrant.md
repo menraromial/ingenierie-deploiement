@@ -1,12 +1,26 @@
-# Chapitre 11 : Vagrant, décrire des machines
+---
+title: "Ch. 11 : Vagrant, décrire des machines"
+sidebar_label: "Ch. 11 : Vagrant, décrire des machines"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    - expliquer le rôle de Vagrant et ses quatre notions : Vagrantfile, box, provider, provisioner ;
-    - lire et écrire un Vagrantfile multi-machines avec réseau privé ;
-    - manier le cycle de vie (`up`, `halt`, `destroy`, `reload`, `ssh`) et comprendre pourquoi `destroy && up` est un geste **désirable** ;
-    - situer honnêtement Vagrant : formidable pour les environnements locaux, hors de propos en production.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 3 · Chapitre 11"
+  title="Vagrant, décrire des machines"
+  lecture="5 min"
+/>
+
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- expliquer le rôle de Vagrant et ses quatre notions : Vagrantfile, box, provider, provisioner ;
+- lire et écrire un Vagrantfile multi-machines avec réseau privé ;
+- manier le cycle de vie (`up`, `halt`, `destroy`, `reload`, `ssh`) et comprendre pourquoi `destroy && up` est un geste **désirable** ;
+- situer honnêtement Vagrant : formidable pour les environnements locaux, hors de propos en production.
+:::
 
 ## 1. L'outil-pont
 
@@ -14,19 +28,15 @@ Vagrant (créé par Mitchell Hashimoto en 2010, première brique de ce qui devie
 
 C'est l'outil-pont idéal entre le VirtualBox manuel des blocs 1-2 et l'IaC : même hyperviseur, mêmes VM, mêmes réseaux ; seule la *manière de les obtenir* change. Tout ce que vous avez cliqué (création, RAM, cartes réseau, redirections) devient une ligne de code, et le chapitre 10 s'incarne : le Vagrantfile est l'**état désiré** de votre parc local.
 
-!!! note "Une précision de licence"
-    Depuis 2023, HashiCorp distribue ses outils (Vagrant, Terraform...) sous licence BUSL : le code est public et l'usage gratuit, mais ce n'est plus de l'open source au sens strict (restrictions pour les offres concurrentes). Sans conséquence pour nos usages ni pour la quasi-totalité des usages en entreprise ; pour Terraform, un fork communautaire existe (OpenTofu, ch. 13). À savoir, car la question des licences fait partie du métier.
+:::note[Une précision de licence]
+Depuis 2023, HashiCorp distribue ses outils (Vagrant, Terraform...) sous licence BUSL : le code est public et l'usage gratuit, mais ce n'est plus de l'open source au sens strict (restrictions pour les offres concurrentes). Sans conséquence pour nos usages ni pour la quasi-totalité des usages en entreprise ; pour Terraform, un fork communautaire existe (OpenTofu, ch. 13). À savoir, car la question des licences fait partie du métier.
+:::
 
 ## 2. Les quatre notions
 
-```mermaid
-flowchart LR
-    VF["<b>Vagrantfile</b><br/>la définition déclarée<br/>(dans Git)"] --> V["vagrant up"]
-    B["<b>Box</b><br/>l'image de base<br/>(bento/ubuntu-24.04)"] --> V
-    V --> P["<b>Provider</b><br/>l'hyperviseur piloté<br/>(VirtualBox)"]
-    P --> VM["VM créées et démarrées"]
-    VM --> PR["<b>Provisioners</b><br/>configuration au premier up<br/>(shell, ansible)"]
-```
+<Figure src="vagrant-notions" num="11.1" alt="Le Vagrantfile et la box alimentent vagrant up, qui pilote le provider VirtualBox ; les VM créées sont ensuite configurées par les provisioners.">
+  Les quatre notions de Vagrant et leur enchaînement. Seul le Vagrantfile est écrit par vous et versionné ; la box est téléchargée, le provider est installé une fois pour toutes.
+</Figure>
 
 **Le Vagrantfile.** Un fichier Ruby, mais utilisé comme un langage de description : vous n'écrirez presque jamais de « vraie » logique, seulement des blocs de configuration (et une boucle, très lisible, pour nos quatre machines). Sa présence à la racine du dépôt suffit : `vagrant up` le trouve et l'applique.
 
@@ -95,12 +105,18 @@ Cadrage honnête, car la confusion est fréquente : Vagrant est un outil d'**env
 
 ## Ce qu'il faut retenir
 
+<div className="retenir">
+
 1. Vagrant = les clics VirtualBox remplacés par un **Vagrantfile** versionné : l'état désiré du parc local. Quatre notions : Vagrantfile, box (image de base, source connue, version épinglée), provider (VirtualBox), provisioner (délègue la configuration).
 2. Cycle de vie : `up`, `ssh`, `halt`, `provision`, `reload`, et surtout **`destroy && up`**, le geste-phénix qui rend les machines jetables et la définition précieuse. `.vagrant/` = état local, dans `.gitignore`.
 3. Le multi-machines s'écrit en une boucle sur un dictionnaire nom → identité : rôle factorisé, identités en données ; les pièges d'identité du clonage manuel (MAC, hostname, clés d'hôte) disparaissent par construction.
 4. Vagrant est fait pour le **local** ; la production relève de Terraform. Même concept, autre théâtre d'opérations.
 
+</div>
+
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -116,3 +132,5 @@ Cadrage honnête, car la confusion est fréquente : Vagrant est un outil d'**env
 
 - Packer ([developer.hashicorp.com/packer](https://developer.hashicorp.com/packer)) : l'outil qui fabrique les boxes (et les images cloud, et bientôt vos images de conteneurs) ; fermez la boucle conceptuelle : Packer fabrique l'image, Vagrant/Terraform l'instancient.
 - Le provider libvirt (vagrant-libvirt) : la voie 100 % libre KVM/QEMU, utile si VirtualBox pose problème sur vos machines Linux personnelles.
+
+</div>

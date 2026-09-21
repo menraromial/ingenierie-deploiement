@@ -1,0 +1,35 @@
+% Ch. 6 : segmentation en zones
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Ocre, text width=40mm, minimum height=22mm] (lb) at (0,0)
+       {\textbf{listify-lb}\sub{seul joignable de}\sub{l'extérieur (80, 443)}};
+  \node[box=Enc, text width=30mm] (a1) at (80,12) {\textbf{listify-app1}};
+  \node[box=Enc, text width=30mm] (a2) at (80,-12) {\textbf{listify-app2}};
+  \node[db=Plum, minimum width=30mm] (db) at (160,0) {\textbf{listify-db}};
+
+  \foreach \a in {a1,a2} {
+    \draw[flow] (lb.east) -- (\a.west);
+    \draw[flow=Plum] (\a.east) -- (db.west);
+  }
+  \node[elabelc, fill=none] at (42,16) {8000};
+  \node[elabel, fill=none, text=Muted] at (42,-16) {uniquement};
+  \node[elabelc, fill=none] at (122,16) {5432};
+  \node[elabel, fill=none, text=Muted] at (122,-16) {uniquement};
+
+  \begin{scope}[on background layer]
+    \node[dframe=Ocre, fit=(lb), inner sep=5mm, yshift=3mm, inner ysep=8mm] (z1) {};
+    \node[dframe=Enc,  fit=(a1)(a2), inner sep=5mm, yshift=3mm, inner ysep=8mm] (z2) {};
+    \node[dframe=Plum, fit=(db), inner sep=5mm, yshift=3mm, inner ysep=8mm] (z3) {};
+  \end{scope}
+  \node[ftitle, text=Ocre, anchor=north] at (z1.north) {ZONE EXPOSÉE};
+  \node[ftitle, text=Enc,  anchor=north] at (z2.north) {ZONE APPLICATIVE};
+  \node[ftitle, text=Plum, anchor=north] at (z3.north) {ZONE DONNÉES};
+
+  \node[box=Brick, fill=BrickBg, text width=30mm] (x) at (0,-46) {tout autre flux};
+  \draw[dflow=Brick, -] (x.east) -| (z3.south);
+  \node[circle, fill=Brick, text=white, font=\sffamily\bfseries, inner sep=0pt, minimum size=5mm] at (z3.south) {$\times$};
+  \node[note, text=Brick, above=1mm] at (80,-46) {refusé par les pare-feu de chaque machine};
+\end{tikzpicture}
+\end{document}

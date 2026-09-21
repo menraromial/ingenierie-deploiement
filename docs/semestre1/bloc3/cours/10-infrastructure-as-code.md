@@ -1,19 +1,39 @@
-# Chapitre 10 : L'Infrastructure as Code, les trois problèmes et les concepts
+---
+title: "Ch. 10 : L'Infrastructure as Code, problèmes et concepts"
+sidebar_label: "Ch. 10 : L'Infrastructure as Code, problèmes et concepts"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    - définir l'Infrastructure as Code et situer tout outil du domaine sur la carte provisionner / configurer / orchestrer ;
-    - opposer rigoureusement **déclaratif** et **impératif**, avec des exemples que vous avez déjà manipulés ;
-    - définir formellement l'**idempotence** et expliquer pourquoi elle est la propriété centrale du semestre ;
-    - raisonner en **état désiré / état réel / convergence**, le modèle mental qui structurera aussi les semestres 2 et 3.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 3 · Chapitre 10"
+  title="L'Infrastructure as Code, les trois problèmes et les concepts"
+  lecture="10 min"
+/>
 
-    C'est le chapitre le plus important du semestre sur le plan conceptuel : tout ce qui suit (Vagrant, Ansible, Terraform, mais aussi Kubernetes au S2 et Airflow au S3) est une déclinaison de ces quelques idées.
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- définir l'Infrastructure as Code et situer tout outil du domaine sur la carte provisionner / configurer / orchestrer ;
+- opposer rigoureusement **déclaratif** et **impératif**, avec des exemples que vous avez déjà manipulés ;
+- définir formellement l'**idempotence** et expliquer pourquoi elle est la propriété centrale du semestre ;
+- raisonner en **état désiré / état réel / convergence**, le modèle mental qui structurera aussi les semestres 2 et 3.
+
+C'est le chapitre le plus important du semestre sur le plan conceptuel : tout ce qui suit (Vagrant, Ansible, Terraform, mais aussi Kubernetes au S2 et Airflow au S3) est une déclinaison de ces quelques idées.
+:::
 
 ## 1. Définition
 
-**Infrastructure as Code (IaC)**
-:   Approche consistant à définir l'infrastructure (machines, réseaux, configurations, services) dans des **fichiers de définition lisibles par une machine**, gérés comme du code source (versionnés, relus, testés), et appliqués par des outils automatiques plutôt que par des opérations manuelles.[^1]
+<dl>
+<dt><strong>Infrastructure as Code (IaC)</strong></dt>
+<dd>
+
+Approche consistant à définir l'infrastructure (machines, réseaux, configurations, services) dans des **fichiers de définition lisibles par une machine**, gérés comme du code source (versionnés, relus, testés), et appliqués par des outils automatiques plutôt que par des opérations manuelles.[^1]
+
+</dd>
+</dl>
 
 [^1]: La formulation canonique est celle de Kief Morris, *Infrastructure as Code*, 2ᵉ éd., O'Reilly, 2020, chapitre 1. Morris insiste sur un point souvent oublié : l'IaC n'est pas d'abord une affaire d'outils mais de **pratiques** héritées du génie logiciel (versionnage, revue, tests, petits changements fréquents).
 
@@ -23,14 +43,26 @@ Relisez le cahier des charges que vous avez écrit au chapitre 9 (§4) : écrit,
 
 Toute mise en production décompose son automatisation en trois problèmes distincts, et la première compétence du domaine est de savoir **lequel un outil résout** :
 
-**Provisionner** (*provision*)
-:   Faire **exister** les ressources : créer les machines (VM, serveurs cloud), les réseaux, les disques, les adresses. Au bloc 2, c'était vos clics dans VirtualBox : création de VM, clonage, cartes réseau, redirections.
+<dl>
+<dt><strong>Provisionner</strong> (<em>provision</em>)</dt>
+<dd>
 
-**Configurer** (*configure*)
-:   Amener chaque machine existante dans l'**état voulu** : paquets installés, fichiers de configuration, utilisateurs, services démarrés. Au bloc 2 : tout ce que vous avez tapé en SSH.
+Faire **exister** les ressources : créer les machines (VM, serveurs cloud), les réseaux, les disques, les adresses. Au bloc 2, c'était vos clics dans VirtualBox : création de VM, clonage, cartes réseau, redirections.
 
-**Orchestrer** (*orchestrate*)
-:   Coordonner l'ensemble **dans le temps** : le bon ordre (la base avant le backend), la bonne échelle (3 backends aux heures de pointe), les remplacements et les reprises. Au bloc 2 : votre discipline personnelle, et c'est bien le problème : elle n'était écrite nulle part.
+</dd>
+<dt><strong>Configurer</strong> (<em>configure</em>)</dt>
+<dd>
+
+Amener chaque machine existante dans l'**état voulu** : paquets installés, fichiers de configuration, utilisateurs, services démarrés. Au bloc 2 : tout ce que vous avez tapé en SSH.
+
+</dd>
+<dt><strong>Orchestrer</strong> (<em>orchestrate</em>)</dt>
+<dd>
+
+Coordonner l'ensemble **dans le temps** : le bon ordre (la base avant le backend), la bonne échelle (3 backends aux heures de pointe), les remplacements et les reprises. Au bloc 2 : votre discipline personnelle, et c'est bien le problème : elle n'était écrite nulle part.
+
+</dd>
+</dl>
 
 ### 2.1 La carte des outils
 
@@ -51,11 +83,20 @@ Deux lectures de cette carte, à retenir pour l'examen : d'abord, **aucun outil 
 
 ### 3.1 Les définitions
 
-Approche **impérative**
-:   Décrire la **suite d'actions** à exécuter : « installe nginx, copie ce fichier, redémarre le service ». C'est un *chemin*. Vos runbooks des blocs 1-2 sont impératifs.
+<dl>
+<dt>Approche <strong>impérative</strong></dt>
+<dd>
 
-Approche **déclarative**
-:   Décrire l'**état final voulu** : « nginx est installé, ce fichier a ce contenu, le service tourne ». C'est une *destination* ; l'outil calcule lui-même le chemin, différent selon l'état de départ.
+Décrire la **suite d'actions** à exécuter : « installe nginx, copie ce fichier, redémarre le service ». C'est un *chemin*. Vos runbooks des blocs 1-2 sont impératifs.
+
+</dd>
+<dt>Approche <strong>déclarative</strong></dt>
+<dd>
+
+Décrire l'**état final voulu** : « nginx est installé, ce fichier a ce contenu, le service tourne ». C'est une *destination* ; l'outil calcule lui-même le chemin, différent selon l'état de départ.
+
+</dd>
+</dl>
 
 Vous avez déjà pratiqué les deux sans le nommer : le SQL est déclaratif (vous décrivez le résultat, l'optimiseur choisit le plan), netplan est déclaratif (le YAML décrit l'adresse, pas les commandes `ip addr add`), et le `CREATE TABLE IF NOT EXISTS` du fil rouge est un pas du côté déclaratif (« cette table existe ») quand `CREATE TABLE` nu est une action.
 
@@ -90,12 +131,9 @@ La ligne du `>>` mérite un arrêt : c'est exactement ce que vous avez fait au T
 
 Ce n'est pas de la magie, c'est une **structure** : chaque module Ansible suit le cycle *vérifier, comparer, agir si nécessaire* :
 
-```mermaid
-flowchart LR
-    A["Lire l'état RÉEL<br/>(le paquet est-il là ?<br/>le fichier a-t-il ce contenu ?)"] --> B{"Conforme à<br/>l'état DÉSIRÉ ?"}
-    B -->|oui| C["Ne rien faire<br/>rapporter : <b>ok</b>"]
-    B -->|non| D["Agir (le minimum)<br/>rapporter : <b>changed</b>"]
-```
+<Figure src="idempotence-cycle" num="10.1" alt="Organigramme : lire l'état réel, le comparer à l'état désiré ; s'il est conforme, ne rien faire et rapporter ok ; sinon agir au minimum et rapporter changed.">
+  Le cycle vérifier, comparer, agir de chaque module idempotent. Exécuté une seconde fois sur une machine déjà conforme, il ne prend que la branche « ok » : c'est la définition opérationnelle de l'idempotence.
+</Figure>
 
 Un script shell n'exécute que la branche « agir » ; le module exécute d'abord la lecture et la comparaison. C'est pour cela que la sortie d'Ansible distingue `ok` (déjà conforme) de `changed` (une action a eu lieu) : et c'est pour cela que la **preuve d'idempotence** du TP 8 sera : deuxième exécution du playbook → `changed=0`. Cette sortie n'est pas cosmétique : un `changed` inattendu au deuxième passage signale soit un rôle mal écrit, soit... du drift détecté. L'outil devient un instrument de mesure.
 
@@ -132,6 +170,8 @@ Vous avez même déjà vu une convergence **en continu** fonctionner : le pool N
 
 ## Ce qu'il faut retenir
 
+<div className="retenir">
+
 1. IaC = l'infrastructure définie dans des **fichiers versionnés**, appliquée par des outils : autant une pratique (génie logiciel) qu'une technologie.
 2. Trois problèmes, à distinguer systématiquement : **provisionner** (faire exister : Vagrant, Terraform : parle à une API), **configurer** (mettre dans l'état voulu : Ansible : parle à un OS), **orchestrer** (coordonner dans le temps : K8s, Airflow, plus tard).
 3. **Impératif** = un chemin, correct pour un seul état de départ ; **déclaratif** = une destination, appliquable depuis tout état. Le déclaratif rend rejouable, le rejouable corrige le drift ; des îlots impératifs restent nécessaires (transitions, migrations).
@@ -139,7 +179,11 @@ Vous avez même déjà vu une convergence **en continu** fonctionner : le pool N
 5. Le modèle **état désiré / état réel / convergence** unifie tout le parcours ; sachez remplir le tableau « qui détient l'état désiré, quand converge-t-on » pour Ansible, Terraform, Kubernetes, GitOps.
 6. Immutabilité (remplacer plutôt que converger) et Git (historique, revue, revert) complètent le modèle ; leurs formes abouties (images, GitOps) arrivent au S2.
 
+</div>
+
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -156,3 +200,5 @@ Vous avez même déjà vu une convergence **en continu** fonctionner : le pool N
 
 - Le débat « convergence vs immutabilité » : Chad Fowler, « Trash Your Servers and Burn Your Code » (2013) contre la tradition CFEngine/Puppet ; les deux camps ont gagné (Ansible converge les hôtes, les conteneurs sont immuables).
 - Google, *Site Reliability Engineering*, chapitre 7 (« The Evolution of Automation at Google ») : une typologie de la maturité de l'automatisation, utile pour situer où ce semestre vous mène.
+
+</div>

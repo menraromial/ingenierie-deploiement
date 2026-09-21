@@ -1,0 +1,16 @@
+% Semestre 2 : trois blocs
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{blk/.style={box=#1, text width=50mm, minimum height=28mm}}
+  \node[blk=Ocre] (c) at (0,0)   {\textbf{Podman}\sub{namespaces, cgroups}\sub{images OCI}};
+  \node[blk=Enc]  (k) at (70,0)  {\textbf{Kubernetes}\sub{réconciliation}\sub{Deployment, Service, Ingress}};
+  \node[blk=Sea]  (p) at (140,0) {\textbf{Du commit à la prod}\sub{GitOps}\sub{Prometheus, Grafana}};
+  \draw[flow] (c) -- (k);
+  \draw[flow] (k) -- (p);
+  \node[ftitle, text=Ocre, above=2mm of c] {BLOC 1 \textperiodcentered{} CONTENEURISATION};
+  \node[ftitle, text=Enc,  above=2mm of k] {BLOC 2 \textperiodcentered{} ORCHESTRATION};
+  \node[ftitle, text=Sea,  above=2mm of p] {BLOC 3 \textperiodcentered{} CI/CD ET OBSERVABILITÉ};
+\end{tikzpicture}
+\end{document}

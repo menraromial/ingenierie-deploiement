@@ -1,0 +1,19 @@
+% Ch. 19 : les sept fonctions d'un orchestrateur
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{fn/.style={box=#1, text width=38mm, minimum height=20mm}}
+  \node[fn=Enc]  at (0,0)   {\textbf{Placement}\sub{quel conteneur,}\sub{sur quelle machine}};
+  \node[fn=Brick] at (46,0) {\textbf{Réparation}\sub{recréer ce qui meurt}};
+  \node[fn=Sea]  at (92,0)  {\textbf{Échelle}\sub{ajuster le nombre}\sub{de répliques}};
+  \node[fn=Ocre] at (138,0) {\textbf{Découverte, LB}\sub{se trouver,}\sub{répartir la charge}};
+  \node[fn=Enc]  at (23,-26)  {\textbf{Mises à jour}\sub{progressives,}\sub{réversibles}};
+  \node[fn=Plum] at (69,-26)  {\textbf{Configuration,}\\\textbf{secrets}\sub{injectés proprement}};
+  \node[fn=Plum] (last) at (115,-26) {\textbf{Stockage}\sub{attaché aux conteneurs}\sub{avec état}};
+  \begin{scope}[on background layer]
+    \node[frame, fit={(-20,11)(158,-37)}, inner sep=4mm, yshift=3mm, inner ysep=8mm] (o) {};
+  \end{scope}
+  \node[ftitle, anchor=north west] at (o.north west) {ORCHESTRATEUR};
+\end{tikzpicture}
+\end{document}

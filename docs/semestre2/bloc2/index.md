@@ -1,4 +1,18 @@
-# Bloc 2 : orchestration, Kubernetes
+---
+title: "Présentation du bloc"
+sidebar_label: "Présentation du bloc"
+hide_title: true
+---
+
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
+
+<ChapterHead
+  kicker="Semestre 2 · Bloc 2"
+  title="Bloc 2 : orchestration, Kubernetes"
+  lecture="5 min"
+  competences={['C1', 'C2']}
+/>
 
 **Semaines 6 à 10.** Vous savez maintenant conteneuriser une application (bloc 1). Mais lancer trois conteneurs à la main sur votre poste ne fait pas une production. Que se passe-t-il quand vous avez **cinquante conteneurs sur dix machines** ? Qui décide où les placer ? Qui les redémarre quand ils meurent ? Qui les met à l'échelle un mardi soir de forte charge ? Qui remplace une version par la suivante sans coupure ? Ce sont les questions de l'**orchestration**, et la réponse dominante de l'industrie s'appelle **Kubernetes**.
 
@@ -14,21 +28,9 @@ Kubernetes généralise ce principe à un système entier, et le fait tourner **
 
 ## L'architecture cible du bloc
 
-```mermaid
-flowchart TB
-    U["Utilisateur"] -->|"kubectl apply -f ..."| API["API Server<br/>(l'état DÉSIRÉ)"]
-    API --> ETCD[("etcd<br/>stockage de l'état")]
-    subgraph CTRL["Boucles de réconciliation (en continu)"]
-        C1["Deployment controller"]
-        C2["ReplicaSet controller"]
-        SCHED["Scheduler"]
-    end
-    API <--> CTRL
-    CTRL --> K1["kubelet (nœud 1)"] --> P1["Pods"]
-    CTRL --> K2["kubelet (nœud 2)"] --> P2["Pods"]
-    ING["Ingress"] -->|route| P1 & P2
-    U2["Trafic externe"] --> ING
-```
+<Figure src="k8s-bloc-architecture" alt="L'utilisateur applique ses manifestes à l'API Server, qui stocke l'état désiré dans etcd ; les boucles de réconciliation dialoguent avec l'API ; les kubelets des nœuds lancent les Pods, que l'Ingress expose au trafic externe.">
+  L'architecture cible du bloc : vous déclarez un état désiré, le cluster le réalise et le maintient. Tout passe par l'API Server.
+</Figure>
 
 À la fin du bloc, Listify tourne sur un **cluster Kubernetes local** (kind), décrit par des manifests déclaratifs, avec auto-réparation, mises à l'échelle, mises à jour sans coupure, et packagé en chart Helm réutilisable.
 

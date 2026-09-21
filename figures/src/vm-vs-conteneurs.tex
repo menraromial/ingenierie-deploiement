@@ -1,0 +1,28 @@
+% Ch. 14 : VM et conteneurs, piles comparées
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  % pile VM
+  \node[layer=Ocre, minimum width=80mm, anchor=south west] at (0,0) {Matériel};
+  \node[keybox=Enc, minimum width=80mm, anchor=south west, rounded corners=0pt] at (0,10) {Hyperviseur};
+  \foreach \x/\k in {2/1, 42/2}{
+    \node[layer=Brick, minimum width=36mm, minimum height=15mm, anchor=south west, align=center] (g\k) at (\x,21) {OS invité \k\\[-.3mm]{\normalsize\color{Muted}noyau + userland}};
+    \node[layer=Plum, minimum width=36mm, anchor=south west] at (\x,36) {App \k};
+  }
+  \node[ftitle, anchor=south] at (40,59) {MACHINES VIRTUELLES};
+  % pile conteneurs
+  \begin{scope}[xshift=100mm]
+    \node[layer=Ocre, minimum width=80mm, anchor=south west] at (0,0) {Matériel};
+    \node[layer=Brick, minimum width=80mm, anchor=south west] at (0,10) {OS hôte : \textbf{un seul noyau partagé}};
+    \node[keybox=Enc, minimum width=80mm, anchor=south west, rounded corners=0pt] at (0,20) {Moteur de conteneurs};
+    \foreach \x/\k in {2/1, 42/2}{
+      \node[layer=Sea, minimum width=36mm, minimum height=15mm, anchor=south west, align=center] at (\x,31) {Conteneur \k\\[-.3mm]{\normalsize\color{Muted}userland seul}};
+      \node[layer=Plum, minimum width=36mm, anchor=south west] at (\x,46) {App \k};
+    }
+    \node[ftitle, anchor=south] at (40,59) {CONTENEURS};
+  \end{scope}
+  \node[note, anchor=north, text width=76mm, align=flush center] at (40,-4) {chaque VM paie un noyau complet : isolation forte, coût élevé};
+  \node[note, anchor=north, text width=76mm, align=flush center] at (140,-4) {le noyau est partagé : léger, isolation moindre};
+\end{tikzpicture}
+\end{document}

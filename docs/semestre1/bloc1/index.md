@@ -1,4 +1,18 @@
-# Bloc 1 : le déploiement « à l'ancienne », tout sur une machine
+---
+title: "Présentation du bloc"
+sidebar_label: "Présentation du bloc"
+hide_title: true
+---
+
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
+
+<ChapterHead
+  kicker="Semestre 1 · Bloc 1"
+  title="Bloc 1 : le déploiement « à l'ancienne », tout sur une machine"
+  lecture="5 min"
+  competences={['C1', 'C2', 'C3', 'C4', 'C5']}
+/>
 
 **Semaines 1 à 5.** Vous allez déployer l'application fil rouge [Listify](../../fil-rouge.md) sur une unique machine virtuelle Ubuntu Server, entièrement à la main : installation du système, base de données, backend en service systemd, reverse proxy Nginx, TLS, sauvegardes. Exactement comme un administrateur système de 2005... et comme, encore aujourd'hui, une part non négligeable des petites structures.
 
@@ -10,27 +24,9 @@ Parce que **tout le reste du parcours est une automatisation de ce bloc**. Ansib
 
 ## Organisation du bloc
 
-```mermaid
-flowchart TB
-    subgraph CM["Cours magistraux"]
-        C1["Ch. 1 : Anatomie d'un serveur"]
-        C2["Ch. 2 : Le système d'exploitation serveur"]
-        C3["Ch. 3 : Le réseau pour le déploiement"]
-        C4["Ch. 4 : Architecture d'une application web"]
-        C5["Ch. 5 : Sécurité de base"]
-    end
-    subgraph TP["Travaux pratiques"]
-        T1["TP 1 : VM, SSH, durcissement"]
-        T2["TP 2 : PostgreSQL + backend"]
-        T3["TP 3 : Nginx + TLS"]
-        T4["TP 4 : le jour 2"]
-        D["Défi final : 30 minutes"]
-    end
-    C1 & C2 & C5 --> T1
-    C2 --> T2
-    C3 & C4 --> T3
-    T1 --> T2 --> T3 --> T4 --> D
-```
+<Figure src="bloc1-organisation" alt="À gauche les cinq chapitres de cours, à droite les quatre TP et le défi ; des flèches indiquent quels chapitres préparent quels TP.">
+  Organisation du bloc 1 : quels chapitres préparent quels TP. Les TP s'enchaînent sur la même machine virtuelle jusqu'au défi final.
+</Figure>
 
 | Semaine | CM | TP |
 |---|---|---|

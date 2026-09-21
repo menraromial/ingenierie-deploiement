@@ -1,0 +1,22 @@
+% Fil rouge : les trois tiers de Listify
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[node distance=10mm and 17mm]
+  \node[box=Rule, fill=white, minimum height=22mm, minimum width=30mm] (u)
+       {\ico[Muted]{globe}\\[1mm]Navigateur\sub{de l'utilisateur}};
+  \node[box=Ocre, minimum height=22mm, minimum width=40mm, right=of u] (f)
+       {\textbf{Frontend}\sub{pages statiques HTML/JS}\sub{servies par Nginx}};
+  \node[box=Enc, minimum height=22mm, minimum width=40mm, right=of f] (b)
+       {\textbf{Backend}\sub{API REST Flask}\sub{exécutée par Gunicorn}};
+  \node[db=Plum, minimum height=24mm, minimum width=32mm, right=of b] (d)
+       {\textbf{Base de}\\\textbf{données}\sub{PostgreSQL}};
+
+  \draw[flow] (u) -- node[elabel, above=1mm]{HTTP(S)} (f);
+  \draw[flow] (f) -- node[elabelc, above=1mm]{/api/*} (b);
+  \draw[flow] (b) -- node[elabel, above=1mm]{SQL}  node[elabelc, below=1mm]{:5432} (d);
+
+  \foreach \n/\t/\c in {f/TIER 1/Ocre, b/TIER 2/Enc, d/TIER 3/Plum}
+    \node[ftitle, text=\c, above=2mm of \n] {\t};
+\end{tikzpicture}
+\end{document}

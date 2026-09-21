@@ -1,0 +1,12 @@
+.head { margin-bottom: 2.2rem; padding-bottom: 1.4rem; border-bottom: 2px solid var(--c-ink); }
+.kicker {
+  font-family: var(--font-ui); font-size: .8rem; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--c-ocre);
+}
+.title { font-size: 2.5rem; letter-spacing: -0.02em; line-height: 1.12; margin: .35rem 0 1rem; }
+.meta { display: flex; flex-wrap: wrap; gap: .4rem 2rem; margin: 0; font-family: var(--font-ui); font-size: .88rem; }
+.meta div { display: flex; gap: .45rem; }
+.meta dt { color: var(--c-muted); font-weight: 400; margin: 0; }
+.meta dd { margin: 0; font-weight: 600; }
+.head .meta dt, .head .meta dd { margin: 0; line-height: 1.5; }
+.head .meta dt { font-weight: 400; }

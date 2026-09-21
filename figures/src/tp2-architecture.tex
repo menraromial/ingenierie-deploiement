@@ -1,0 +1,32 @@
+% TP 2 : ce que vous allez construire
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Sea, text width=40mm, minimum height=15mm] (ps) at (0,14)
+       {\cmd{postgresql.service}\sub{fourni par le paquet}};
+  \node[box=Sea, text width=40mm, minimum height=15mm] (ls) at (0,-14)
+       {\cmd{listify.service}\sub{écrit par \textbf{vous}}};
+  \node[db=Plum, minimum width=44mm, minimum height=24mm] (p) at (74,14)
+       {\textbf{PostgreSQL 16}\\[.5mm]\cmd{127.0.0.1:5432}\\{\normalsize base et rôle \cmd{listify}}};
+  \node[box=Enc, text width=44mm, minimum height=20mm] (g) at (74,-14)
+       {\textbf{Gunicorn}, 3 workers\\[.5mm]\cmd{127.0.0.1:8000}\sub{utilisateur système \cmd{listify}}};
+  \node[box=Rule, fill=white, text width=44mm, minimum height=18mm, align=flush left] (e) at (40,-52)
+       {\ico[Muted]{file-alt}\enspace\cmd{/etc/listify/listify.env}\\[.5mm]{\normalsize 640 \cmd{root:listify}}\\\cmd{DB\_PASSWORD=...}};
+  \node[box=Rule, fill=white, text width=44mm, minimum height=14mm, align=flush left] (c) at (112,-52)
+       {\ico[Muted]{folder}\enspace\cmd{/opt/listify/}\\[.5mm]{\normalsize code + venv}};
+
+  \draw[flow=Sea] (ps) -- node[elabel, above=1mm]{démarre} (p);
+  \draw[flow=Sea] (ls) -- node[elabel, above=1mm]{démarre} (g);
+  \draw[flow=Plum] (g) -- node[elabel, right=1mm]{SQL} (p);
+  \draw[dflow] (58,0 |- e.north) -- node[elabelc, right=1mm, fill=none]{\small EnvironmentFile} (58,0 |- g.south);
+  \draw[dflow] (92,0 |- c.north) -- node[elabelc, right=1mm, fill=none]{\small WorkingDirectory} (92,0 |- g.south);
+
+  \begin{scope}[on background layer]
+    \node[dframe=Sea, fit=(ps)(ls), inner sep=4mm, yshift=3mm, inner ysep=7mm] (sd) {};
+    \node[dframe=Muted, fit=(sd)(p)(e)(c), inner sep=5mm, yshift=3mm, inner ysep=8mm] (vm) {};
+  \end{scope}
+  \node[ftitle, text=Sea, anchor=north] at (sd.north) {SYSTEMD};
+  \node[ftitle, anchor=north west] at (vm.north west) {VM LISTIFY-S1};
+\end{tikzpicture}
+\end{document}

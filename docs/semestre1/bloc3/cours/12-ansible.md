@@ -1,30 +1,36 @@
-# Chapitre 12 : Ansible, configurer par l'état désiré
+---
+title: "Ch. 12 : Ansible, configurer par l'état désiré"
+sidebar_label: "Ch. 12 : Ansible, configurer par l'état désiré"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    - expliquer l'architecture *agentless* d'Ansible et ce qu'elle doit à SSH ;
-    - manier les objets du langage : inventaire, modules, tâches, plays, playbooks, rôles, handlers ;
-    - écrire des templates Jinja2 alimentés par l'inventaire, et chiffrer les secrets avec ansible-vault ;
-    - prouver et interpréter l'idempotence d'un playbook (`ok` / `changed`, `--check`, `--diff`).
+<ChapterHead
+  kicker="Semestre 1 · Bloc 3 · Chapitre 12"
+  title="Ansible, configurer par l'état désiré"
+  lecture="10 min"
+/>
 
-    C'est l'outil central du semestre : le TP 8 transformera l'intégralité de vos runbooks des blocs 1-2 en rôles rejouables.
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- expliquer l'architecture *agentless* d'Ansible et ce qu'elle doit à SSH ;
+- manier les objets du langage : inventaire, modules, tâches, plays, playbooks, rôles, handlers ;
+- écrire des templates Jinja2 alimentés par l'inventaire, et chiffrer les secrets avec ansible-vault ;
+- prouver et interpréter l'idempotence d'un playbook (`ok` / `changed`, `--check`, `--diff`).
+
+C'est l'outil central du semestre : le TP 8 transformera l'intégralité de vos runbooks des blocs 1-2 en rôles rejouables.
+:::
 
 ## 1. L'architecture : agentless, sur SSH
 
 Ansible (Michael DeHaan, 2012, aujourd'hui porté par Red Hat) a gagné la bataille de la gestion de configuration sur un choix d'architecture : **rien à installer sur les machines gérées**. Là où Puppet et Chef exigeaient un agent résident sur chaque serveur (avec son cycle de vie, ses certificats, sa propre mise à jour... une infrastructure pour gérer l'infrastructure), Ansible n'exige que ce que tout serveur a déjà : **SSH et Python**.
 
-```mermaid
-flowchart LR
-    subgraph C["Nœud de contrôle (votre poste)"]
-        P["Playbooks + rôles<br/>(dans Git)"] --> A["ansible-playbook"]
-        I["Inventaire"] --> A
-    end
-    A -->|"SSH : pousse un module Python,<br/>l'exécute, récupère le résultat JSON"| M1["listify-db"]
-    A -->|SSH| M2["listify-app1"]
-    A -->|SSH| M3["listify-app2"]
-    A -->|SSH| M4["listify-lb"]
-```
+<Figure src="ansible-push" num="12.1" alt="Sur le nœud de contrôle, playbooks et inventaire alimentent ansible-playbook, qui se connecte en SSH aux quatre machines du parc.">
+  L'architecture sans agent d'Ansible. Le nœud de contrôle pousse un module Python par SSH, l'exécute et récupère un résultat JSON : les machines gérées n'ont besoin que de SSH et de Python.
+</Figure>
 
 Le fonctionnement réel, qu'il faut connaître pour déboguer : pour chaque tâche, Ansible **copie** par SSH un petit programme Python (le module, avec ses arguments) sur la cible, l'exécute, récupère un résultat JSON, puis nettoie. C'est du **push** déclenché depuis le nœud de contrôle : pas de démon qui tourne, pas de port à ouvrir en plus du 22, et l'élévation de privilèges passe par le `sudo` des machines (mot-clé `become`, dont vous comprenez désormais toutes les implications TTY et mot de passe). Tout votre investissement des blocs 1-2 (clés, durcissement, `~/.ssh/config`) est directement réutilisé : **Ansible, c'est votre SSH, industrialisé**.
 
@@ -134,7 +140,7 @@ Deux options démultiplient cet instrument : **`--check`** (mode simulation : An
 
 ### 4.1 Les variables
 
-Les variables alimentent tâches et templates ; elles viennent de partout (defaults des rôles, `group_vars`, `host_vars`, ligne de commande...), avec une précédence documentée dont il suffit de retenir la logique : **du plus général au plus spécifique** (un default de rôle < une variable de groupe < une variable d'hôte < la ligne de commande). S'y ajoutent les **facts** : les données que Ansible collecte automatiquement sur chaque cible en début de play (`ansible_default_ipv4.address`, distribution, cœurs...), et les variables « magiques » dont deux servent constamment :
+Les variables alimentent tâches et templates ; elles viennent de partout (defaults des rôles, `group_vars`, `host_vars`, ligne de commande...), avec une précédence documentée dont il suffit de retenir la logique : **du plus général au plus spécifique** (un default de rôle &lt; une variable de groupe &lt; une variable d'hôte &lt; la ligne de commande). S'y ajoutent les **facts** : les données que Ansible collecte automatiquement sur chaque cible en début de play (`ansible_default_ipv4.address`, distribution, cœurs...), et les variables « magiques » dont deux servent constamment :
 
 - `hostvars` : accéder aux variables **d'une autre machine** ;
 - `groups` : les groupes de l'inventaire et leurs membres.
@@ -182,6 +188,8 @@ Convention d'usage qui sauve la lisibilité : les variables du vault sont préfi
 
 ## Ce qu'il faut retenir
 
+<div className="retenir">
+
 1. **Agentless sur SSH** : Ansible pousse des modules Python par SSH et ne laisse rien derrière ; vos clés et durcissements des blocs 1-2 sont son infrastructure. `become` = sudo.
 2. Les objets : l'**inventaire** (groupes = rôles ; c'est le plan d'adressage devenu exécutable), les **modules** idempotents invoqués par des **tâches** au nom déclaratif, les **plays** (groupe × rôles, l'ordre des plays = l'orchestration minimale), les **rôles** (arborescence conventionnelle, partageable).
 3. Règle d'or : un module plutôt que `shell` ; chaque `shell` doit reconstruire son idempotence (`creates:`, `changed_when:`).
@@ -190,7 +198,11 @@ Convention d'usage qui sauve la lisibilité : les variables du vault sont préfi
 6. **Handlers** : déclenchés par `changed` via `notify`, exécutés une fois en fin de play : dix modifications, un redémarrage.
 7. **ansible-vault** : les secrets committés chiffrés, référencés par des variables en clair préfixées `vault_`.
 
+</div>
+
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -207,3 +219,5 @@ Convention d'usage qui sauve la lisibilité : les variables du vault sont préfi
 - Michael DeHaan, sur les origines d'Ansible (billets et interviews, 2012-2014) : pourquoi l'agentless, pourquoi YAML, pourquoi le nom (le communicateur supraluminique d'Ursula K. Le Guin).
 - Molecule ([ansible.readthedocs.io/projects/molecule](https://ansible.readthedocs.io/projects/molecule/)) : tester ses rôles automatiquement ; le pont entre ce chapitre et le CI/CD du S2.
 - ansible-lint : l'analyseur statique qui attrape les non-idempotences et écarts aux bonnes pratiques ; à essayer sur votre TP 8 fini.
+
+</div>

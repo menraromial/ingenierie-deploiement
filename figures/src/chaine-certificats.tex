@@ -1,0 +1,24 @@
+% Ch. 3 : chaîne de confiance X.509
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[node distance=13mm]
+  \tikzset{cert/.style={box=#1, text width=70mm, minimum height=19mm, align=flush left}}
+  \node[cert=Enc] (root)
+     {\ico[Enc]{certificate}\enspace\textbf{CA racine}\\[1mm]{\normalsize\color{Muted}ex. ISRG Root X1}\\
+      {\normalsize auto-signée, pré-installée dans le magasin\\de confiance de l'OS ou du navigateur}};
+  \node[cert=Enc, below=of root] (inter)
+     {\ico[Enc]{certificate}\enspace\textbf{CA intermédiaire}\\[1mm]{\normalsize\color{Muted}ex. Let's Encrypt R11}\\
+      {\normalsize certificat signé par la racine}};
+  \node[cert=Sea, below=of inter] (leaf)
+     {\ico[Sea]{certificate}\enspace\textbf{Certificat feuille}\\[1mm]
+      {\normalsize\cmd{CN=listify.example.com}\\signé par l'intermédiaire}};
+  \draw[flow=Enc] (root) -- node[elabel, right=2mm]{signe} (inter);
+  \draw[flow=Enc] (inter) -- node[elabel, right=2mm]{signe} (leaf);
+
+  \node[box=Rule, fill=white, text width=48mm, align=flush center, right=22mm of inter] (nav)
+     {\ico[Muted]{globe}\\[1mm]\textbf{Navigateur}\\[1mm]{\normalsize vérifie la chaîne de signatures, le nom et les dates de validité}};
+  \draw[dflow=Muted] (nav.south) |- node[elabel, pos=.75, below=1mm]{vérifie} (leaf.east);
+  \draw[dflow=Muted] (nav.north) |- node[elabel, pos=.75, above=1mm]{fait confiance} (root.east);
+\end{tikzpicture}
+\end{document}

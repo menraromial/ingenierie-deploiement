@@ -1,0 +1,37 @@
+% S2 Bloc 2 : architecture cible
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Rule, fill=white, text width=32mm] (u) at (0,44) {\ico[Muted]{user}\enspace Utilisateur};
+  \node[keybox=Enc, text width=38mm, minimum height=18mm] (api) at (0,12) {API Server\\[-.3mm]{\normalsize\mdseries l'état désiré}};
+  \node[db=Ocre, minimum width=30mm, minimum height=20mm] (etcd) at (-56,12) {\textbf{etcd}\sub{stockage}\sub{de l'état}};
+  \draw[flow] (u) -- node[elabelc, right=2mm, fill=none]{kubectl apply -f ...} (api);
+  \draw[flow=Ocre] (api) -- (etcd);
+
+  \foreach \t/\y [count=\k] in {Deployment controller/26, ReplicaSet controller/12, Scheduler/-2}
+    \node[box=Sea, text width=44mm, minimum height=10mm] (c\k) at (74,\y) {\t};
+  \begin{scope}[on background layer]
+    \node[dframe=Sea, fit=(c1)(c3), inner sep=4mm, yshift=3mm, inner ysep=7mm] (ctrl) {};
+  \end{scope}
+  \node[ftitle, text=Sea, anchor=north] at (ctrl.north) {RÉCONCILIATION, EN CONTINU};
+  \draw[{Stealth[length=2.2mm,width=1.6mm]}-{Stealth[length=2.2mm,width=1.6mm]}, draw=Sea, line width=.8pt] (api) -- (ctrl.west |- api);
+
+  \foreach \x/\k in {-30/1, 30/2}{
+    \node[box=Enc, fill=white, text width=30mm] (k\k) at (\x,-34) {\textbf{kubelet}};
+    \node[box=Plum, text width=30mm] (p\k) at (\x,-52) {\ico[Plum]{cubes}\enspace Pods};
+    \draw[flow] (k\k) -- (p\k);
+    \begin{scope}[on background layer]
+      \node[dframe=Muted, fit=(k\k)(p\k), inner sep=4mm, yshift=3mm, inner ysep=7mm] (n\k) {};
+    \end{scope}
+    \node[ftitle, anchor=north] at (n\k.north) {NŒUD \k};
+    \draw[{Stealth[length=2.2mm,width=1.6mm]}-{Stealth[length=2.2mm,width=1.6mm]}, draw=Enc, line width=.8pt] (api.south) -- ++(0,-8) -| (n\k.north);
+  }
+
+  \node[box=Rule, fill=white, text width=34mm] (ext) at (110,-30) {\ico[Muted]{globe}\enspace Trafic externe};
+  \node[box=Ocre, text width=34mm] (ing) at (110,-52) {\textbf{Ingress}};
+  \draw[flow] (ext) -- (ing);
+  \draw[flow=Ocre] (ing.south) -- ++(0,-10) -| (p2.south);
+  \draw[flow=Ocre] (ing.south) -- ++(0,-10) -| node[elabel, pos=.2, below=1mm, fill=none]{route} (p1.south);
+\end{tikzpicture}
+\end{document}

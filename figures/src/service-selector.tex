@@ -1,0 +1,17 @@
+% Ch. 21 : le Service devant des Pods éphémères
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Ocre, text width=30mm, minimum height=16mm] (f) at (0,0) {\ico[Ocre]{cube}\enspace Pod\\frontend};
+  \node[keybox=Enc, text width=48mm, minimum height=24mm] (s) at (92,0) {Service \texttt{backend}\\[-.3mm]{\normalsize\mdseries IP virtuelle stable}\\[-.5mm]{\small\mdseries\ttfamily app=listify,tier=backend}};
+  \draw[flow] (f) -- node[elabelc, above=1mm, fill=none]{http://backend:8000} node[elabel, below=1mm, fill=none]{nom stable} (s);
+  \node[box=Plum, text width=34mm] (p1) at (168,18) {\ico[Plum]{cube}\enspace Pod backend};
+  \node[box=Plum, text width=34mm] (p2) at (168,0) {\ico[Plum]{cube}\enspace Pod backend};
+  \node[box=Plum, text width=34mm, dash pattern=on 3pt off 2pt] (p3) at (168,-26) {\ico[Plum]{cube}\enspace Pod backend\sub{nouveau}};
+  \draw[flow=Enc] (s.east) -- ++(6,0) |- (p1.west);
+  \draw[flow=Enc] (s.east) -- (p2.west);
+  \draw[dflow=Enc] (s.east) -- ++(6,0) |- (p3.west);
+  \node[note, anchor=north, text width=64mm, align=flush center] at (168,-38) {un Pod meurt, un autre naît :\\le Service suit les labels};
+\end{tikzpicture}
+\end{document}

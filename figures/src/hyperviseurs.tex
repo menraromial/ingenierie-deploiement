@@ -1,0 +1,47 @@
+% Figure 1.1 : hyperviseurs de type 1 et de type 2 (piles comparées)
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  % ---------- une VM : application au-dessus de son OS invité ----------
+  % #1 = nom, #2 = x gauche, #3 = y bas, #4 = libellé application
+  \newcommand{\vm}[4]{%
+    \node[layer=Sea, minimum width=24mm, anchor=south west] (#1os) at (#2,#3) {OS invité};
+    \node[layer=Plum, minimum width=24mm, anchor=south] (#1app) at (#1os.north) {#4};
+    \node[fit=(#1os)(#1app), inner sep=1.4mm, draw=Muted, line width=.5pt,
+          rounded corners=2pt] (#1) {};
+  }
+
+  % =================== Type 1 (bare metal) ===================
+  \node[layer=Ocre, minimum width=86mm, anchor=south west] (hw1) at (0,0)
+       {\ico[Ocre]{server}\quad Matériel physique};
+  \node[keybox=Enc, minimum width=86mm, anchor=south west, rounded corners=0pt] (hv1) at (0,9)
+       {Hyperviseur \textmd{(KVM, ESXi, Hyper-V, Xen)}};
+  \vm{a}{2}{22}{Nginx}
+  \vm{b}{30.5}{22}{PostgreSQL}
+  \vm{c}{59}{22}{Windows}
+  \node[ftitle, anchor=south] at (43,56) {TYPE 1 \textperiodcentered{} « BARE METAL »};
+
+  % =================== Type 2 (hébergé) ===================
+  \begin{scope}[xshift=108mm]
+    \node[layer=Ocre, minimum width=86mm, anchor=south west] (hw2) at (0,0)
+         {\ico[Ocre]{laptop}\quad Matériel physique};
+    \node[layer=Rule, fill=Paper, minimum width=86mm, anchor=south west] (os2) at (0,9)
+         {OS hôte \textcolor{Muted}{(Linux, Windows, macOS)}};
+    \node[keybox=Enc, minimum width=58mm, anchor=south west, rounded corners=0pt] (hv2) at (0,18)
+         {Hyperviseur \textmd{(VirtualBox)}};
+    \node[layer=Rule, fill=white, minimum width=28mm, minimum height=32.4mm,
+          anchor=south west, align=center, text=Muted] (apps) at (58,18)
+         {\ico[Muted]{window-maximize}\\[1mm]Applications\\de l'hôte\\\small(navigateur,\\\small éditeur…)};
+    \vm{d}{2}{31}{Listify}
+    \vm{e}{30.5}{31}{Ubuntu}
+    \node[ftitle, anchor=south] at (43,56) {TYPE 2 \textperiodcentered{} « HÉBERGÉ »};
+  \end{scope}
+
+  % ---------- annotations ----------
+  \draw[brace] (-3,.5) -- node[note, left=3mm, align=right]{accès\\direct} (-3,17.5);
+  \draw[brace] (197,26.5) -- node[note, right=3mm]{chaque accès\\matériel\\traverse\\l'OS hôte} (197,.5);
+  \node[note, anchor=north] at (43,-4) {\textit{production, cloud (AWS, GCP, OpenStack)}};
+  \node[note, anchor=north] at (151,-4) {\textit{poste de travail : c'est le cas des TP}};
+\end{tikzpicture}
+\end{document}

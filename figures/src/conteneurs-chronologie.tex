@@ -1,0 +1,22 @@
+% Ch. 14 : lignée du conteneur
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \draw[draw=Ink, line width=1.2pt, -{Stealth[length=3mm]}] (-8,0) -- (224,0);
+  \foreach \x/\an/\mode/\desc/\c/\s in {
+      0/1979/chroot/{Unix V7 : changer\\la racine /}/Ocre/1,
+     36/2000/FreeBSD Jails/{isolation des\\processus et du réseau}/Ocre/-1,
+     72/2004-2007/{Zones, VServer}/{Solaris Zones,\\Linux-VServer, OpenVZ}/Ocre/1,
+    108/2002-2008/{namespaces, cgroups}/{intégrés au\\noyau Linux}/Enc/-1,
+    144/2008/LXC/{conteneurs Linux\\« complets »}/Enc/1,
+    180/2013/Docker/{images, ergonomie,\\partage}/Sea/-1,
+    214/2015+/{OCI, Podman}/{containerd :\\la standardisation}/Sea/1}{
+    \node[circle, fill=\c, minimum size=3.6mm, inner sep=0pt] at (\x,0) {};
+    \node[font=\sffamily\large\bfseries, text=\c] at (\x,-5.5*\s) {\an};
+    \draw[draw=\c, line width=.6pt] (\x,2.4*\s) -- (\x,11*\s);
+    \ifnum\s=1 \def\anc{south}\else\def\anc{north}\fi
+    \node[box=\c, text width=31mm, minimum height=19mm, anchor=\anc] at (\x,11*\s) {\textbf{\mode}\\[.6mm]{\normalsize\color{Muted}\desc}};
+  }
+\end{tikzpicture}
+\end{document}

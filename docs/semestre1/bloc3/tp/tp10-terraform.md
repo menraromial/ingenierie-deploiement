@@ -1,12 +1,25 @@
-# TP 10 : Terraform en découverte, le state et la dérive
+---
+title: "TP 10 : Terraform en découverte"
+sidebar_label: "TP 10 : Terraform en découverte"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 3 h (TP de découverte : l'objectif est de *voir tourner* les concepts du chapitre 13, pas de maîtriser Terraform)
-    - **Prérequis** : chapitre 13 ; Podman installé (S2 le généralisera ; ici on n'utilise que son socket)
-    - **Livrables** : la configuration `.tf`, l'observation commentée d'un cycle plan/apply, la **capture d'une dérive détectée** ; runbook
-    - **Compétences travaillées** : C2
+import ChapterHead from '@site/src/components/ChapterHead';
 
-    On reste 100 % local : le provider Docker de Terraform pilote le socket Podman (compatible API Docker). Aucun compte cloud, aucune installation de Docker. Le cloud reste au tableau (chapitre 13).
+<ChapterHead
+  kicker="Semestre 1 · Bloc 3 · Travaux pratiques 10"
+  title="Terraform en découverte, le state et la dérive"
+  competences={['C2']}
+/>
+
+:::fiche
+- **Durée** : 3 h (TP de découverte : l'objectif est de *voir tourner* les concepts du chapitre 13, pas de maîtriser Terraform)
+- **Prérequis** : chapitre 13 ; Podman installé (S2 le généralisera ; ici on n'utilise que son socket)
+- **Livrables** : la configuration `.tf`, l'observation commentée d'un cycle plan/apply, la **capture d'une dérive détectée** ; runbook
+- **Compétences travaillées** : C2
+
+On reste 100 % local : le provider Docker de Terraform pilote le socket Podman (compatible API Docker). Aucun compte cloud, aucune installation de Docker. Le cloud reste au tableau (chapitre 13).
+:::
 
 ## Pourquoi ce TP, après Ansible ?
 
@@ -89,8 +102,12 @@ terraform show                        # l'état lisible
 ls -l terraform.tfstate               # le fichier ; NE VA PAS dans Git (ch. 13, §3.3)
 ```
 
-??? question "Point de contrôle n° 1 : le graphe et l'ordre"
-    Vous n'avez écrit aucun ordre, pourtant l'image a été créée avant le conteneur. Retrouvez, dans la sortie de `plan` ou avec `terraform graph`, la dépendance qui l'a imposé (la ligne `image = docker_image.web.image_id`). Reliez au chapitre 13, §2.1 : l'ordre est **calculé** depuis les références.
+<details className="controle">
+<summary>Point de contrôle n° 1 : le graphe et l'ordre</summary>
+
+Vous n'avez écrit aucun ordre, pourtant l'image a été créée avant le conteneur. Retrouvez, dans la sortie de `plan` ou avec `terraform graph`, la dépendance qui l'a imposé (la ligne `image = docker_image.web.image_id`). Reliez au chapitre 13, §2.1 : l'ordre est **calculé** depuis les références.
+
+</details>
 
 ## Étape 3 : la détection de dérive (l'expérience clé, 45 min)
 
@@ -114,8 +131,12 @@ podman ps            # tf-demo est de retour
 
 Faites la variante « modification » : changez le port externe à `8089` dans `main.tf`, `terraform plan` (il montre un `-/+`, remplacement : le conteneur doit être détruit puis recréé, car le port n'est pas modifiable à chaud), puis `apply`. Observez le `~`/`-/+` : Terraform distingue ce qui se modifie en place de ce qui exige un remplacement.
 
-??? question "Point de contrôle n° 2 : les trois termes"
-    Remplissez le tableau du chapitre 13 (§3.2) avec CE que vous venez de voir : dans le cas « `podman rm -f` », quelle était la **configuration**, quel était le **state avant refresh**, quelle était la **réalité**, et qu'a proposé le `plan` ? Ce tableau est une question d'examen quasi certaine.
+<details className="controle">
+<summary>Point de contrôle n° 2 : les trois termes</summary>
+
+Remplissez le tableau du chapitre 13 (§3.2) avec CE que vous venez de voir : dans le cas « `podman rm -f` », quelle était la **configuration**, quel était le **state avant refresh**, quelle était la **réalité**, et qu'a proposé le `plan` ? Ce tableau est une question d'examen quasi certaine.
+
+</details>
 
 ## Étape 4 : destruction et nettoyage (15 min)
 

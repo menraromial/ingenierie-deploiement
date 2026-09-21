@@ -1,13 +1,27 @@
-# Chapitre 5 : Sécurité de base
+---
+title: "Ch. 5 : Sécurité de base"
+sidebar_label: "Ch. 5 : Sécurité de base"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    - expliquer le fonctionnement de l'authentification SSH par clés et durcir un serveur SSH ;
-    - appliquer le principe du moindre privilège aux utilisateurs, processus et réseaux ;
-    - analyser la surface d'attaque d'un serveur et la réduire méthodiquement.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 1 · Chapitre 5"
+  title="Sécurité de base"
+  lecture="10 min"
+/>
 
-    Ce chapitre est enseigné en deux temps : la partie SSH dès la semaine 1 (nécessaire au [TP 1](../tp/tp1-vm-ssh-durcissement.md)), le reste en synthèse de bloc.
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- expliquer le fonctionnement de l'authentification SSH par clés et durcir un serveur SSH ;
+- appliquer le principe du moindre privilège aux utilisateurs, processus et réseaux ;
+- analyser la surface d'attaque d'un serveur et la réduire méthodiquement.
+
+Ce chapitre est enseigné en deux temps : la partie SSH dès la semaine 1 (nécessaire au [TP 1](../tp/tp1-vm-ssh-durcissement.md)), le reste en synthèse de bloc.
+:::
 
 ## 1. SSH : la porte d'entrée de tous vos serveurs
 
@@ -21,17 +35,9 @@ L'authentification par mot de passe a deux défauts rédhibitoires sur un serveu
 
 L'authentification **par clés** repose sur la cryptographie asymétrique :
 
-```mermaid
-sequenceDiagram
-    participant C as Client (détient la clé PRIVÉE)
-    participant S as Serveur (connaît la clé PUBLIQUE)
-    Note over C,S: La clé publique du client a été déposée dans<br/>~/.ssh/authorized_keys du serveur (une seule fois)
-    C->>S: Je veux me connecter (j'annonce ma clé publique)
-    S->>C: Défi : signe-moi cette valeur aléatoire
-    C->>S: Signature (calculée avec la clé privée, qui ne quitte JAMAIS le client)
-    S->>S: Vérifie la signature avec la clé publique
-    S-->>C: Accès accordé
-```
+<Figure src="ssh-defi-reponse" num="5.1" alt="Diagramme de séquence entre client et serveur : annonce de la clé publique, défi aléatoire, signature avec la clé privée, vérification, accès accordé.">
+  Authentification SSH par clé : un protocole défi-réponse. La clé privée ne quitte jamais le client ; le serveur ne stocke qu'une clé publique, inutile à un attaquant qui la volerait.
+</Figure>
 
 Propriétés décisives : la clé privée **ne transite jamais** ; rien n'est devinable par force brute en ligne ; une clé se révoque en supprimant une ligne de `authorized_keys` ; et chaque personne a la sienne (traçabilité), là où un mot de passe partagé est anonyme.
 
@@ -49,8 +55,9 @@ ssh-copy-id deploy@192.168.56.10
 ssh deploy@192.168.56.10   # connexion sans mot de passe du serveur
 ```
 
-!!! warning "La clé privée est un secret absolu"
-    `~/.ssh/id_ed25519` ne se copie pas, ne s'envoie pas par mail, ne se commite pas dans Git (des robots scannent GitHub en permanence pour ça). Ce qui se partage, c'est `id_ed25519.pub`, la clé **publique**. SSH refuse d'ailleurs d'utiliser une clé privée lisible par d'autres (`chmod 600` obligatoire).
+:::warning[La clé privée est un secret absolu]
+`~/.ssh/id_ed25519` ne se copie pas, ne s'envoie pas par mail, ne se commite pas dans Git (des robots scannent GitHub en permanence pour ça). Ce qui se partage, c'est `id_ed25519.pub`, la clé **publique**. SSH refuse d'ailleurs d'utiliser une clé privée lisible par d'autres (`chmod 600` obligatoire).
+:::
 
 ### 1.3 La vérification de l'hôte : l'autre sens de l'authentification
 
@@ -101,8 +108,9 @@ La force du principe est de s'appliquer identiquement à chaque niveau ; c'est l
 | (S2) Conteneurs | Rootless, utilisateurs non-root dans l'image, capabilities réduites | S2 bloc 1 |
 | (S2) Orchestrateur | RBAC : chaque composant n'a que les verbes API nécessaires | S2 bloc 2 |
 
-!!! example "Exemple travaillé : dérouler une compromission"
-    Exercice type examen : « une faille d'injection dans l'API Listify permet d'exécuter du code arbitraire ; qu'obtient l'attaquant, étape par étape ? » Réponse dans notre architecture : il exécute du code en tant que `listify`. Il peut lire le code de l'application et `listify.env` (donc le mot de passe SQL de la base listify : il lit et modifie **cette** base, dégât réel mais borné). Il ne peut pas : lire `/etc/shadow` (root), toucher les données d'autres bases (l'utilisateur SQL est cantonné), modifier la configuration Nginx ou le pare-feu (root), installer un service persistant (root), ni rebondir facilement (pas d'agent SSH, réseau sortant filtrable). Chaque « ne peut pas » correspond à une décision précise des TP 1-3 : c'est la démonstration que la sécurité est une **architecture**, pas un produit.
+:::exemple[Exemple travaillé : dérouler une compromission]
+Exercice type examen : « une faille d'injection dans l'API Listify permet d'exécuter du code arbitraire ; qu'obtient l'attaquant, étape par étape ? » Réponse dans notre architecture : il exécute du code en tant que `listify`. Il peut lire le code de l'application et `listify.env` (donc le mot de passe SQL de la base listify : il lit et modifie **cette** base, dégât réel mais borné). Il ne peut pas : lire `/etc/shadow` (root), toucher les données d'autres bases (l'utilisateur SQL est cantonné), modifier la configuration Nginx ou le pare-feu (root), installer un service persistant (root), ni rebondir facilement (pas d'agent SSH, réseau sortant filtrable). Chaque « ne peut pas » correspond à une décision précise des TP 1-3 : c'est la démonstration que la sécurité est une **architecture**, pas un produit.
+:::
 
 ### 2.3 sudo : l'élévation contrôlée
 
@@ -141,13 +149,19 @@ Dernier principe structurant : aucune mesure n'est fiable seule ; on **superpose
 
 ## Ce qu'il faut retenir
 
+<div className="retenir">
+
 1. SSH par **clés** : la clé privée ne quitte jamais le client et rien n'est devinable ; ed25519 + passphrase ; la clé publique seule se dépose (`authorized_keys`). L'avertissement *host identification changed* mérite toujours dix secondes de réflexion.
 2. Durcissement sshd minimal : `PermitRootLogin no`, `PasswordAuthentication no`, `sshd -t` avant reload, une session de secours ouverte pendant les tests.
 3. **Moindre privilège** (Saltzer & Schroeder, 1975) : à chaque couche (comptes, processus, fichiers, SQL, réseau), le minimum nécessaire ; l'objectif est de borner le rayon d'explosion, et savoir *dérouler* une compromission hypothétique est un exercice attendu.
 4. **Surface d'attaque** : l'inventaire commence par `ss -tlnp` ; réduire = désinstaller, confiner (127.0.0.1), filtrer (ufw), maintenir à jour (`unattended-upgrades`).
 5. **Défense en profondeur** : des couches indépendantes, chacune conçue en supposant la chute de la précédente.
 
+</div>
+
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -167,3 +181,5 @@ Dernier principe structurant : aucune mesure n'est fiable seule ; on **superpose
 - fail2ban : documentation et paquet Debian/Ubuntu ; à expérimenter sur votre VM en bonus du TP 1.
 - Le concept de bastion moderne et l'enregistrement de sessions : cherchez « SSH bastion pattern » ; comparez avec Teleport ou le simple `ProxyJump`.
 - Pour mesurer le bruit d'Internet : le projet Shodan (moteur de recherche des services exposés) ; cherchez-y « port:5432 » pour voir combien de PostgreSQL publics existent réellement.
+
+</div>

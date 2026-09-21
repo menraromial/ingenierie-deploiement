@@ -1,0 +1,40 @@
+% Ch. 20 : plan de contrôle et nœuds de travail
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[keybox=Enc, text width=46mm, minimum height=20mm] (api) at (0,0) {API Server\\[-.3mm]{\normalsize\mdseries seule porte d'entrée ;}\\[-.8mm]{\normalsize\mdseries valide et stocke les objets}};
+  \node[db=Ocre, minimum width=36mm, minimum height=22mm] (etcd) at (-68,0) {\textbf{etcd}\sub{clé-valeur : la}\sub{source de vérité}};
+  \node[box=Enc, text width=38mm, minimum height=18mm] (sch) at (68,12) {\textbf{Scheduler}\sub{choisit le nœud}\sub{de chaque Pod}};
+  \node[box=Enc, text width=38mm, minimum height=18mm] (cm) at (68,-12) {\textbf{Controller Manager}\sub{boucles de réconciliation}};
+  \draw[{Stealth[length=2.2mm,width=1.6mm]}-{Stealth[length=2.2mm,width=1.6mm]}, draw=Ocre, line width=.8pt] (api) -- (etcd);
+  \draw[flow=Enc] (sch.west) -- (api.east |- sch.west);
+  \draw[flow=Enc] (cm.west) -- (api.east |- cm.west);
+  \begin{scope}[on background layer]
+    \node[dframe=Enc, fit=(etcd)(api)(sch)(cm), inner sep=5mm, yshift=3mm, inner ysep=8mm] (cp) {};
+  \end{scope}
+  \node[ftitle, text=Enc, anchor=north west] at (cp.north west) {PLAN DE CONTRÔLE};
+
+  % nœud 1 détaillé
+  \node[box=Sea, text width=34mm, minimum height=18mm] (k1) at (-50,-58) {\textbf{kubelet}\sub{lance et surveille}\sub{les Pods}};
+  \node[box=Sea, text width=34mm, minimum height=18mm] (px) at (-8,-58) {\textbf{kube-proxy}\sub{règles réseau}\sub{des Services}};
+  \node[box=Rule, fill=white, text width=76mm] (rt1) at (-29,-80) {runtime : \cmd{containerd} ou \cmd{CRI-O}};
+  \draw[flow=Sea] (k1) -- (k1 |- rt1.north);
+  \begin{scope}[on background layer]
+    \node[dframe=Sea, fit=(k1)(px)(rt1), inner sep=5mm, yshift=3mm, inner ysep=8mm] (n1) {};
+  \end{scope}
+  \node[ftitle, text=Sea, anchor=north west] at (n1.north west) {NŒUD DE TRAVAIL 1};
+  % nœud 2 résumé
+  \node[box=Sea, text width=30mm, minimum height=18mm] (k2) at (58,-58) {\textbf{kubelet}};
+  \node[box=Rule, fill=white, text width=30mm] (rt2) at (58,-80) {runtime};
+  \draw[flow=Sea] (k2) -- (rt2);
+  \begin{scope}[on background layer]
+    \node[dframe=Sea, fit=(k2)(rt2), inner sep=5mm, yshift=3mm, inner ysep=8mm] (n2) {};
+  \end{scope}
+  \node[ftitle, text=Sea, anchor=north west] at (n2.north west) {NŒUD 2};
+
+  \draw[{Stealth[length=2.2mm,width=1.6mm]}-{Stealth[length=2.2mm,width=1.6mm]}, draw=Ink, line width=.8pt] ([xshift=-8mm]api.south) |- ++(0,-8) -| (k1.north);
+  \draw[{Stealth[length=2.2mm,width=1.6mm]}-{Stealth[length=2.2mm,width=1.6mm]}, draw=Ink, line width=.8pt] ([xshift=8mm]api.south) |- ++(0,-8) -| (k2.north);
+  \node[note, anchor=west, text width=40mm] at (82,-66) {le kubelet lit ce qu'il doit faire et rapporte l'état réel};
+\end{tikzpicture}
+\end{document}

@@ -1,12 +1,25 @@
-# TP 16 : Listify complet sur Kubernetes
+---
+title: "TP 16 : Listify complet sur Kubernetes"
+sidebar_label: "TP 16 : Listify complet sur Kubernetes"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 4 h
-    - **Prérequis** : TP 15 ; chapitre 21
-    - **Livrables** : le dossier `k8s/` de manifests committé ; Listify fonctionnel sur le cluster ; un rolling update et un rollback prouvés ; runbook
-    - **Compétences travaillées** : C3 (cœur), C6
+import ChapterHead from '@site/src/components/ChapterHead';
 
-    Vous reconstruisez Listify **entièrement en objets Kubernetes** : Namespace, Secret, base en StatefulSet avec stockage persistant, backend et frontend en Deployments, exposition par Services. Tous les manifests de ce TP ont été appliqués et validés sur kind + Podman.
+<ChapterHead
+  kicker="Semestre 2 · Bloc 2 · Travaux pratiques 16"
+  title="Listify complet sur Kubernetes"
+  competences={['C3', 'C6']}
+/>
+
+:::fiche
+- **Durée** : 4 h
+- **Prérequis** : TP 15 ; chapitre 21
+- **Livrables** : le dossier `k8s/` de manifests committé ; Listify fonctionnel sur le cluster ; un rolling update et un rollback prouvés ; runbook
+- **Compétences travaillées** : C3 (cœur), C6
+
+Vous reconstruisez Listify **entièrement en objets Kubernetes** : Namespace, Secret, base en StatefulSet avec stockage persistant, backend et frontend en Deployments, exposition par Services. Tous les manifests de ce TP ont été appliqués et validés sur kind + Podman.
+:::
 
 ## Étape 0 : le cluster est-il là ? (5 min)
 
@@ -231,8 +244,12 @@ kubectl port-forward -n listify service/frontend 8088:80
 # autre terminal : navigateur sur http://localhost:8088 → Listify fonctionne
 ```
 
-??? question "Point de contrôle n° 1 : l'auto-réparation de bout en bout"
-    Tuez le Pod backend : `kubectl delete pod -n listify -l tier=backend --field-selector ...` (ou un nom). Observez qu'un nouveau démarre, passe la readiness (base joignable), et réintègre le Service `backend` : l'application n'a pas eu d'interruption visible (l'autre réplique servait). Puis tuez `db-0` : il redémarre, **retrouve ses données** (le PVC a persisté), et le backend, un instant en 503 (readiness), revient tout seul. Consignez : c'est la résilience du chapitre 20, sur une vraie application.
+<details className="controle">
+<summary>Point de contrôle n° 1 : l'auto-réparation de bout en bout</summary>
+
+Tuez le Pod backend : `kubectl delete pod -n listify -l tier=backend --field-selector ...` (ou un nom). Observez qu'un nouveau démarre, passe la readiness (base joignable), et réintègre le Service `backend` : l'application n'a pas eu d'interruption visible (l'autre réplique servait). Puis tuez `db-0` : il redémarre, **retrouve ses données** (le PVC a persisté), et le backend, un instant en 503 (readiness), revient tout seul. Consignez : c'est la résilience du chapitre 20, sur une vraie application.
+
+</details>
 
 ## Étape 6 : l'exposition par Ingress (30 min)
 
@@ -255,8 +272,9 @@ spec:
               service: { name: frontend, port: { number: 80 } }
 ```
 
-!!! note "Ingress sur kind : une étape d'infrastructure"
-    Pour que l'Ingress fonctionne sur kind, le cluster doit être créé avec des ports mappés vers l'hôte, puis un contrôleur installé (`kubectl apply -f` du manifeste ingress-nginx pour kind). C'est documenté dans le guide de TP (kind + ingress-nginx). Si vous préférez rester simple, `port-forward` suffit pour ce semestre ; l'Ingress est surtout à **comprendre** comme l'équivalent Kubernetes du reverse proxy S1. Retenez le concept, l'installation est un détail d'environnement.
+:::note[Ingress sur kind : une étape d'infrastructure]
+Pour que l'Ingress fonctionne sur kind, le cluster doit être créé avec des ports mappés vers l'hôte, puis un contrôleur installé (`kubectl apply -f` du manifeste ingress-nginx pour kind). C'est documenté dans le guide de TP (kind + ingress-nginx). Si vous préférez rester simple, `port-forward` suffit pour ce semestre ; l'Ingress est surtout à **comprendre** comme l'équivalent Kubernetes du reverse proxy S1. Retenez le concept, l'installation est un détail d'environnement.
+:::
 
 ## Étape 7 : rolling update et rollback (30 min)
 

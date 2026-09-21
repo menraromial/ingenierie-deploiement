@@ -1,0 +1,20 @@
+% TP 8 : les quatre rôles Ansible
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[keybox=Enc, text width=52mm, minimum height=13mm, font=\ttfamily\large\bfseries] (a) at (78,30) {ansible-playbook site.yml};
+  % x / nom du rôle / cible / tâches (3 lignes)
+  \foreach \x/\r/\c/\t/\u/\v/\col in {
+      0/common/les 4 VM/paquets/\cmd{/etc/hosts}/ufw de base/Muted,
+     52/database/listify-db/{PostgreSQL, rôle SQL}/\cmd{pg\_hba}/ufw/Plum,
+    104/backend/{app1, app2}/{venv, code}/\cmd{listify.env}/{systemd, ufw}/Enc,
+    156/loadbalancer/listify-lb/{nginx, TLS}/statiques/upstream calculé/Ocre}{
+    \node[box=Sea, text width=40mm, minimum height=24mm] (r\x) at (\x,0)
+         {\textbf{rôle} \cmd{\r}\\[1mm]{\normalsize\color{Muted}\t\\\u\\\v}};
+    \node[box=Rule, fill=white, text width=36mm] (c\x) at (\x,-34) {\textbf{\c}};
+    \draw[dflow=Sea] (r\x) -- (c\x);
+    \draw[flow=Enc] (a.south) -- ++(0,-5) -| (r\x.north);
+  }
+\end{tikzpicture}
+\end{document}

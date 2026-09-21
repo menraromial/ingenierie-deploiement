@@ -1,14 +1,29 @@
-# Chapitre 13 : Terraform, provisionner par l'état
+---
+title: "Ch. 13 : Terraform, provisionner par l'état"
+sidebar_label: "Ch. 13 : Terraform, provisionner par l'état"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    - expliquer le modèle de Terraform : ressources, providers, graphe de dépendances, fichier d'état, cycle plan/apply ;
-    - lire une configuration HCL simple et prédire ce qu'un `terraform plan` affichera ;
-    - expliquer la détection de dérive par comparaison à trois termes (configuration / state / réalité) ;
-    - articuler Terraform et Ansible : qui provisionne, qui configure, et pourquoi les deux se complètent.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 3 · Chapitre 13"
+  title="Terraform, provisionner par l'état"
+  lecture="10 min"
+  competences={['C1']}
+/>
 
-    Théorie approfondie, pratique en découverte : le [TP 10](../tp/tp10-terraform.md) manipule Terraform en local via le socket Podman, et le cloud reste au tableau, conformément à la philosophie du parcours.
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- expliquer le modèle de Terraform : ressources, providers, graphe de dépendances, fichier d'état, cycle plan/apply ;
+- lire une configuration HCL simple et prédire ce qu'un `terraform plan` affichera ;
+- expliquer la détection de dérive par comparaison à trois termes (configuration / state / réalité) ;
+- articuler Terraform et Ansible : qui provisionne, qui configure, et pourquoi les deux se complètent.
+
+Théorie approfondie, pratique en découverte : le [TP 10](../tp/tp10-terraform.md) manipule Terraform en local via le socket Podman, et le cloud reste au tableau, conformément à la philosophie du parcours.
+:::
 
 ## 1. Le problème que Vagrant ne résout pas
 
@@ -16,8 +31,9 @@ Vagrant décrit des VM **sur votre poste**. Mais la production vit ailleurs : de
 
 **Terraform** (HashiCorp, 2014) est le standard du domaine. Sa percée conceptuelle n'est pas de parler à AWS (chaque cloud a son outil maison, CloudFormation chez AWS...) mais de parler à **tout** : un cœur unique (langage, graphe, état) et des **providers** interchangeables, plus de 3 000, des clouds aux DNS en passant par... Docker, ce qui nous permettra un TP entièrement local.
 
-!!! note "Terraform et OpenTofu"
-    Suite au passage de Terraform sous licence BUSL (2023, comme Vagrant : ch. 11), la communauté a créé **OpenTofu**, fork open source hébergé par la Linux Foundation, compatible et activement développé. Tout ce chapitre s'applique aux deux ; en entreprise vous rencontrerez les deux ; le TP accepte l'un ou l'autre (`terraform` et `tofu` sont interchangeables à notre niveau).
+:::note[Terraform et OpenTofu]
+Suite au passage de Terraform sous licence BUSL (2023, comme Vagrant : ch. 11), la communauté a créé **OpenTofu**, fork open source hébergé par la Linux Foundation, compatible et activement développé. Tout ce chapitre s'applique aux deux ; en entreprise vous rencontrerez les deux ; le TP accepte l'un ou l'autre (`terraform` et `tofu` sont interchangeables à notre niveau).
+:::
 
 ## 2. Le langage : décrire des ressources
 
@@ -74,16 +90,9 @@ Ansible n'a pas de mémoire : à chaque exécution il interroge les machines et 
 
 Le cycle de travail confronte en permanence **trois** sources, et c'est le schéma d'examen par excellence :
 
-```mermaid
-flowchart TB
-    C["<b>Configuration</b> (.tf)<br/>l'état désiré, dans Git"]
-    S["<b>State</b> (terraform.tfstate)<br/>ce que Terraform croit avoir créé"]
-    R["<b>Réalité</b><br/>ce que l'API rapporte vraiment"]
-    C -->|"différence ?<br/>→ création/modif/destruction"| P["terraform plan"]
-    S --> P
-    R -->|"refresh : le state est<br/>confronté à la réalité"| P
-    P -->|"plan validé"| A["terraform apply<br/>exécute et met à jour le state"]
-```
+<Figure src="terraform-trois-sources" num="13.1" alt="La configuration, le state et la réalité convergent vers terraform plan, qui calcule les différences ; une fois validé, terraform apply les exécute et met à jour le state.">
+  Les trois sources que Terraform confronte à chaque cycle. Le plan est la différence entre l'état désiré et l'état réel, le state servant de mémoire de ce que Terraform croit avoir créé.
+</Figure>
 
 Les cas remarquables, à savoir dérouler :
 
@@ -115,6 +124,8 @@ Le pattern de production standard les enchaîne : **Terraform crée** les machin
 
 ## Ce qu'il faut retenir
 
+<div className="retenir">
+
 1. Terraform = provisionnement **déclaratif multi-fournisseurs** : un cœur (HCL, graphe, state, plan/apply) et des providers pour chaque API. OpenTofu en est le fork open source compatible.
 2. Les **références entre ressources** construisent un **graphe** dont l'outil déduit ordre, destruction inverse et parallélisme : jamais d'ordre écrit à la main. (Le DAG reviendra au S3.)
 3. Le **state** est la mémoire de propriété : indispensable pour retrouver « ses » ressources et détruire ce qui n'est plus déclaré ; servitudes réelles : secrets, partage/verrouillage, sauvegarde.
@@ -122,7 +133,11 @@ Le pattern de production standard les enchaîne : **Terraform crée** les machin
 5. `plan` avant `apply` : la revue avant l'action, dans la lignée de `--check`, `nginx -t`, `sshd -t`.
 6. **Terraform provisionne (API), Ansible configure (OS)** : complémentaires, enchaînés en production ; le TP 9 en est la maquette locale avec Vagrant.
 
+</div>
+
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -140,3 +155,5 @@ Le pattern de production standard les enchaîne : **Terraform crée** les machin
 - HashiCorp, « Terraform graph » : visualisez le graphe de dépendances du TP 10 (`terraform graph | dot -Tsvg`) ; comparez avec les DAG d'Airflow au S3.
 - L'histoire de la licence : billets d'annonce HashiCorp (août 2023) et manifeste OpenTofu : un cas d'école de gouvernance open source, à discuter en TD.
 - Pulumi : le provisionnement déclaratif écrit en langage général (Python, TypeScript) ; comparez les compromis avec HCL.
+
+</div>

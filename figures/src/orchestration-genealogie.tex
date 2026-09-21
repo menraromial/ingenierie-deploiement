@@ -1,0 +1,18 @@
+% Ch. 19 : généalogie de l'orchestration
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{g/.style={box=#1, text width=42mm, minimum height=20mm}}
+  \node[g=Enc] (b) at (0,0)  {{\normalsize\color{Muted}vers 2003-2015}\\\textbf{Borg}\sub{Google, interne}};
+  \node[g=Enc] (o) at (58,0) {{\normalsize\color{Muted}2013}\\\textbf{Omega}\sub{refonte du scheduler}};
+  \node[keybox=Enc, text width=46mm, minimum height=20mm] (k) at (120,0) {{\normalsize\mdseries 2014-2015}\\Kubernetes\\[-.3mm]{\normalsize\mdseries open source, héritier de Borg}};
+  \draw[flow=Enc] (b) -- (o);
+  \draw[flow=Enc] (o) -- (k);
+  \node[g=Rule, fill=white] (m) at (58,-38) {{\normalsize\color{Muted}2009+}\\\textbf{Mesos} + Marathon\sub{Berkeley, puis Apache}};
+  \node[g=Rule, fill=white] (s) at (182,-38) {{\normalsize\color{Muted}2015}\\\textbf{Docker Swarm}\sub{simple, intégré à Docker}};
+  \draw[dflow] (m.east) -| node[elabel, pos=.25, above=1mm, fill=none]{concurrent} ([xshift=-8mm]k.south);
+  \draw[dflow] (s.north) |- node[elabel, pos=.75, above=1mm, fill=none]{concurrent} (k.east);
+  \node[ftitle, text=Enc, anchor=south west] at ([yshift=3mm]b.north west) {LIGNÉE GOOGLE};
+\end{tikzpicture}
+\end{document}

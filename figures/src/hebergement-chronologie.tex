@@ -1,0 +1,23 @@
+% Ch. 1 : trente ans de modes d'hébergement (frise)
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \draw[draw=Ink, line width=1.2pt, -{Stealth[length=3mm]}] (-8,0) -- (192,0);
+  % année / mode / description / couleur / au-dessus (1) ou au-dessous (-1)
+  \foreach \x/\an/\mode/\desc/\c/\s in {
+      0/1995/On-premise/{le serveur dans le\\placard de l'entreprise}/Ocre/1,
+     36/2000/Mutualisé/{un serveur,\\des dizaines de sites}/Ocre/-1,
+     68/2003/Dédié/{une machine louée\\en datacenter}/Ocre/1,
+    104/2006/Cloud IaaS/{AWS EC2 :\\la VM à l'heure}/Enc/-1,
+    140/2013/{Conteneurs, PaaS}/{généralisation des\\plateformes gérées}/Enc/1,
+    176/2015/Serverless/{AWS Lambda : la fonction\\à la milliseconde}/Sea/-1}{
+    \node[circle, fill=\c, minimum size=3.6mm, inner sep=0pt] at (\x,0) {};
+    \node[font=\sffamily\large\bfseries, text=\c] at (\x,-5.5*\s) {\an};
+    \draw[draw=\c, line width=.6pt] (\x,2.4*\s) -- (\x,11*\s);
+    \ifnum\s=1 \def\anc{south}\else\def\anc{north}\fi
+    \node[box=\c, text width=34mm, minimum height=19mm, anchor=\anc]
+         at (\x,11*\s) {\textbf{\mode}\\[.6mm]{\normalsize\color{Muted}\desc}};
+  }
+\end{tikzpicture}
+\end{document}

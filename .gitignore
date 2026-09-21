@@ -1,14 +1,21 @@
-# Environnement Python local
-.venv/
-__pycache__/
-*.pyc
+# Dépendances (réinstallées par `npm ci`)
+node_modules/
 
-# Sortie de build MkDocs (générée par la CI, jamais versionnée)
-site/
+# Sorties de build Docusaurus (générées par la CI, jamais versionnées)
+build/
+.docusaurus/
+.cache-loader/
 
-# Caches
-.cache/
-.mkdocs_cache/
+# Build intermédiaire LaTeX des figures (les SVG/PDF de static/figures, eux, sont versionnés)
+figures/build/
+
+# Photo source haute définition (la version recadrée est dans static/img/)
+profile.jpg
+
+# Journaux et environnement local
+npm-debug.log*
+.env.local
+.env.*.local
 
 # Éditeurs / OS
 .idea/

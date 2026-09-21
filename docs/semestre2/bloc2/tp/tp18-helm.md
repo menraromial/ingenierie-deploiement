@@ -1,12 +1,25 @@
-# TP 18 : Packager Listify en chart Helm
+---
+title: "TP 18 : Packager en chart Helm"
+sidebar_label: "TP 18 : Packager en chart Helm"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 4 h
-    - **Prérequis** : TP 16 (manifests Listify) ; chapitre 22, §5
-    - **Livrables** : le chart Helm `charts/listify/` committé ; deux installations (dev et prod) avec des valeurs différentes ; runbook
-    - **Compétences travaillées** : C3, C4
+import ChapterHead from '@site/src/components/ChapterHead';
 
-    Vous transformez vos manifests figés en un **paquet paramétrable**. Un seul chart, déployable en dev (1 réplique, image de test) comme en prod (3 répliques, image versionnée), sans dupliquer un seul YAML. Commandes validées avec Helm 3.
+<ChapterHead
+  kicker="Semestre 2 · Bloc 2 · Travaux pratiques 18"
+  title="Packager Listify en chart Helm"
+  competences={['C3', 'C4']}
+/>
+
+:::fiche
+- **Durée** : 4 h
+- **Prérequis** : TP 16 (manifests Listify) ; chapitre 22, §5
+- **Livrables** : le chart Helm `charts/listify/` committé ; deux installations (dev et prod) avec des valeurs différentes ; runbook
+- **Compétences travaillées** : C3, C4
+
+Vous transformez vos manifests figés en un **paquet paramétrable**. Un seul chart, déployable en dev (1 réplique, image de test) comme en prod (3 répliques, image versionnée), sans dupliquer un seul YAML. Commandes validées avec Helm 3.
+:::
 
 ## Étape 1 : le problème, et la structure d'un chart (45 min)
 
@@ -136,17 +149,21 @@ kubectl get deploy -n prod            # backend à 3 répliques, sans avoir touc
 
 Le même chart a produit deux déploiements différents, isolés dans leurs namespaces. Comparez `kubectl get deploy -n dev` (2 répliques) et `-n prod` (3) : **un code, N environnements**, la promesse tenue au niveau Kubernetes. C'est aussi la base du CI/CD du bloc 3 (promouvoir la même image/le même chart de dev vers prod).
 
-??? question "Point de contrôle n° 1 : la mise à jour et le rollback Helm"
-    Modifiez une valeur (passez `backend.replicas` à 4) et **mettez à jour** la release, puis annulez :
+<details className="controle">
+<summary>Point de contrôle n° 1 : la mise à jour et le rollback Helm</summary>
 
-    ```bash
-    helm upgrade dev ./listify -n dev --set backend.replicas=4
-    kubectl get deploy dev-backend -n dev          # 4 répliques
-    helm history dev -n dev                         # les révisions de la release
-    helm rollback dev 1 -n dev                      # retour à la révision 1
-    ```
+Modifiez une valeur (passez `backend.replicas` à 4) et **mettez à jour** la release, puis annulez :
 
-    Helm **suit les révisions** de chaque release et permet le rollback, comme le `rollout undo` de Kubernetes mais au niveau du paquet entier. Vous retrouvez l'état désiré versionné du S1, appliqué au packaging.
+```bash
+helm upgrade dev ./listify -n dev --set backend.replicas=4
+kubectl get deploy dev-backend -n dev          # 4 répliques
+helm history dev -n dev                         # les révisions de la release
+helm rollback dev 1 -n dev                      # retour à la révision 1
+```
+
+Helm **suit les révisions** de chaque release et permet le rollback, comme le `rollout undo` de Kubernetes mais au niveau du paquet entier. Vous retrouvez l'état désiré versionné du S1, appliqué au packaging.
+
+</details>
 
 ## Étape 4 : nettoyage de fin de bloc, et bilan (30 min)
 

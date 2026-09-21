@@ -1,14 +1,28 @@
-# Chapitre 17 : Les images de conteneurs
+---
+title: "Ch. 17 : Les images de conteneurs"
+sidebar_label: "Ch. 17 : Les images de conteneurs"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    - lire et écrire un `Containerfile` (syntaxe Dockerfile) et expliquer comment chaque instruction crée une couche ;
-    - exploiter le **cache de build** en ordonnant les instructions, et expliquer l'invalidation de cache ;
-    - concevoir une image **multi-stage** pour séparer la construction de l'exécution ;
-    - appliquer les bonnes pratiques de taille et de sécurité (utilisateur non-root, image de base minimale, scan de vulnérabilités).
+<ChapterHead
+  kicker="Semestre 2 · Bloc 1 · Chapitre 17"
+  title="Les images de conteneurs"
+  lecture="10 min"
+/>
 
-    Ce chapitre outille les [TP 12](../tp/tp12-images-containerfile.md) et [TP 14](../tp/tp14-registre-scan.md), où vous construirez et scannerez les images de Listify.
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- lire et écrire un `Containerfile` (syntaxe Dockerfile) et expliquer comment chaque instruction crée une couche ;
+- exploiter le **cache de build** en ordonnant les instructions, et expliquer l'invalidation de cache ;
+- concevoir une image **multi-stage** pour séparer la construction de l'exécution ;
+- appliquer les bonnes pratiques de taille et de sécurité (utilisateur non-root, image de base minimale, scan de vulnérabilités).
+
+Ce chapitre outille les [TP 12](../tp/tp12-images-containerfile.md) et [TP 14](../tp/tp14-registre-scan.md), où vous construirez et scannerez les images de Listify.
+:::
 
 ## 1. Le Containerfile : une recette qui produit un artefact
 
@@ -36,8 +50,9 @@ Les instructions essentielles, à connaître :
 | `USER` | L'utilisateur sous lequel s'exécutera le conteneur |
 | `CMD` / `ENTRYPOINT` | La commande lancée **au démarrage** du conteneur |
 
-!!! note "`RUN` vs `CMD` : le piège fondamental"
-    `RUN` s'exécute **pendant la construction** de l'image (et fige son résultat dans une couche). `CMD` définit ce qui s'exécutera **au lancement** du conteneur. Confondre les deux est l'erreur n° 1 des débutants. Règle : tout ce qui prépare l'environnement (installer, compiler) est un `RUN` ; l'unique processus applicatif est un `CMD`.
+:::note[`RUN` vs `CMD` : le piège fondamental]
+`RUN` s'exécute **pendant la construction** de l'image (et fige son résultat dans une couche). `CMD` définit ce qui s'exécutera **au lancement** du conteneur. Confondre les deux est l'erreur n° 1 des débutants. Règle : tout ce qui prépare l'environnement (installer, compiler) est un `RUN` ; l'unique processus applicatif est un `CMD`.
+:::
 
 ### 1.1 Build et exécution
 
@@ -70,8 +85,9 @@ RUN pip install -r requirements.txt   # ...force à réinstaller TOUTES les dép
 
 Dans le premier cas, modifier une ligne de `app.py` reconstruit une couche en une seconde ; dans le second, cela réinstalle Flask, Gunicorn et psycopg2 à chaque fois. Sur des projets réels (des centaines de dépendances), l'écart se compte en minutes à chaque build, donc à chaque itération de CI. **L'ordre des couches est une décision de performance**, directement issue du copy-on-write du chapitre 15.
 
-!!! tip "Le fichier `.containerignore`"
-    Comme `.gitignore`, un `.containerignore` exclut du **contexte de build** ce qui n'a rien à y faire (`.git/`, `.venv/`, `__pycache__/`, les tests...). Cela réduit ce qui est envoyé au moteur, accélère le build, et évite d'invalider le cache pour un fichier non pertinent. À fournir dès le TP 12.
+:::tip[Le fichier `.containerignore`]
+Comme `.gitignore`, un `.containerignore` exclut du **contexte de build** ce qui n'a rien à y faire (`.git/`, `.venv/`, `__pycache__/`, les tests...). Cela réduit ce qui est envoyé au moteur, accélère le build, et évite d'invalider le cache pour un fichier non pertinent. À fournir dès le TP 12.
+:::
 
 ## 3. Les images multi-stage : construire ici, exécuter là
 
@@ -97,17 +113,9 @@ FROM nginx:1.27-alpine
 COPY --from=build /src/dist /usr/share/nginx/html   # on ne prend QUE le résultat
 ```
 
-```mermaid
-flowchart LR
-    subgraph S1["Étape 'build' (jetée)"]
-        N["node:20-slim + npm ci + npm run build"] --> DIST["/src/dist"]
-    end
-    subgraph S2["Étape finale (conservée)"]
-        NG["nginx:1.27-alpine"]
-    end
-    DIST -->|"COPY --from=build"| NG
-    NG --> IMG["Image finale : Nginx + statiques<br/>(quelques dizaines de Mo,<br/>zéro outil de build)"]
-```
+<Figure src="multi-stage" num="17.1" alt="Une étape de build basée sur node produit le dossier dist ; seule cette sortie est copiée dans l'étape finale basée sur nginx, qui donne une image légère sans outils de build.">
+  Construction multi-étapes. L'étape de build, avec ses centaines de Mo d'outillage, est jetée ; l'image livrée ne contient que le résultat.
+</Figure>
 
 L'image finale ne contient **ni Node, ni npm, ni le code source**, seulement Nginx et les fichiers produits : plus petite, plus sûre, plus rapide à distribuer. Le multi-stage est la technique la plus rentable de tout le chapitre, et une question d'examen quasi certaine.
 
@@ -144,10 +152,13 @@ trivy image listify-backend:1.0
 
 Le réflexe professionnel, que vous adopterez au TP 14 : **scanner dans le pipeline de CI** (bloc 3) et refuser de déployer une image porteuse de failles critiques. C'est la face « sécurité de la chaîne d'approvisionnement logicielle » (*supply chain security*), un sujet brûlant depuis les attaques SolarWinds (2020) et Log4Shell (2021). Un scan ne rend pas une image sûre, mais une image jamais scannée est un pari aveugle.
 
-!!! note "Buildah et les alternatives de construction"
-    Podman délègue en réalité la construction à **Buildah**, un outil dédié qui sait construire des images *sans* Containerfile (par script) et *sans privilèges*. Vous n'en aurez pas besoin directement (Podman l'appelle pour vous), mais sachez qu'il existe : construire une image et exécuter un conteneur sont deux métiers séparés dans le monde rootless.
+:::note[Buildah et les alternatives de construction]
+Podman délègue en réalité la construction à **Buildah**, un outil dédié qui sait construire des images *sans* Containerfile (par script) et *sans privilèges*. Vous n'en aurez pas besoin directement (Podman l'appelle pour vous), mais sachez qu'il existe : construire une image et exécuter un conteneur sont deux métiers séparés dans le monde rootless.
+:::
 
 ## Ce qu'il faut retenir
+
+<div className="retenir">
 
 1. Un **Containerfile** décrit la construction d'une image ; **chaque instruction crée une couche**. `RUN` s'exécute au **build**, `CMD` au **lancement** : ne jamais confondre.
 2. Le **cache de build** réutilise les couches inchangées et invalide tout **à partir** du premier changement : placer les dépendances (stables) **avant** le code (volatil). `.containerignore` allège le contexte.
@@ -155,14 +166,19 @@ Le réflexe professionnel, que vous adopterez au TP 14 : **scanner dans le pipel
 4. Sécurité et taille : **image de base minimale** (slim/alpine/distroless), `RUN` regroupés et nettoyés dans la même couche, **utilisateur non-root** (`USER`), **scan Trivy** des CVE (supply chain).
 5. L'image est l'**artefact immuable** identifié par son digest : le même du poste à la production. C'est la fin structurelle du « ça marche sur ma machine ».
 
+</div>
+
 ## Regard recherche
 
-!!! quote "Pour aller vers la recherche"
-    - **Rui Shu, Xiaohui Gu, William Enck, « A Study of Security Vulnerabilities on Docker Hub », ACM CODASPY, 2017.** Une analyse empirique à grande échelle des vulnérabilités dans les images publiques de Docker Hub. Édifiant : la majorité des images, y compris officielles, portent des CVE. C'est *la* justification chiffrée du scan, et un modèle d'étude de sécurité empirique reproductible.
-    - **Sur la reproductibilité des builds** : le projet **Reproducible Builds** ([reproducible-builds.org](https://reproducible-builds.org/)) et la littérature associée posent une question de recherche profonde : deux constructions du même code produisent-elles le *même* binaire, au bit près ? Les images de conteneurs, malgré leur digest, ne sont pas toujours reproductibles (horodatages, ordre de fichiers). Un excellent sujet d'exploration.
-    - **Supply chain security** : cherchez les travaux autour de **SLSA** (Supply-chain Levels for Software Artifacts, Google/OpenSSF) et **Sigstore** (signature d'artefacts). Après SolarWinds, sécuriser la *provenance* des images est un domaine de recherche et d'ingénierie en pleine expansion.
+:::recherche
+- **Rui Shu, Xiaohui Gu, William Enck, « A Study of Security Vulnerabilities on Docker Hub », ACM CODASPY, 2017.** Une analyse empirique à grande échelle des vulnérabilités dans les images publiques de Docker Hub. Édifiant : la majorité des images, y compris officielles, portent des CVE. C'est *la* justification chiffrée du scan, et un modèle d'étude de sécurité empirique reproductible.
+- **Sur la reproductibilité des builds** : le projet **Reproducible Builds** ([reproducible-builds.org](https://reproducible-builds.org/)) et la littérature associée posent une question de recherche profonde : deux constructions du même code produisent-elles le *même* binaire, au bit près ? Les images de conteneurs, malgré leur digest, ne sont pas toujours reproductibles (horodatages, ordre de fichiers). Un excellent sujet d'exploration.
+- **Supply chain security** : cherchez les travaux autour de **SLSA** (Supply-chain Levels for Software Artifacts, Google/OpenSSF) et **Sigstore** (signature d'artefacts). Après SolarWinds, sécuriser la *provenance* des images est un domaine de recherche et d'ingénierie en pleine expansion.
+:::
 
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -179,3 +195,5 @@ Le réflexe professionnel, que vous adopterez au TP 14 : **scanner dans le pipel
 
 - L'outil `dive` : explorer une image couche par couche pour traquer le gaspillage d'espace ; très instructif après le TP 12.
 - Chainguard Images et les images « zero-CVE » : l'état de l'art actuel des images minimales et durcies ; comparez leur approche à `distroless`.
+
+</div>

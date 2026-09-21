@@ -1,0 +1,26 @@
+% Ch. 20 : du clavier au conteneur
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{sh/.style={seqhead=#1, minimum width=28mm, font=\sffamily\normalsize\bfseries}}
+  \def\U{0}\def\A{40}\def\E{80}\def\C{120}\def\S{160}\def\K{200}
+  \node[sh=Rule, fill=white] (h1) at (\U,0) {kubectl (vous)};
+  \node[sh=Enc]  (h2) at (\A,0) {API Server};
+  \node[sh=Ocre] (h3) at (\E,0) {etcd};
+  \node[sh=Sea]  (h4) at (\C,0) {Controllers};
+  \node[sh=Sea]  (h5) at (\S,0) {Scheduler};
+  \node[sh=Plum] (h6) at (\K,0) {kubelet};
+  \foreach \x/\h in {\U/h1,\A/h2,\E/h3,\C/h4,\S/h5,\K/h6} \draw[lifeline] (\h.south) -- (\x,-122);
+  \newcommand{\m}[5]{\draw[#4] (#2,#1) -- node[mlabel]{#5} (#3,#1);}
+  \m{-14}{\U}{\A}{msg}{\textbf{1.} apply Deployment (\cmd{replicas: 3})}
+  \draw[msg] (\A,-20) -- ++(8,0) |- node[pos=.25, right=1mm, elabel, fill=none]{valide (RBAC, schéma)} (\A,-27);
+  \m{-38}{\A}{\E}{msg=Ocre}{\textbf{2.} écrit l'état désiré}
+  \m{-52}{\C}{\A}{msg=Sea}{\textbf{3.} voit le Deployment $\rightarrow$ crée un ReplicaSet}
+  \m{-64}{\C}{\A}{msg=Sea}{\textbf{4.} « 3 voulus, 0 réels » $\rightarrow$ crée 3 Pods sans nœud}
+  \m{-78}{\S}{\A}{msg=Sea}{\textbf{5.} voit 3 Pods non placés $\rightarrow$ leur assigne un nœud}
+  \m{-92}{\K}{\A}{msg=Plum}{\textbf{6.} « un Pod m'est assigné » $\rightarrow$ le lance via le runtime}
+  \m{-104}{\K}{\A}{ret=Plum}{\textbf{7.} rapporte : Pod \cmd{Running}}
+  \m{-116}{\A}{\E}{msg=Ocre}{état réel mis à jour}
+\end{tikzpicture}
+\end{document}

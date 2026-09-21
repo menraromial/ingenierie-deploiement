@@ -1,0 +1,26 @@
+% Bloc 3 : trois problèmes, trois outils
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{pb/.style={box=Enc, text width=48mm, minimum height=19mm},
+           tool/.style={box=Sea, text width=52mm, minimum height=15mm}}
+  \node[pb] (p1) at (0,9)   {\textbf{Provisionner}\sub{créer machines, réseaux, disques}};
+  \node[pb] (p2) at (0,-22) {\textbf{Configurer}\sub{les amener dans l'état voulu}};
+  \node[pb] (p3) at (0,-48) {\textbf{Orchestrer}\sub{dans le bon ordre,}\sub{à la bonne échelle}};
+
+  \node[tool] (v) at (90,20)  {\textbf{Vagrant} {\normalsize\color{Muted}ch. 11, TP 7}\sub{VM locales déclarées}};
+  \node[tool] (t) at (90,-1)  {\textbf{Terraform} {\normalsize\color{Muted}ch. 13, TP 10}\sub{état désiré, plan / apply}};
+  \node[tool] (a) at (90,-22) {\textbf{Ansible} {\normalsize\color{Muted}ch. 12, TP 8}\sub{rôles idempotents sur SSH}};
+  \node[box=Rule, fill=white, text=Muted, text width=52mm, minimum height=19mm, dash pattern=on 3pt off 2pt] (o) at (90,-48)
+       {\textbf{plus tard}\sub{Kubernetes (semestre 2)}\sub{Airflow (semestre 3)}};
+
+  \draw[line width=1pt, draw=Sea] (p1.east) -- (v.west);
+  \draw[line width=1pt, draw=Sea] (p1.east) -- (t.west);
+  \draw[line width=1pt, draw=Sea] (p2.east) -- (a.west);
+  \draw[dflow=Muted] (p3.east) -- (o.west);
+
+  \node[ftitle, text=Enc] at (0,36) {LES TROIS PROBLÈMES (CH. 10)};
+  \node[ftitle, text=Sea] at (90,36) {LES OUTILS DU BLOC};
+\end{tikzpicture}
+\end{document}

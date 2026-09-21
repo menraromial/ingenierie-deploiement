@@ -1,4 +1,16 @@
-# Bibliographie générale du parcours
+---
+title: "Bibliographie générale"
+sidebar_label: "Bibliographie générale"
+hide_title: true
+---
+
+import ChapterHead from '@site/src/components/ChapterHead';
+
+<ChapterHead
+  kicker="Ressources"
+  title="Bibliographie générale du parcours"
+  lecture="5 min"
+/>
 
 Chaque chapitre du cours se termine par sa propre bibliographie commentée, précise et directement exploitable. Cette page recense les **ouvrages socles**, ceux qui couvrent plusieurs blocs et que la bibliothèque de l'école devrait posséder.
 
@@ -40,6 +52,8 @@ Chaque chapitre du cours se termine par sa propre bibliographie commentée, pré
 
 ## Comment lire une bibliographie de chapitre
 
+<div className="biblio">
+
 Chaque chapitre distingue trois niveaux :
 
 - **Sources primaires** : documentation officielle, RFC, papiers de recherche. C'est ce qui fait foi en cas de doute, et ce que cite l'examen.
@@ -47,3 +61,5 @@ Chaque chapitre distingue trois niveaux :
 - **Pour aller plus loin** : approfondissements facultatifs, souvent historiques ou techniques, pour les curieux.
 
 Une compétence d'ingénieur à part entière : **remonter à la source**. Quand un billet de blog contredit la documentation officielle, la documentation gagne ; quand la documentation contredit la RFC, la RFC gagne.
+
+</div>

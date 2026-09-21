@@ -1,0 +1,20 @@
+% Ch. 15 : ce que fait podman run
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \def\U{0} \def\P{56} \def\K{150}
+  \node[seqhead=Rule, fill=white] (hu) at (\U,0) {\ico[Muted]{user}\enspace Vous};
+  \node[seqhead=Enc] (hp) at (\P,0) {\ico[Enc]{cube}\enspace Podman};
+  \node[seqhead=Sea] (hk) at (\K,0) {\ico[Sea]{linux}\enspace Noyau Linux};
+  \foreach \x/\h in {\U/hu,\P/hp,\K/hk} \draw[lifeline] (\h.south) -- (\x,-104);
+  \draw[msg] (\U,-14) -- node[mlabel]{\cmd{podman run debian sleep 100}} (\P,-14);
+  \draw[msg] (\P,-22) -- ++(10,0) |- node[pos=.25, right=1mm, elabel, fill=none, align=left]{\textbf{1.} récupère les couches de l'image\\(stockage local ou registre)} (\P,-30);
+  \newcommand{\m}[3]{\draw[msg=Sea] (\P,#1) -- node[mlabel]{#3} (\K,#1); \node[step, right=1mm] at (\P,#1+3.5) {#2};}
+  \m{-44}{2}{monte un OverlayFS (lowerdir = image, upperdir neuf)}
+  \m{-56}{3}{crée les namespaces : pid, net, mnt, uts, ipc, user}
+  \m{-68}{4}{crée un cgroup et y applique les limites}
+  \m{-80}{5}{lance \cmd{sleep 100} en PID 1 sur la vue fusionnée}
+  \draw[ret] (\K,-94) -- node[mlabel]{le processus tourne, isolé et borné} (\P,-94);
+\end{tikzpicture}
+\end{document}

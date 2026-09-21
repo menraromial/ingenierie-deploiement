@@ -1,0 +1,30 @@
+.page { display: grid; grid-template-columns: 260px 1fr; gap: 4rem; padding-top: 4rem; padding-bottom: 5rem; max-width: 1080px; }
+.side { position: sticky; top: calc(var(--ifm-navbar-height) + 2rem); align-self: start; }
+.photo { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; border: 1px solid var(--c-rule); }
+.facts { font-family: var(--font-ui); font-size: .9rem; margin-top: 1.4rem; }
+.facts dt { font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--c-muted); margin-top: 1rem; }
+.facts dd { margin: .15rem 0 0; }
+.main { max-width: 42rem; }
+.kicker { font-family: var(--font-ui); font-size: .8rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--c-ocre); }
+.name { font-size: 2.8rem; letter-spacing: -0.02em; margin: .4rem 0 .3rem; }
+.role { font-family: var(--font-ui); font-size: 1.05rem; color: var(--c-muted); padding-bottom: 1.4rem; border-bottom: 2px solid var(--c-ink); }
+.main h2 { font-size: 1.25rem; margin-top: 2.4rem; }
+.pubs { padding-left: 1.2rem; }
+.quote { border-left: 3px solid var(--c-ocre); font-style: italic; color: var(--c-ink); font-size: 1.08rem; }
+.todo {
+  font-family: var(--font-ui); font-size: .82em; font-style: normal;
+  background: var(--c-ocre-bg); color: var(--c-ocre);
+  border: 1px dashed var(--c-ocre); border-radius: 3px; padding: 0 .35rem;
+}
+@media (max-width: 860px) {
+  .page { grid-template-columns: 1fr; gap: 2rem; padding-top: 2.5rem; }
+  .side { position: static; display: flex; gap: 1.5rem; align-items: flex-start; }
+  .photo { width: 140px; flex: none; }
+  .facts { margin-top: 0; }
+}
+.links { display: flex; flex-wrap: wrap; gap: .3rem .9rem; }
+.pubs li { margin-bottom: .8rem; font-size: .97rem; }
+.award {
+  display: inline-block; font-family: var(--font-ui); font-size: .78rem; font-weight: 600;
+  color: var(--c-ocre); border: 1px solid var(--c-ocre); border-radius: 3px; padding: 0 .4rem;
+}

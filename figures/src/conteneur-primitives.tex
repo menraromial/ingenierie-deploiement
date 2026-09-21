@@ -1,0 +1,15 @@
+% Ch. 14 : un conteneur = un processus + trois mécanismes
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[keybox=Ink, text width=64mm, minimum height=13mm] (p) at (62,30) {Un processus Linux ordinaire};
+  \node[box=Enc,  text width=48mm, minimum height=34mm] (n) at (0,0)
+       {\textbf{Namespaces}\\[1mm]{\normalsize ce que le processus \textbf{voit} :\\ses propres PID, réseau,\\points de montage, hostname}};
+  \node[box=Ocre, text width=48mm, minimum height=34mm] (c) at (62,0)
+       {\textbf{cgroups}\\[1mm]{\normalsize ce que le processus \textbf{peut}\\\textbf{consommer} :\\CPU, mémoire, I/O}};
+  \node[box=Sea,  text width=48mm, minimum height=34mm] (f) at (124,0)
+       {\textbf{Fichiers en couches}\\[1mm]{\normalsize ce qu'il voit comme \textbf{sa racine} :\\l'image en lecture seule\\+ une couche inscriptible}};
+  \foreach \t in {n,c,f} \draw[flow] (p.south) -- ++(0,-4) -| (\t.north);
+\end{tikzpicture}
+\end{document}

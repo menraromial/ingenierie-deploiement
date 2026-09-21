@@ -1,0 +1,24 @@
+% Ch. 3 : redirection de port du NAT VirtualBox
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[node distance=24mm]
+  \node[box=Rule, fill=white, minimum height=20mm, text width=40mm] (t)
+       {\ico[Muted]{terminal}\\[1mm]\textbf{Terminal}\\[.5mm]\cmd{ssh -p 2222}\\\cmd{deploy@127.0.0.1}};
+  \node[box=Ocre, minimum height=20mm, text width=44mm, right=of t] (r)
+       {\textbf{Redirection}\\[1mm]\cmd{127.0.0.1:2222}\\[-.5mm]$\downarrow$\\[-.5mm]\cmd{10.0.2.15:22}};
+  \node[box=Sea, minimum height=20mm, text width=34mm, right=of r] (s)
+       {\ico[Sea]{lock}\\[1mm]\textbf{sshd}\sub{écoute sur :22}};
+  \draw[flow] (t) -- node[elabelc, above=1mm, pos=.4]{:2222} (r);
+  \draw[flow] (r) -- node[elabelc, above=1mm, pos=.5]{:22} (s);
+
+  \begin{scope}[on background layer]
+    \node[dframe=Ocre, fit=(r), inner sep=4mm, yshift=3mm, inner ysep=7mm] (nat) {};
+    \node[dframe=Sea, fit=(s), inner sep=4mm, yshift=3mm, inner ysep=7mm] (vm) {};
+    \node[frame, fit=(t)(nat)(vm), inner sep=5mm, yshift=3mm, inner ysep=8mm] (host) {};
+  \end{scope}
+  \node[ftitle, text=Ocre, anchor=north] at (nat.north) {NAT VIRTUALBOX};
+  \node[ftitle, text=Sea, anchor=north] at (vm.north) {VM \textperiodcentered{} 10.0.2.0/24};
+  \node[ftitle, anchor=north west] at (host.north west) {POSTE HÔTE};
+\end{tikzpicture}
+\end{document}

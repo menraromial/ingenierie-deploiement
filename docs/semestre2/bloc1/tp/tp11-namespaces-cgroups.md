@@ -1,14 +1,27 @@
-# TP 11 : Construire un « conteneur » à la main
+---
+title: "TP 11 : Construire un conteneur à la main"
+sidebar_label: "TP 11 : Construire un conteneur à la main"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 4 h
-    - **Prérequis** : chapitres 14 et 15 ; Podman installé (déjà présent sur les postes)
-    - **Livrables** : le compte rendu des manipulations (namespaces isolés, cgroup limitant la mémoire, comparaison avec `podman`) ; runbook
-    - **Compétences travaillées** : C3, C6
+import ChapterHead from '@site/src/components/ChapterHead';
 
-    Objectif : **démystifier le moteur de conteneurs**. Vous allez isoler un processus et le limiter en ressources avec les seules primitives du noyau, sans aucun moteur, puis vérifier que Podman ne fait rien de plus mystérieux. Après ce TP, un conteneur ne sera plus une boîte noire.
+<ChapterHead
+  kicker="Semestre 2 · Bloc 1 · Travaux pratiques 11"
+  title="Construire un « conteneur » à la main"
+  competences={['C3', 'C6']}
+/>
 
-    Tout se fait **en rootless**, sans `sudo` : c'est possible grâce au namespace *user* (ch. 15, §2.2), et c'est le point le plus instructif du TP.
+:::fiche
+- **Durée** : 4 h
+- **Prérequis** : chapitres 14 et 15 ; Podman installé (déjà présent sur les postes)
+- **Livrables** : le compte rendu des manipulations (namespaces isolés, cgroup limitant la mémoire, comparaison avec `podman`) ; runbook
+- **Compétences travaillées** : C3, C6
+
+Objectif : **démystifier le moteur de conteneurs**. Vous allez isoler un processus et le limiter en ressources avec les seules primitives du noyau, sans aucun moteur, puis vérifier que Podman ne fait rien de plus mystérieux. Après ce TP, un conteneur ne sera plus une boîte noire.
+
+Tout se fait **en rootless**, sans `sudo` : c'est possible grâce au namespace *user* (ch. 15, §2.2), et c'est le point le plus instructif du TP.
+:::
 
 ## Étape 1 : isoler la vue avec les namespaces (1 h 15)
 
@@ -46,20 +59,24 @@ Points à comprendre et noter (ch. 15, §2.1) :
 - `--mount-proc` remonte un `/proc` propre au namespace, sans quoi `ps` montrerait encore les processus de l'hôte (`/proc` reflète le namespace PID).
 - Vous êtes **PID 1** : dans un vrai conteneur, cela a des conséquences (adoption des orphelins, gestion des signaux) qui justifient les init minimalistes comme `tini`.
 
-??? question "Point de contrôle n° 1 : deux vues du même processus"
-    Ouvrez **deux** terminaux. Dans le premier, lancez un processus isolé qui dure :
+<details className="controle">
+<summary>Point de contrôle n° 1 : deux vues du même processus</summary>
 
-    ```bash
-    unshare --user --map-root-user --pid --fork --mount-proc sh -c 'sleep 999'
-    ```
+Ouvrez **deux** terminaux. Dans le premier, lancez un processus isolé qui dure :
 
-    Dans le second (sur l'hôte), retrouvez ce `sleep` :
+```bash
+unshare --user --map-root-user --pid --fork --mount-proc sh -c 'sleep 999'
+```
 
-    ```bash
-    ps aux | grep 'sleep 999'      # il a un PID "normal" côté hôte (ex. 34712)
-    ```
+Dans le second (sur l'hôte), retrouvez ce `sleep` :
 
-    Le **même** processus est PID 1 dans son namespace et PID 34712 vu de l'hôte. Notez-le : le conteneur n'est pas *caché* à l'hôte, chacun a simplement sa numérotation. C'est la clé pour déboguer un conteneur depuis l'hôte.
+```bash
+ps aux | grep 'sleep 999'      # il a un PID "normal" côté hôte (ex. 34712)
+```
+
+Le **même** processus est PID 1 dans son namespace et PID 34712 vu de l'hôte. Notez-le : le conteneur n'est pas *caché* à l'hôte, chacun a simplement sa numérotation. C'est la clé pour déboguer un conteneur depuis l'hôte.
+
+</details>
 
 ### 1.3 Le namespace user : la magie du rootless
 
@@ -101,19 +118,24 @@ systemd-run --user --scope -p MemoryMax=50M \
 
 La commande tente d'allouer 200 Mo alors que le cgroup en autorise 50 : le noyau invoque l'**OOM killer** (ch. 15, §3.3), le processus est tué avant d'afficher « après ». Consignez le comportement et le message (souvent `Killed` ou un code de sortie **137**). Ce **137** n'est pas arbitraire : c'est `128 + 9` (tué par le signal SIGKILL). La convention « lire un code de sortie » est détaillée dans l'encadré du chapitre 15, §3.3 ; gardez-la, elle resservira à chaque diagnostic.
 
-!!! note "Le lien direct avec la suite"
-    `systemd-run -p MemoryMax=50M` ↔ `podman run --memory=50m` ↔ le `limits.memory` d'un conteneur Kubernetes (bloc 2). **Trois abstractions, une seule primitive** : le contrôleur `memory` d'un cgroup v2. L'`OOMKilled` que vous diagnostiquerez au bloc 2 vient exactement d'ici. Vous venez d'en voir la source.
+:::note[Le lien direct avec la suite]
+`systemd-run -p MemoryMax=50M` ↔ `podman run --memory=50m` ↔ le `limits.memory` d'un conteneur Kubernetes (bloc 2). **Trois abstractions, une seule primitive** : le contrôleur `memory` d'un cgroup v2. L'`OOMKilled` que vous diagnostiquerez au bloc 2 vient exactement d'ici. Vous venez d'en voir la source.
+:::
 
-??? question "Point de contrôle n° 2 : comparer avec Podman"
-    Faites la même expérience avec Podman et constatez le comportement identique :
+<details className="controle">
+<summary>Point de contrôle n° 2 : comparer avec Podman</summary>
 
-    ```bash
-    podman run --rm --memory=50m python:3.12-slim \
-      python3 -c "b = bytearray(200*1024*1024); print('jamais atteint')"
-    echo "code de sortie : $?"      # 137 = 128 + SIGKILL(9) : OOMKilled
-    ```
+Faites la même expérience avec Podman et constatez le comportement identique :
 
-    Podman n'a rien fait de plus que vous à l'étape 2.1 : il a créé un cgroup et fixé `memory.max`. Notez cette équivalence, c'est le cœur du TP.
+```bash
+podman run --rm --memory=50m python:3.12-slim \
+  python3 -c "b = bytearray(200*1024*1024); print('jamais atteint')"
+echo "code de sortie : $?"      # 137 = 128 + SIGKILL(9) : OOMKilled
+```
+
+Podman n'a rien fait de plus que vous à l'étape 2.1 : il a créé un cgroup et fixé `memory.max`. Notez cette équivalence, c'est le cœur du TP.
+
+</details>
 
 ## Étape 3 : assembler un « conteneur » minimal (1 h)
 

@@ -1,9 +1,22 @@
-# Défi final du bloc 1 : le mur du déploiement manuel
+---
+title: "Défi final : le mur du déploiement manuel"
+sidebar_label: "Défi final : le mur du déploiement manuel"
+hide_title: true
+---
 
-!!! abstract "Fiche du défi"
-    - **Durée** : 30 minutes, chronométrées, en fin de semaine 5
-    - **Matériel autorisé** : votre dépôt Git (code + `RUNBOOK.md`). Rien d'autre : pas de snapshot, pas de copie de VM, pas d'internet au-delà des miroirs de paquets.
-    - **Notation** : ce défi n'est **pas noté sur la réussite**. Il est noté sur le compte rendu que vous en ferez (voir plus bas). Échouer est le résultat attendu et assumé.
+import ChapterHead from '@site/src/components/ChapterHead';
+
+<ChapterHead
+  kicker="Semestre 1 · Bloc 1 · Évaluation"
+  title="Défi final du bloc 1 : le mur du déploiement manuel"
+  lecture="5 min"
+/>
+
+:::fiche
+- **Durée** : 30 minutes, chronométrées, en fin de semaine 5
+- **Matériel autorisé** : votre dépôt Git (code + `RUNBOOK.md`). Rien d'autre : pas de snapshot, pas de copie de VM, pas d'internet au-delà des miroirs de paquets.
+- **Notation** : ce défi n'est **pas noté sur la réussite**. Il est noté sur le compte rendu que vous en ferez (voir plus bas). Échouer est le résultat attendu et assumé.
+:::
 
 ## L'énoncé
 

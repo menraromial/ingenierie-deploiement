@@ -1,0 +1,14 @@
+% Ch. 21 : PVC, PV, StorageClass
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Plum, text width=28mm, minimum height=18mm] (p) at (0,0) {\ico[Plum]{cube}\enspace Pod\\(db)};
+  \node[box=Enc, text width=40mm, minimum height=18mm] (c) at (60,0) {\textbf{PVC}\sub{« je demande 1 Gio »}};
+  \node[db=Ocre, minimum width=40mm, minimum height=22mm] (v) at (124,0) {\textbf{PV}\sub{un disque réel}\sub{de 1 Gio}};
+  \node[box=Sea, text width=40mm] (sc) at (124,-36) {\textbf{StorageClass}};
+  \draw[flow] (p) -- node[elabel, above=1mm, fill=none]{monte} (c);
+  \draw[flow] (c) -- node[elabel, above=1mm, fill=none]{lié à} (v);
+  \draw[dflow=Sea] (sc) -- node[elabel, right=2mm, fill=none]{provisionne automatiquement} (v);
+\end{tikzpicture}
+\end{document}

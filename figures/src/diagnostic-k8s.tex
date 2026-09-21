@@ -1,0 +1,17 @@
+% TP 17 : méthode de diagnostic
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{st/.style={box=#1, text width=40mm, minimum height=30mm}}
+  \foreach \x/\cmdt/\q/\d/\c [count=\k] in {
+      0/get pods/QUEL est l'état ?/{Pending, CrashLoop,\\ImagePull, OOMKilled...}/Enc,
+     52/describe pod/POURQUOI ?/{les Events,\\en bas de la sortie}/Ocre,
+    104/logs/que dit l'APPLICATION ?/{\cmd{--previous}\\si le Pod a redémarré}/Sea,
+    156/get events/dans quel ORDRE ?/{la chronologie\\du cluster}/Plum}{
+    \node[st=\c] (s\k) at (\x,0) {\cmd{kubectl \cmdt}\\[1.5mm]\textbf{\q}\\[1mm]{\normalsize\color{Muted}\d}};
+    \node[step=\c] at (s\k.north west) {\k};
+  }
+  \foreach \a/\b in {1/2,2/3,3/4} \draw[flow] (s\a) -- (s\b);
+\end{tikzpicture}
+\end{document}

@@ -1,46 +1,60 @@
-# TP 1 : Créer et durcir sa machine virtuelle
+---
+title: "TP 1 : Créer et durcir sa machine virtuelle"
+sidebar_label: "TP 1 : Créer et durcir sa machine virtuelle"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 4 h (2 séances de 2 h)
-    - **Prérequis** : chapitre 1 (VM, NAT VirtualBox) et chapitre 5, section 1 (SSH)
-    - **Livrables** : une VM `listify-s1` fonctionnelle, accessible en SSH par clés uniquement ; le fichier `RUNBOOK.md` dans votre dépôt Git `listify`
-    - **Compétences travaillées** : C1 (comprendre les couches), C6 (opérer)
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-    À la fin de ce TP, vous disposez du « serveur » qui portera toute l'application pendant le bloc 1.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 1 · Travaux pratiques 1"
+  title="Créer et durcir sa machine virtuelle"
+  competences={['C1', 'C6']}
+/>
+
+:::fiche
+- **Durée** : 4 h (2 séances de 2 h)
+- **Prérequis** : chapitre 1 (VM, NAT VirtualBox) et chapitre 5, section 1 (SSH)
+- **Livrables** : une VM `listify-s1` fonctionnelle, accessible en SSH par clés uniquement ; le fichier `RUNBOOK.md` dans votre dépôt Git `listify`
+- **Compétences travaillées** : C1 (comprendre les couches), C6 (opérer)
+
+À la fin de ce TP, vous disposez du « serveur » qui portera toute l'application pendant le bloc 1.
+:::
 
 ## Ce que vous allez construire
 
-```mermaid
-flowchart LR
-    subgraph Hote["Votre poste (hôte)"]
-        T["Terminal<br/>ssh -p 2222 deploy@127.0.0.1"]
-        K["Clé privée<br/>~/.ssh/id_ed25519"]
-    end
-    subgraph VM["VM listify-s1 : Ubuntu Server 24.04, 2 Go RAM, 2 vCPU"]
-        S["sshd durci :<br/>clés seulement, root interdit"]
-        U["ufw : deny incoming,<br/>allow 22/tcp"]
-        D["Utilisateur deploy (sudo)"]
-    end
-    T -->|"NAT : 2222 → 22"| U --> S --> D
-    K -.authentifie.- S
-```
+<Figure src="tp1-architecture" num="TP1.1" alt="Le terminal du poste hôte, muni de la clé privée, traverse le NAT 2222 vers 22, puis le pare-feu ufw, jusqu'à sshd durci et l'utilisateur deploy dans la VM.">
+  Ce que vous allez construire : une VM joignable uniquement en SSH par clé, derrière un pare-feu qui refuse tout le reste.
+</Figure>
 
 ## Étape 0 : préparer le poste hôte (15 min)
 
 1. Vérifiez que la virtualisation matérielle est active :
 
-    === "Linux"
-        ```bash
-        egrep -c '(vmx|svm)' /proc/cpuinfo   # doit afficher un nombre > 0
-        ```
-    === "Windows"
-        Gestionnaire des tâches → Performance → CPU → « Virtualisation : activée ». Sinon, activez VT-x/AMD-V dans le BIOS/UEFI.
+    <Tabs>
+    <TabItem value="linux" label="Linux">
+
+    ```bash
+    egrep -c '(vmx|svm)' /proc/cpuinfo   # doit afficher un nombre > 0
+    ```
+
+    </TabItem>
+    <TabItem value="windows" label="Windows">
+
+    Gestionnaire des tâches → Performance → CPU → « Virtualisation : activée ». Sinon, activez VT-x/AMD-V dans le BIOS/UEFI.
+
+    </TabItem>
+    </Tabs>
 
 2. Installez VirtualBox ≥ 7.0 (version exacte : voir le guide d'installation de la semaine 1).
 3. Récupérez l'ISO **Ubuntu Server 24.04 LTS (amd64)** (~2,7 Go) : depuis [releases.ubuntu.com/24.04](https://releases.ubuntu.com/24.04/), téléchargez le fichier `ubuntu-24.04.x-live-server-amd64.iso` (« Server install image »), ou prenez-le sur le miroir local de l'école. Tout le monde doit utiliser la **même** version : les corrections et les pannes injectées sont préparées dessus.
 
-!!! note "« Server », pas « Desktop »"
-    Prenez bien l'image **Server** et non l'image Desktop : l'ISO serveur n'embarque **aucun environnement graphique**. C'est le choix « serveur » du chapitre 1 : on n'installe **que** ce dont on a besoin (réduction de la surface d'attaque, chapitre 5), et on administre tout à distance en SSH. L'installateur d'Ubuntu Server s'appelle **Subiquity** ; il diffère de l'installateur historique de Debian, d'où la procédure détaillée ci-dessous.
+:::note[« Server », pas « Desktop »]
+Prenez bien l'image **Server** et non l'image Desktop : l'ISO serveur n'embarque **aucun environnement graphique**. C'est le choix « serveur » du chapitre 1 : on n'installe **que** ce dont on a besoin (réduction de la surface d'attaque, chapitre 5), et on administre tout à distance en SSH. L'installateur d'Ubuntu Server s'appelle **Subiquity** ; il diffère de l'installateur historique de Debian, d'où la procédure détaillée ci-dessous.
+:::
 
 ## Étape 1 : créer la VM (15 min)
 
@@ -55,8 +69,9 @@ Dans VirtualBox, créez une machine avec ces paramètres :
 | Disque | VDI, 20 Go, alloué dynamiquement | « Dynamique » : le fichier ne grossit qu'à l'usage réel |
 | Réseau, carte 1 | NAT | Sortie Internet immédiate ; entrée par redirections (ch. 3, §4) |
 
-!!! danger "Cochez « Skip unattended installation »"
-    VirtualBox 7 propose une installation automatique de l'OS. **Refusez-la** : d'une part elle crée des comptes par défaut que nous ne voulons pas, d'autre part... installer un OS serveur à la main est précisément un objectif de ce TP. (Vous automatiserez tout cela au bloc 3 avec Vagrant, en connaissance de cause.)
+:::danger[Cochez « Skip unattended installation »]
+VirtualBox 7 propose une installation automatique de l'OS. **Refusez-la** : d'une part elle crée des comptes par défaut que nous ne voulons pas, d'autre part... installer un OS serveur à la main est précisément un objectif de ce TP. (Vous automatiserez tout cela au bloc 3 avec Vagrant, en connaissance de cause.)
+:::
 
 Configurez tout de suite la **redirection de port SSH** : Configuration → Réseau → Carte 1 → Avancé → Redirection de ports, puis cliquez sur l'icône « + » et renseignez **exactement** cette règle (les six colonnes) :
 
@@ -66,12 +81,13 @@ Configurez tout de suite la **redirection de port SSH** : Configuration → Rés
 
 L'IP hôte `127.0.0.1` restreint la redirection à votre propre poste : personne d'autre sur le réseau de la salle ne pourra tenter de se connecter à votre VM.
 
-!!! danger "Sans cette règle, l'étape 3 échouera avec « Connection refused »"
-    C'est la traduction d'adresse qui rend la VM (en NAT) joignable depuis l'hôte : votre `ssh -p 2222 deploy@127.0.0.1` de l'étape 3 **dépend** entièrement de cette redirection. Les erreurs les plus fréquentes, toutes donnant « Connection refused » : oublier la règle, mettre le **Protocole** sur UDP au lieu de **TCP**, écrire **2222** dans « Port invité » (il doit valoir **22**, le port de sshd dans la VM), ou renseigner l'« IP invité » alors qu'elle doit rester **vide**. Vous pouvez vérifier la règle depuis l'hôte : `VBoxManage showvminfo listify-s1 | grep -i "NIC.*Rule"`.
+:::danger[Sans cette règle, l'étape 3 échouera avec « Connection refused »]
+C'est la traduction d'adresse qui rend la VM (en NAT) joignable depuis l'hôte : votre `ssh -p 2222 deploy@127.0.0.1` de l'étape 3 **dépend** entièrement de cette redirection. Les erreurs les plus fréquentes, toutes donnant « Connection refused » : oublier la règle, mettre le **Protocole** sur UDP au lieu de **TCP**, écrire **2222** dans « Port invité » (il doit valoir **22**, le port de sshd dans la VM), ou renseigner l'« IP invité » alors qu'elle doit rester **vide**. Vous pouvez vérifier la règle depuis l'hôte : `VBoxManage showvminfo listify-s1 | grep -i "NIC.*Rule"`.
+:::
 
 ## Étape 2 : installer Ubuntu Server 24.04 (30 min)
 
-Démarrez la VM sur l'ISO. Au menu GRUB, choisissez « Try or Install Ubuntu Server ». L'installateur **Subiquity** se déroule en une série d'écrans (naviguez au clavier : flèches, ++tab++, ++enter++). Points de décision, tout le reste par défaut :
+Démarrez la VM sur l'ISO. Au menu GRUB, choisissez « Try or Install Ubuntu Server ». L'installateur **Subiquity** se déroule en une série d'écrans (naviguez au clavier : flèches, <kbd>Tab</kbd>, <kbd>Entrée</kbd>). Points de décision, tout le reste par défaut :
 
 1. **Langue / clavier** : à votre convenance (le serveur, lui, parlera anglais dans ses logs : c'est très bien).
 2. **Type d'installation** : choisissez **« Ubuntu Server »** (l'option standard, pas « minimized » qui retire des outils utiles au TP).
@@ -85,21 +101,26 @@ Démarrez la VM sur l'ISO. Au menu GRUB, choisissez « Try or Install Ubuntu Ser
 
 L'installation se lance, puis propose « Reboot Now ». Au redémarrage, retirez l'ISO si VirtualBox ne l'a pas fait (Périphériques → Lecteurs optiques → Retirer le disque), et vous obtenez une console de login en mode texte.
 
-!!! info "Ubuntu Server applique déjà la politique du chapitre 5"
-    Contrairement à l'installateur Debian, Subiquity ne demande **jamais** de mot de passe root : le compte root est désactivé d'office et votre utilisateur `deploy` reçoit automatiquement `sudo`. C'est exactement le modèle « pas de connexion root directe » du chapitre 5, appliqué par défaut : rien à corriger.
+:::info[Ubuntu Server applique déjà la politique du chapitre 5]
+Contrairement à l'installateur Debian, Subiquity ne demande **jamais** de mot de passe root : le compte root est désactivé d'office et votre utilisateur `deploy` reçoit automatiquement `sudo`. C'est exactement le modèle « pas de connexion root directe » du chapitre 5, appliqué par défaut : rien à corriger.
+:::
 
 Connectez-vous en `deploy` **dans la console VirtualBox** une seule fois pour vérifier, puis n'y revenez qu'en secours : à partir de maintenant, **tout se fait en SSH**, comme sur un vrai serveur.
 
-??? question "Point de contrôle n° 1 : votre première session"
-    Dans la console VM, vérifiez et notez dans le runbook :
+<details className="controle">
+<summary>Point de contrôle n° 1 : votre première session</summary>
 
-    ```bash
-    ip -brief addr        # l'IP de la VM : 10.0.2.15/24 (réseau NAT VirtualBox)
-    sudo whoami           # doit répondre "root" (deploy a bien sudo, sans mot de passe root)
-    systemctl status ssh  # sshd doit être "active (running)"
-    ```
+Dans la console VM, vérifiez et notez dans le runbook :
 
-    Si `systemctl status ssh` répond « Unit ssh.service could not be found » : vous avez oublié de cocher « Install OpenSSH server » à l'étape 8. Réparez sans réinstaller : `sudo apt update && sudo apt install -y openssh-server`.
+```bash
+ip -brief addr        # l'IP de la VM : 10.0.2.15/24 (réseau NAT VirtualBox)
+sudo whoami           # doit répondre "root" (deploy a bien sudo, sans mot de passe root)
+systemctl status ssh  # sshd doit être "active (running)"
+```
+
+Si `systemctl status ssh` répond « Unit ssh.service could not be found » : vous avez oublié de cocher « Install OpenSSH server » à l'étape 8. Réparez sans réinstaller : `sudo apt update && sudo apt install -y openssh-server`.
+
+</details>
 
 ## Étape 3 : première connexion SSH et création du dépôt (20 min)
 
@@ -115,14 +136,15 @@ Trois choses se passent, à comprendre et consigner :
 2. Le mot de passe demandé est celui de `deploy` **sur la VM** (authentification par mot de passe, que nous allons précisément supprimer).
 3. Vous êtes sur la VM : le prompt affiche `deploy@listify-s1`. Le trafic a suivi : terminal → 127.0.0.1:2222 → NAT VirtualBox → 10.0.2.15:22.
 
-!!! warning "Erreur « Too many authentication failures » ?"
-    Si vous avez déjà des clés SSH sur votre poste, `ssh` les propose **toutes** avant d'arriver au mot de passe ; chaque essai compte comme un échec, et le serveur coupe dès qu'il dépasse sa limite (`MaxAuthTries`, 6 par défaut) avant même de vous demander le mot de passe. Comptez vos clés avec `ssh-add -l`. La parade, à ce stade où la VM accepte encore le mot de passe : forcer `ssh` à ne proposer aucune clé et à aller droit au mot de passe.
+:::warning[Erreur « Too many authentication failures » ?]
+Si vous avez déjà des clés SSH sur votre poste, `ssh` les propose **toutes** avant d'arriver au mot de passe ; chaque essai compte comme un échec, et le serveur coupe dès qu'il dépasse sa limite (`MaxAuthTries`, 6 par défaut) avant même de vous demander le mot de passe. Comptez vos clés avec `ssh-add -l`. La parade, à ce stade où la VM accepte encore le mot de passe : forcer `ssh` à ne proposer aucune clé et à aller droit au mot de passe.
 
-    ```bash
-    ssh -p 2222 -o PubkeyAuthentication=no -o PreferredAuthentications=password deploy@127.0.0.1
-    ```
+```bash
+ssh -p 2222 -o PubkeyAuthentication=no -o PreferredAuthentications=password deploy@127.0.0.1
+```
 
-    Vous obtenez alors l'invite `deploy@127.0.0.1's password:`. Ce problème disparaît de lui-même après l'étape 4 : une fois votre clé publique déposée sur la VM, seule la bonne clé sera utilisée.
+Vous obtenez alors l'invite `deploy@127.0.0.1's password:`. Ce problème disparaît de lui-même après l'étape 4 : une fois votre clé publique déposée sur la VM, seule la bonne clé sera utilisée.
+:::
 
 Créez maintenant le dépôt de travail du semestre **sur votre poste hôte** :
 
@@ -134,8 +156,9 @@ printf '# Runbook TP1 : création et durcissement de la VM\n\n' > RUNBOOK.md
 git add -A && git commit -m "Code initial de Listify + runbook TP1"
 ```
 
-!!! tip "Le runbook commence maintenant"
-    Dès cette étape, chaque commande exécutée sur la VM va dans `RUNBOOK.md`, avec sa raison et son résultat. Format libre mais chronologique. Rappel : c'est noté, et c'est votre seule aide autorisée au défi final.
+:::tip[Le runbook commence maintenant]
+Dès cette étape, chaque commande exécutée sur la VM va dans `RUNBOOK.md`, avec sa raison et son résultat. Format libre mais chronologique. Rappel : c'est noté, et c'est votre seule aide autorisée au défi final.
+:::
 
 ## Étape 4 : authentification par clés (30 min)
 
@@ -166,16 +189,17 @@ ssh -p 2222 deploy@127.0.0.1   # doit maintenant demander la PASSPHRASE de la cl
                                # pas le mot de passe du serveur
 ```
 
-!!! warning "Vous avez déjà plusieurs clés SSH ? (`ssh-copy-id` échoue avec « Too many authentication failures »)"
-    Par défaut, `ssh-copy-id` déploie **toutes** les clés de votre agent et les propose toutes avant le mot de passe, ce qui dépasse `MaxAuthTries`. Désignez **une seule** clé à installer avec `-i` et forcez le mot de passe :
+:::warning[Vous avez déjà plusieurs clés SSH ? (`ssh-copy-id` échoue avec « Too many authentication failures »)]
+Par défaut, `ssh-copy-id` déploie **toutes** les clés de votre agent et les propose toutes avant le mot de passe, ce qui dépasse `MaxAuthTries`. Désignez **une seule** clé à installer avec `-i` et forcez le mot de passe :
 
-    ```bash
-    ssh-copy-id -i ~/.ssh/id_ed25519.pub \
-      -o PubkeyAuthentication=no -o PreferredAuthentications=password \
-      -p 2222 deploy@127.0.0.1
-    ```
+```bash
+ssh-copy-id -i ~/.ssh/id_ed25519.pub \
+  -o PubkeyAuthentication=no -o PreferredAuthentications=password \
+  -p 2222 deploy@127.0.0.1
+```
 
-    Cela n'installe que `id_ed25519.pub` et s'authentifie par le mot de passe de `deploy`. Le `ssh` de vérification qui suit exige alors le réglage `~/.ssh/config` de l'étape 4.3 (sinon l'agent propose encore ses autres clés et la connexion peut de nouveau être coupée).
+Cela n'installe que `id_ed25519.pub` et s'authentifie par le mot de passe de `deploy`. Le `ssh` de vérification qui suit exige alors le réglage `~/.ssh/config` de l'étape 4.3 (sinon l'agent propose encore ses autres clés et la connexion peut de nouveau être coupée).
+:::
 
 Sur la VM, regardez ce que `ssh-copy-id` a réellement fait : votre clé publique est une ligne dans `~/.ssh/authorized_keys`, et les permissions sont strictes (`700` sur `~/.ssh`, `600` sur le fichier), sans quoi sshd refuserait de s'en servir.
 
@@ -194,14 +218,19 @@ Désormais : `ssh listify-s1`. Ce fichier est aussi une **documentation** de vot
 
 Les deux dernières lignes règlent définitivement le problème « Too many authentication failures » : `IdentityFile` désigne la clé à utiliser et `IdentitiesOnly yes` interdit à `ssh` de proposer les **autres** clés de votre agent. Sans elles, si vous avez beaucoup de clés, la bonne peut être offerte trop tard (après les 6 essais autorisés) et le serveur coupe. C'est aussi une bonne pratique de sécurité : ne présenter à chaque serveur que la clé qui le concerne.
 
-??? question "Point de contrôle n° 2"
-    - `ssh listify-s1` vous connecte en demandant la passphrase de la clé (ou rien si un agent SSH tourne), **pas** le mot de passe deploy.
-    - Dans `journalctl -u ssh -n 20` sur la VM, la ligne de votre connexion indique `Accepted publickey for deploy`.
+<details className="controle">
+<summary>Point de contrôle n° 2</summary>
+
+- `ssh listify-s1` vous connecte en demandant la passphrase de la clé (ou rien si un agent SSH tourne), **pas** le mot de passe deploy.
+- Dans `journalctl -u ssh -n 20` sur la VM, la ligne de votre connexion indique `Accepted publickey for deploy`.
+
+</details>
 
 ## Étape 5 : durcissement de sshd (30 min)
 
-!!! danger "Filet de sécurité obligatoire"
-    Gardez **deux** terminaux : le premier reste connecté en SSH pendant toute l'étape (session de secours) ; le second teste. En cas d'erreur fatale, il reste aussi la console VirtualBox : c'est votre « accès physique ».
+:::danger[Filet de sécurité obligatoire]
+Gardez **deux** terminaux : le premier reste connecté en SSH pendant toute l'étape (session de secours) ; le second teste. En cas d'erreur fatale, il reste aussi la console VirtualBox : c'est votre « accès physique ».
+:::
 
 Sur la VM, créez le fichier de durcissement (on ne modifie pas `sshd_config` directement : les fichiers de `sshd_config.d/` sont inclus et survivent mieux aux mises à jour du paquet). Le préfixe **`00-`** du nom est important, on explique pourquoi juste après :
 
@@ -217,13 +246,14 @@ sudo sshd -t          # test de syntaxe : AUCUNE sortie = OK
 sudo systemctl reload ssh
 ```
 
-!!! danger "Piège Ubuntu : le fichier `50-cloud-init.conf` qui réactive le mot de passe"
-    Le fichier principal `/etc/ssh/sshd_config` inclut `sshd_config.d/*.conf` **par ordre alphabétique**, et pour sshd **c'est la _première_ valeur lue d'un paramètre qui gagne** (pas la dernière). Or l'installateur d'Ubuntu Server a déposé un fichier **`/etc/ssh/sshd_config.d/50-cloud-init.conf`** contenant `PasswordAuthentication yes`. Si vous nommiez votre fichier `50-hardening.conf`, il serait lu **après** `50-cloud-init` (`c` < `h`) et votre `PasswordAuthentication no` serait **ignoré** : la connexion par mot de passe resterait ouverte. En le nommant `00-hardening.conf`, il est lu **en premier** et vos réglages l'emportent. Vérifiez toujours la config **effective** (celle qui s'applique vraiment), c'est le réflexe à prendre :
+:::danger[Piège Ubuntu : le fichier `50-cloud-init.conf` qui réactive le mot de passe]
+Le fichier principal `/etc/ssh/sshd_config` inclut `sshd_config.d/*.conf` **par ordre alphabétique**, et pour sshd **c'est la _première_ valeur lue d'un paramètre qui gagne** (pas la dernière). Or l'installateur d'Ubuntu Server a déposé un fichier **`/etc/ssh/sshd_config.d/50-cloud-init.conf`** contenant `PasswordAuthentication yes`. Si vous nommiez votre fichier `50-hardening.conf`, il serait lu **après** `50-cloud-init` (`c` &lt; `h`) et votre `PasswordAuthentication no` serait **ignoré** : la connexion par mot de passe resterait ouverte. En le nommant `00-hardening.conf`, il est lu **en premier** et vos réglages l'emportent. Vérifiez toujours la config **effective** (celle qui s'applique vraiment), c'est le réflexe à prendre :
 
-    ```bash
-    sudo sshd -T | grep -iE 'passwordauthentication|permitrootlogin'
-    # attendu : passwordauthentication no  /  permitrootlogin no
-    ```
+```bash
+sudo sshd -T | grep -iE 'passwordauthentication|permitrootlogin'
+# attendu : passwordauthentication no  /  permitrootlogin no
+```
+:::
 
 Vérifiez ensuite depuis le **second** terminal du poste hôte :
 

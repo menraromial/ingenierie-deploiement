@@ -1,12 +1,25 @@
-# TP 14 : Registre local, scan de vulnérabilités et service systemd
+---
+title: "TP 14 : Registre local, scan et service systemd"
+sidebar_label: "TP 14 : Registre local, scan et service systemd"
+hide_title: true
+---
 
-!!! abstract "Fiche du TP"
-    - **Durée** : 4 h
-    - **Prérequis** : TP 12 et 13 (images construites, composition maîtrisée) ; chapitres 16 et 17
-    - **Livrables** : un registre local fonctionnel avec les images poussées ; un rapport Trivy et la correction d'une image ; un service utilisateur systemd via Quadlet ; runbook
-    - **Compétences travaillées** : C3, C6
+import ChapterHead from '@site/src/components/ChapterHead';
 
-    Vous complétez la chaîne : **distribuer** les images (registre), les **sécuriser** (scan Trivy), et les **superviser** (Quadlet + systemd, la boucle avec le S1). Commandes validées sous Podman 5.
+<ChapterHead
+  kicker="Semestre 2 · Bloc 1 · Travaux pratiques 14"
+  title="Registre local, scan de vulnérabilités et service systemd"
+  competences={['C3', 'C6']}
+/>
+
+:::fiche
+- **Durée** : 4 h
+- **Prérequis** : TP 12 et 13 (images construites, composition maîtrisée) ; chapitres 16 et 17
+- **Livrables** : un registre local fonctionnel avec les images poussées ; un rapport Trivy et la correction d'une image ; un service utilisateur systemd via Quadlet ; runbook
+- **Compétences travaillées** : C3, C6
+
+Vous complétez la chaîne : **distribuer** les images (registre), les **sécuriser** (scan Trivy), et les **superviser** (Quadlet + systemd, la boucle avec le S1). Commandes validées sous Podman 5.
+:::
 
 ## Étape 1 : monter un registre local (1 h)
 
@@ -18,8 +31,9 @@ Un **registre** est le serveur qui stocke et distribue les images (la *distribut
 podman run -d --name registry -p 5000:5000 docker.io/library/registry:2
 ```
 
-!!! warning "Si le port 5000 est déjà pris"
-    `Address already in use` : un autre service occupe le 5000 (fréquent). Utilisez un autre port, par exemple `-p 5001:5000`, et adaptez les commandes suivantes (`localhost:5001`). Savoir diagnostiquer un port occupé (`ss -tlnp | grep 5000`) est un réflexe du S1 qui resert ici.
+:::warning[Si le port 5000 est déjà pris]
+`Address already in use` : un autre service occupe le 5000 (fréquent). Utilisez un autre port, par exemple `-p 5001:5000`, et adaptez les commandes suivantes (`localhost:5001`). Savoir diagnostiquer un port occupé (`ss -tlnp | grep 5000`) est un réflexe du S1 qui resert ici.
+:::
 
 ### 1.2 Pousser et tirer
 
@@ -45,12 +59,16 @@ podman pull --tls-verify=false localhost:5000/listify-backend:1.0
 
 Consignez la sortie de `_catalog` et `tags/list` : vous parlez directement à l'API du registre, sans passer par le moteur. C'est la *distribution spec* de l'OCI, celle que le pipeline de CI/CD du bloc 3 utilisera pour publier les images automatiquement.
 
-??? question "Point de contrôle n° 1 : le digest, identité immuable"
-    ```bash
-    podman image inspect localhost:5000/listify-backend:1.0 --format '{{.Digest}}'
-    ```
+<details className="controle">
+<summary>Point de contrôle n° 1 : le digest, identité immuable</summary>
 
-    Notez ce `sha256:...`. C'est l'**empreinte immuable** de l'image (ch. 16 §2) : deux images de même digest sont bit à bit identiques. Le tag `1.0` peut être réaffecté ; le digest, jamais. En production, on déploie souvent par digest pour une reproductibilité absolue. Poussez la **même** image sous un second tag (`:latest`) et vérifiez que le digest est **identique** : le contenu n'a pas changé, seul le nom.
+```bash
+podman image inspect localhost:5000/listify-backend:1.0 --format '{{.Digest}}'
+```
+
+Notez ce `sha256:...`. C'est l'**empreinte immuable** de l'image (ch. 16 §2) : deux images de même digest sont bit à bit identiques. Le tag `1.0` peut être réaffecté ; le digest, jamais. En production, on déploie souvent par digest pour une reproductibilité absolue. Poussez la **même** image sous un second tag (`:latest`) et vérifiez que le digest est **identique** : le contenu n'a pas changé, seul le nom.
+
+</details>
 
 ## Étape 2 : scanner les vulnérabilités avec Trivy (1 h 30)
 
@@ -80,16 +98,17 @@ Lisez le rapport : chaque vulnérabilité est listée avec son identifiant **CVE
 trivy image --severity HIGH,CRITICAL --input /tmp/listify-backend.tar
 ```
 
-!!! tip "Alternative : le socket Podman (comme en CI)"
-    Plutôt que l'archive, on peut activer le socket Podman et laisser Trivy interroger le moteur, exactement comme le fera un runner de CI au bloc 3 :
+:::tip[Alternative : le socket Podman (comme en CI)]
+Plutôt que l'archive, on peut activer le socket Podman et laisser Trivy interroger le moteur, exactement comme le fera un runner de CI au bloc 3 :
 
-    ```bash
-    systemctl --user enable --now podman.socket
-    export DOCKER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
-    trivy image localhost/listify-backend:1.0     # nom complet : voir `podman images`
-    ```
+```bash
+systemctl --user enable --now podman.socket
+export DOCKER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
+trivy image localhost/listify-backend:1.0     # nom complet : voir `podman images`
+```
 
-    Les deux méthodes donnent le même rapport. L'archive (`--input`) est plus simple et sans dépendance ; le socket prépare l'intégration en pipeline.
+Les deux méthodes donnent le même rapport. L'archive (`--input`) est plus simple et sans dépendance ; le socket prépare l'intégration en pipeline.
+:::
 
 ### 2.2 Corriger une image vulnérable
 
@@ -106,8 +125,9 @@ trivy image --severity HIGH,CRITICAL --input /tmp/listify-backend-1.1.tar
 
 Consignez le nombre de CVE HIGH/CRITICAL **avant** et **après**. Discussion à mener au runbook : une image n'est jamais « sûre » définitivement (de nouvelles CVE sont publiées chaque jour) ; ce qui compte, c'est de **scanner régulièrement** et de **reconstruire** quand la base est corrigée. C'est pourquoi le scan sera **automatisé dans le pipeline de CI** au bloc 3 : un humain ne peut pas suivre ce rythme.
 
-!!! note "Ce qu'un scan ne dit pas"
-    Trivy détecte les CVE **connues** des paquets installés. Il ne détecte pas les failles de *votre* code, ni les erreurs de configuration, ni les CVE non encore publiées (*zero-day*). C'est une couche de défense, pas une garantie. Un ingénieur honnête connaît les limites de ses outils (esprit du S1, chapitre 5).
+:::note[Ce qu'un scan ne dit pas]
+Trivy détecte les CVE **connues** des paquets installés. Il ne détecte pas les failles de *votre* code, ni les erreurs de configuration, ni les CVE non encore publiées (*zero-day*). C'est une couche de défense, pas une garantie. Un ingénieur honnête connaît les limites de ses outils (esprit du S1, chapitre 5).
+:::
 
 ## Étape 3 : superviser un conteneur avec systemd (Quadlet) (1 h)
 
@@ -142,16 +162,17 @@ systemctl --user start listify-backend.service
 systemctl --user status listify-backend.service      # doit être active (running)
 ```
 
-!!! warning "Le service échoue avec `status=126` et `Address already in use` ?"
-    C'est un **conflit de port** : le `PublishPort` (8001 ici) est déjà occupé sur votre poste (un autre conteneur, un serveur de dev, `mkdocs serve`...). Vérifiez avec `ss -tlnp | grep 8001` et changez le port publié dans le fichier `.container` si besoin. Piège associé : après plusieurs échecs rapides, systemd refuse de redémarrer (`Start request repeated too quickly`) ; il faut alors **effacer l'état d'échec** avant de réessayer :
+:::warning[Le service échoue avec `status=126` et `Address already in use` ?]
+C'est un **conflit de port** : le `PublishPort` (8001 ici) est déjà occupé sur votre poste (un autre conteneur, un serveur de dev, `mkdocs serve`...). Vérifiez avec `ss -tlnp | grep 8001` et changez le port publié dans le fichier `.container` si besoin. Piège associé : après plusieurs échecs rapides, systemd refuse de redémarrer (`Start request repeated too quickly`) ; il faut alors **effacer l'état d'échec** avant de réessayer :
 
-    ```bash
-    systemctl --user reset-failed listify-backend.service
-    systemctl --user daemon-reload
-    systemctl --user start listify-backend.service
-    ```
+```bash
+systemctl --user reset-failed listify-backend.service
+systemctl --user daemon-reload
+systemctl --user start listify-backend.service
+```
 
-    Rappel du journal, votre meilleur allié : `journalctl --user -u listify-backend.service -n 20` donne le message exact de `podman` (ici, `pasta: Listen failed ... Address already in use`).
+Rappel du journal, votre meilleur allié : `journalctl --user -u listify-backend.service -n 20` donne le message exact de `podman` (ici, `pasta: Listen failed ... Address already in use`).
+:::
 
 Vous **retrouvez mot pour mot** le chapitre 2 du S1 : `Restart=on-failure`, `systemctl status`, `WantedBy=`. La différence ? Ce n'est plus Gunicorn dans un venv, c'est un **conteneur**. L'unité de déploiement a changé ; l'outil de supervision est le même. La boucle S1 → S2 est bouclée.
 

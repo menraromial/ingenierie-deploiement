@@ -1,4 +1,17 @@
-# Évaluation du Semestre 1
+---
+title: "Évaluation du Semestre 1"
+sidebar_label: "Évaluation du Semestre 1"
+hide_title: true
+---
+
+import ChapterHead from '@site/src/components/ChapterHead';
+
+<ChapterHead
+  kicker="Semestre 1 · Évaluation"
+  title="Évaluation du Semestre 1"
+  lecture="5 min"
+  competences={['C1', 'C6']}
+/>
 
 L'évaluation du semestre pèse trois choses distinctes : la **régularité** (contrôle continu), la **capacité à produire** un déploiement automatisé de bout en bout (projet), et la **maîtrise des concepts** durables (examen théorique). Aucune ne remplace les autres : on peut réussir un `deploy.sh` sans comprendre l'idempotence, et réciter l'idempotence sans savoir déboguer une VM. Le métier exige les deux.
 

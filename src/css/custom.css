@@ -1,0 +1,184 @@
+/* =====================================================================
+   Charte du cours « Ingénierie du Déploiement »
+   Esprit : manuel universitaire. Texte courant en Source Serif 4,
+   interface et figures en Source Sans 3, code en JetBrains Mono.
+   Palette partagée avec figures/lib/coursfig.sty.
+   ===================================================================== */
+@import '@fontsource-variable/source-serif-4/index.css';
+@import '@fontsource-variable/source-serif-4/wght-italic.css';
+@import '@fontsource/source-sans-3/400.css';
+@import '@fontsource/source-sans-3/600.css';
+@import '@fontsource/source-sans-3/700.css';
+@import '@fontsource-variable/jetbrains-mono/index.css';
+
+:root {
+  /* palette (identique aux couleurs TikZ) */
+  --c-ink: #1f2430;
+  --c-muted: #5b6272;
+  --c-rule: #dcdfe6;
+  --c-paper: #fbfaf7;
+  --c-enc: #1f3a68;
+  --c-enc-bg: #eef2f8;
+  --c-sea: #1d6f6a;
+  --c-sea-bg: #e9f3f1;
+  --c-ocre: #a8680c;
+  --c-ocre-bg: #faf2e4;
+  --c-brick: #a33a2b;
+  --c-brick-bg: #f9ebe8;
+  --c-plum: #5e3f7a;
+  --c-plum-bg: #f2edf6;
+
+  --ifm-color-primary: #1f3a68;
+  --ifm-color-primary-dark: #1c345e;
+  --ifm-color-primary-darker: #1a3158;
+  --ifm-color-primary-darkest: #152849;
+  --ifm-color-primary-light: #224072;
+  --ifm-color-primary-lighter: #244378;
+  --ifm-color-primary-lightest: #2a4d8a;
+
+  --ifm-font-family-base: 'Source Serif 4 Variable', 'Source Serif 4', Georgia, serif;
+  --ifm-heading-font-family: 'Source Sans 3', system-ui, sans-serif;
+  --ifm-font-family-monospace: 'JetBrains Mono Variable', ui-monospace, monospace;
+  --font-ui: 'Source Sans 3', system-ui, sans-serif;
+
+  --ifm-background-color: var(--c-paper);
+  --ifm-font-color-base: var(--c-ink);
+  --ifm-font-size-base: 112.5%;
+  --ifm-line-height-base: 1.68;
+  --ifm-heading-font-weight: 700;
+  --ifm-heading-color: #151a24;
+  --ifm-link-color: var(--c-enc);
+  --ifm-code-font-size: 88%;
+  --ifm-code-background: #eef0f4;
+  --ifm-toc-border-color: var(--c-rule);
+  --ifm-navbar-height: 3.6rem;
+  --ifm-navbar-background-color: rgba(251, 250, 247, 0.92);
+  --ifm-footer-background-color: #f1efe9;
+  --ifm-table-stripe-background: #f4f3ee;
+  --ifm-hr-border-color: var(--c-rule);
+  --docusaurus-highlighted-code-line-bg: rgba(31, 58, 104, 0.08);
+  --fig-paper: #ffffff;
+}
+
+[data-theme='dark'] {
+  --c-ink: #e3e5ea;
+  --c-muted: #a3a9b6;
+  --c-rule: #2e3441;
+  --c-paper: #14171e;
+  --c-enc: #8fb0e6;
+  --c-enc-bg: #1a2233;
+  --c-sea: #6cc3bb;
+  --c-sea-bg: #152523;
+  --c-ocre: #e0a94f;
+  --c-ocre-bg: #2a2114;
+  --c-brick: #ec8b7b;
+  --c-brick-bg: #2c1a17;
+  --c-plum: #c3a5de;
+  --c-plum-bg: #221b2b;
+
+  --ifm-color-primary: #8fb0e6;
+  --ifm-color-primary-dark: #749ce0;
+  --ifm-color-primary-darker: #6692dd;
+  --ifm-color-primary-darkest: #3f76d3;
+  --ifm-color-primary-light: #aac4ec;
+  --ifm-color-primary-lighter: #b8ceef;
+  --ifm-color-primary-lightest: #e1eaf8;
+  --ifm-background-color: var(--c-paper);
+  --ifm-heading-color: #f0f1f4;
+  --ifm-code-background: #222733;
+  --ifm-navbar-background-color: rgba(20, 23, 30, 0.9);
+  --ifm-footer-background-color: #10131a;
+  --ifm-table-stripe-background: #191d25;
+  --fig-paper: #f7f6f2;
+}
+
+/* ---------- interface en sans-serif, lecture en serif ---------- */
+.navbar, .menu, .table-of-contents, .pagination-nav, .breadcrumbs,
+.footer, .footer__title, .button, table, figcaption, .theme-doc-toc-mobile, .admonition-heading,
+.tabs, [class*="codeBlockTitle"], .markdown summary {
+  font-family: var(--font-ui);
+}
+.navbar { backdrop-filter: blur(8px); border-bottom: 1px solid var(--c-rule); box-shadow: none; }
+.navbar__title { font-weight: 700; letter-spacing: -0.01em; }
+.menu { font-size: 0.95rem; }
+.menu__link--active:not(.menu__link--sublist) { font-weight: 600; }
+.table-of-contents { font-size: 0.85rem; }
+
+/* ---------- colonne de lecture ---------- */
+.theme-doc-markdown { max-width: 46rem; }
+.markdown h1:first-child { font-size: 2.4rem; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 1.4rem; }
+.markdown h2 {
+  font-size: 1.6rem; margin-top: 3rem; padding-top: 1rem;
+  border-top: 1px solid var(--c-rule);
+}
+.markdown h3 { font-size: 1.22rem; margin-top: 2rem; }
+.markdown p, .markdown li { hyphens: auto; }
+.markdown dl:not([class]) dt { font-family: var(--font-ui); font-weight: 700; margin-top: 1rem; }
+
+/* numéro de chapitre au-dessus du titre (frontmatter + composant) */
+.chapter-kicker {
+  font-family: var(--font-ui); font-size: .82rem; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--c-ocre);
+  margin-bottom: .3rem;
+}
+
+/* ---------- tableaux sobres (filets typographiques) ---------- */
+.markdown table { display: table; width: 100%; border-collapse: collapse; font-size: .92rem; }
+.markdown table thead tr { border-bottom: 2px solid var(--c-ink); }
+.markdown table tr { border-top: 0; border-bottom: 1px solid var(--c-rule); background: none; }
+.markdown table th, .markdown table td { border: 0; padding: .55rem .8rem; vertical-align: top; }
+.markdown table th { text-align: left; font-weight: 700; }
+
+/* ---------- code ---------- */
+.theme-code-block { border: 1px solid var(--c-rule); box-shadow: none; }
+code { border: 0; }
+
+/* ---------- notes de bas de page ---------- */
+.footnotes { font-size: .88rem; color: var(--c-muted); }
+
+/* ---------- bibliographie de chapitre ---------- */
+.biblio ul { list-style: none; padding-left: 0; }
+.biblio li { padding-left: 1.6rem; text-indent: -1.6rem; margin-bottom: .6rem; font-size: .95rem; }
+.biblio h3 {
+  font-family: var(--font-ui); font-size: .8rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--c-muted); margin-top: 1.6rem;
+}
+
+/* ---------- « Ce qu'il faut retenir » ---------- */
+.retenir ol { counter-reset: r; list-style: none; padding-left: 0; }
+.retenir li { counter-increment: r; position: relative; padding-left: 2.4rem; margin-bottom: .7rem; }
+.retenir li::before {
+  content: counter(r); position: absolute; left: 0; top: .15rem;
+  width: 1.6rem; height: 1.6rem; border-radius: 50%;
+  background: var(--c-enc); color: #fff; font: 700 .8rem/1.6rem var(--font-ui); text-align: center;
+}
+[data-theme='dark'] .retenir li::before { color: #14171e; }
+
+/* ---------- blocs repliables : points de contrôle, banque de pannes ---------- */
+.markdown details {
+  --tone: var(--c-enc);
+  --ifm-alert-background-color: transparent;
+  --ifm-alert-border-color: var(--c-rule);
+  background: var(--ifm-background-color);
+  border: 1px solid var(--c-rule);
+  border-left: 3px solid var(--tone);
+  border-radius: 0 4px 4px 0;
+  box-shadow: none;
+  margin: 1.6rem 0;
+}
+.markdown details > summary {
+  font-family: var(--font-ui); font-weight: 700; font-size: 1rem;
+  color: var(--ifm-heading-color);
+}
+.markdown details.controle > summary::before { border-color: transparent transparent transparent var(--tone); }
+.markdown details.enseignant { --tone: var(--c-brick); background: var(--c-brick-bg); }
+.markdown details.enseignant > summary { color: var(--c-brick); }
+
+/* ---------- listes de définitions ---------- */
+.markdown dl:not([class]) { margin: 1.4rem 0; }
+.markdown dl:not([class]) dt { font-size: 1rem; color: var(--ifm-heading-color); }
+.markdown dl:not([class]) dd { margin: .2rem 0 1rem 1.4rem; padding-left: .9rem; border-left: 2px solid var(--c-rule); }
+.markdown dl:not([class]) dd > :last-child { margin-bottom: 0; }
+
+/* ---------- touches clavier ---------- */
+kbd { font-family: var(--font-ui); font-size: .82em; box-shadow: none; border: 1px solid var(--c-rule); border-bottom-width: 2px; }

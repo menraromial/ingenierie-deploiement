@@ -1,0 +1,17 @@
+% Ch. 20 : la boucle de réconciliation
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Enc, text width=40mm, minimum height=22mm] (o) at (0,0) {\textbf{Observer}\sub{lire l'état réel}\sub{(quels Pods existent ?)}};
+  \node[diamond, aspect=1.7, draw=Ocre, fill=OcreBg, line width=.8pt, align=center, inner sep=1mm] (c) at (62,0) {\textbf{Comparer}\\{\normalsize réel = désiré ?}};
+  \node[box=Sea, text width=40mm, minimum height=18mm] (w) at (124,20) {\textbf{Ne rien faire}\sub{attendre, ré-observer}};
+  \node[box=Brick, text width=40mm, minimum height=18mm] (a) at (124,-20) {\textbf{Agir}\sub{créer ou supprimer}\sub{ce qu'il faut}};
+  \draw[flow] (o) -- (c);
+  \draw[flow=Sea] (c.north) |- node[elabel, pos=.25, left=1mm, fill=none, text=Sea]{oui} (w.west);
+  \draw[flow=Brick] (c.south) |- node[elabel, pos=.25, left=1mm, fill=none, text=Brick]{non} (a.west);
+  \draw[flow=Muted, rounded corners=4pt] (w.north) -- ++(0,8) -| (o.north);
+  \draw[flow=Muted, rounded corners=4pt] (a.south) -- ++(0,-8) -| (o.south);
+  \node[note, anchor=south] at (62,38) {indéfiniment, pour chaque type d'objet};
+\end{tikzpicture}
+\end{document}

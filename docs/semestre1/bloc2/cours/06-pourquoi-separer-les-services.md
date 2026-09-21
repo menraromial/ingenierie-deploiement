@@ -1,12 +1,27 @@
-# Chapitre 6 : Pourquoi séparer les services
+---
+title: "Ch. 6 : Pourquoi séparer les services"
+sidebar_label: "Ch. 6 : Pourquoi séparer les services"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    - énumérer et illustrer les quatre raisons de séparer les services sur des machines distinctes ;
-    - définir rigoureusement montée en charge **verticale** et **horizontale**, et choisir entre les deux ;
-    - raisonner la sécurité d'une architecture en **zones** reliées par des liens contrôlés ;
-    - énoncer le prix de la distribution : le réseau devient un composant interne, et il n'est pas fiable.
+<ChapterHead
+  kicker="Semestre 1 · Bloc 2 · Chapitre 6"
+  title="Pourquoi séparer les services"
+  lecture="10 min"
+  competences={['C1']}
+/>
+
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- énumérer et illustrer les quatre raisons de séparer les services sur des machines distinctes ;
+- définir rigoureusement montée en charge **verticale** et **horizontale**, et choisir entre les deux ;
+- raisonner la sécurité d'une architecture en **zones** reliées par des liens contrôlés ;
+- énoncer le prix de la distribution : le réseau devient un composant interne, et il n'est pas fiable.
+:::
 
 ## 1. Le bilan honnête du tout-sur-une-machine
 
@@ -22,10 +37,9 @@ Votre VM `listify-s1` du bloc 1 fonctionne. Pourquoi y toucher ? Parce qu'en pro
 
 La séparation des services répond point par point à ce tableau. Détaillons les quatre raisons canoniques, car l'examen demande de savoir les **argumenter**, pas les réciter.
 
-<figure markdown>
-  ![Racks de serveurs dans un datacenter](../../../assets/images/wikimedia-servers.jpg)
-  <figcaption>Des rangées de serveurs d'un datacenter réel (ceux de la Wikimedia Foundation) : chaque machine y a un rôle assigné, base de données, cache, application, exactement la logique de ce chapitre. Photo : Victor Grigas, CC BY-SA 3.0, via Wikimedia Commons.</figcaption>
-</figure>
+<Figure photo="/img/wikimedia-servers.jpg" alt="Racks de serveurs dans un datacenter">
+  Des rangées de serveurs d'un datacenter réel (ceux de la Wikimedia Foundation) : chaque machine y a un rôle assigné, base de données, cache, application, exactement la logique de ce chapitre. Photo : Victor Grigas, CC BY-SA 3.0, via Wikimedia Commons.
+</Figure>
 
 ## 2. Raison 1 : l'isolation des pannes
 
@@ -49,11 +63,20 @@ Honnêteté intellectuelle : en séparant, on échange une panne totale évident
 
 ### 3.1 Verticale vs horizontale : les définitions
 
-Montée en charge **verticale** (*scale up*)
-:   Augmenter les ressources **d'une machine** : plus de vCPU, plus de RAM, un disque plus rapide. Sur VirtualBox : deux clics, VM éteinte. Chez un hébergeur : changer de gamme.
+<dl>
+<dt>Montée en charge <strong>verticale</strong> (<em>scale up</em>)</dt>
+<dd>
 
-Montée en charge **horizontale** (*scale out*)
-:   Augmenter le **nombre de machines** qui rendent le même service, derrière un répartiteur de charge. C'est le TP 6 : un deuxième backend.
+Augmenter les ressources **d'une machine** : plus de vCPU, plus de RAM, un disque plus rapide. Sur VirtualBox : deux clics, VM éteinte. Chez un hébergeur : changer de gamme.
+
+</dd>
+<dt>Montée en charge <strong>horizontale</strong> (<em>scale out</em>)</dt>
+<dd>
+
+Augmenter le **nombre de machines** qui rendent le même service, derrière un répartiteur de charge. C'est le TP 6 : un deuxième backend.
+
+</dd>
+</dl>
 
 ### 3.2 Le match, argument par argument
 
@@ -70,32 +93,20 @@ Deux conclusions structurantes :
 1. **On commence toujours par la verticale** (simple, immédiate) et on passe à l'horizontale quand la disponibilité l'exige ou que le prix de la machine suivante décroche. Ce n'est pas un aveu d'échec, c'est de l'ingénierie économique.
 2. **L'horizontale ne s'applique facilement qu'aux tiers sans état.** Doubler le backend Listify : trivial (TP 6). Doubler PostgreSQL : un tout autre sujet (réplication, élection de primaire...), évoqué honnêtement au ch. 8 et repoussé hors du périmètre du semestre. C'est pour cela que l'architecture cible du bloc met le pluriel sur `app` et le singulier sur `db`.
 
-!!! example "Exemple travaillé : dimensionner Listify pour un pic à 600 requêtes/s"
-    Mesures (hypothèses réalistes pour notre stack) : un backend à 3 workers traite ~200 req/s ; la base en traite 1 500 ; Nginx, 10 000.
-    Verticale : passer le backend de 2 à 8 vCPU permet ~4× plus de workers, soit ~800 req/s : ça passe, jusqu'au pic suivant, et le pic de 3 h du matin paie 8 vCPU toute l'année.
-    Horizontale : 3 backends de 2 vCPU = ~600 req/s, ajoutés pour la saison haute, retirés après ; la panne d'un backend laisse 400 req/s au lieu de 0.
-    Le goulot suivant : à 1 500 req/s, ce sera la base, et là, ni 2 clics ni un clone ne suffiront. Savoir **où est le prochain goulot** fait partie de la réponse attendue à toute question de dimensionnement (compétence C1).
+:::exemple[Exemple travaillé : dimensionner Listify pour un pic à 600 requêtes/s]
+Mesures (hypothèses réalistes pour notre stack) : un backend à 3 workers traite ~200 req/s ; la base en traite 1 500 ; Nginx, 10 000.
+Verticale : passer le backend de 2 à 8 vCPU permet ~4× plus de workers, soit ~800 req/s : ça passe, jusqu'au pic suivant, et le pic de 3 h du matin paie 8 vCPU toute l'année.
+Horizontale : 3 backends de 2 vCPU = ~600 req/s, ajoutés pour la saison haute, retirés après ; la panne d'un backend laisse 400 req/s au lieu de 0.
+Le goulot suivant : à 1 500 req/s, ce sera la base, et là, ni 2 clics ni un clone ne suffiront. Savoir **où est le prochain goulot** fait partie de la réponse attendue à toute question de dimensionnement (compétence C1).
+:::
 
 ## 4. Raison 3 : la sécurité par segmentation
 
 Au bloc 1, le moindre privilège s'appliquait *dans* la machine (utilisateurs système, permissions). La séparation permet de l'appliquer **au réseau** : chaque tier ne peut parler qu'à qui son rôle l'exige.
 
-```mermaid
-flowchart LR
-    subgraph Z1["Zone exposée"]
-        LB["listify-lb<br/>seul joignable de l'extérieur<br/>(80/443)"]
-    end
-    subgraph Z2["Zone applicative"]
-        A1["listify-app1"]
-        A2["listify-app2"]
-    end
-    subgraph Z3["Zone données"]
-        DB[("listify-db")]
-    end
-    LB -->|"8000 uniquement"| A1 & A2
-    A1 & A2 -->|"5432 uniquement"| DB
-    X["Tout autre flux"] -. "refusé par les pare-feu" .-> Z3
-```
+<Figure src="zones-reseau" num="6.1" alt="Trois zones de gauche à droite : exposée (listify-lb), applicative (deux serveurs d'application), données (listify-db) ; seuls les flux 8000 puis 5432 sont autorisés, tout autre flux est refusé.">
+  La segmentation en zones. Chaque frontière ne laisse passer qu'un port, dans un seul sens : un attaquant qui compromet le répartiteur ne voit pas la base de données.
+</Figure>
 
 Ce découpage en **zones** (exposée / applicative / données, la zone exposée étant l'héritière des « DMZ » des architectures réseau classiques) transforme la compromission en parcours du combattant : l'attaquant qui tient le load balancer ne voit de la base... rien du tout, elle n'est pas routable pour lui autrement qu'à travers l'API. Chaque flèche du schéma est une règle de pare-feu que vous écrirez au TP 5 ; **tout ce qui n'est pas une flèche est interdit**. Reprenez l'exercice du chapitre 5 (dérouler une compromission) sur cette architecture : chaque saut de zone coûte une vulnérabilité de plus à l'attaquant. C'est la défense en profondeur, version réseau.
 
@@ -115,13 +126,19 @@ Cette lucidité a un texte fondateur : les **huit illusions de l'informatique di
 
 ## Ce qu'il faut retenir
 
+<div className="retenir">
+
 1. Le tout-sur-une-machine couple **cycles de vie, ressources, sécurité et capacité** : quatre bonnes raisons de séparer, à savoir argumenter avec des exemples.
 2. **Une frontière de machine est une frontière de panne** (bulkhead) : le rayon d'explosion se conçoit, il ne se subit pas. En échange, on accepte des pannes partielles plus subtiles.
 3. Verticale = grossir une machine (simple, plafond dur, disponibilité inchangée) ; horizontale = multiplier les machines (LB + stateless requis, disponibilité accrue). On commence vertical ; le stateful ne se multiplie pas facilement : la base reste au singulier ce semestre.
 4. Segmentation : des **zones** reliées par des liens explicitement autorisés ; tout le reste est interdit. Chaque flèche du schéma = une règle ufw du TP 5.
 5. Le réseau devient interne : latence additive, pannes nouvelles, diagnostic par machine ET par lien. Les trois premières *fallacies* sont au programme de l'examen.
 
+</div>
+
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -138,3 +155,5 @@ Cette lucidité a un texte fondateur : les **huit illusions de l'informatique di
 
 - L'étude d'incident « AWS S3 outage, 28 février 2017 » (post-mortem public d'Amazon) : une commande de maintenance mal ciblée, un rayon d'explosion continental ; à lire avec la grille de ce chapitre.
 - Werner Vogels, « A Conversation with Werner Vogels », *ACM Queue*, 2006 : l'architecte d'Amazon explique le passage au « tout service », ancêtre direct des microservices.
+
+</div>

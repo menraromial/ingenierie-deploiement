@@ -1,15 +1,30 @@
-# Chapitre 21 : Les objets fondamentaux de Kubernetes
+---
+title: "Ch. 21 : Les objets fondamentaux"
+sidebar_label: "Ch. 21 : Les objets fondamentaux"
+hide_title: true
+---
 
-!!! abstract "Objectifs du chapitre"
-    À l'issue de ce chapitre, vous saurez :
+import ChapterHead from '@site/src/components/ChapterHead';
+import Figure from '@site/src/components/Figure';
 
-    - définir et relier les objets de charge : Pod, ReplicaSet, Deployment ;
-    - exposer des Pods avec un Service (ClusterIP/NodePort/LoadBalancer) et un Ingress ;
-    - injecter configuration et secrets (ConfigMap, Secret) et cloisonner avec les Namespaces ;
-    - gérer le stockage persistant (PV, PVC, StorageClass) et l'état avec un StatefulSet ;
-    - trancher, avec des arguments, le débat « faut-il mettre sa base de données dans Kubernetes ? ».
+<ChapterHead
+  kicker="Semestre 2 · Bloc 2 · Chapitre 21"
+  title="Les objets fondamentaux de Kubernetes"
+  lecture="10 min"
+  competences={['C1']}
+/>
 
-    Chaque objet de ce chapitre deviendra un manifeste concret au [TP 16](../tp/tp16-fil-rouge-complet.md), où Listify sera reconstruit sur le cluster.
+:::objectifs
+À l'issue de ce chapitre, vous saurez :
+
+- définir et relier les objets de charge : Pod, ReplicaSet, Deployment ;
+- exposer des Pods avec un Service (ClusterIP/NodePort/LoadBalancer) et un Ingress ;
+- injecter configuration et secrets (ConfigMap, Secret) et cloisonner avec les Namespaces ;
+- gérer le stockage persistant (PV, PVC, StorageClass) et l'état avec un StatefulSet ;
+- trancher, avec des arguments, le débat « faut-il mettre sa base de données dans Kubernetes ? ».
+
+Chaque objet de ce chapitre deviendra un manifeste concret au [TP 16](../tp/tp16-fil-rouge-complet.md), où Listify sera reconstruit sur le cluster.
+:::
 
 ## 1. Le Pod : l'unité atomique
 
@@ -50,13 +65,9 @@ Un **ReplicaSet** maintient un **nombre donné de Pods identiques** vivants. C'e
 
 On n'écrit presque jamais un ReplicaSet directement. On écrit un **Deployment**, qui gère des ReplicaSets pour vous et ajoute la brique décisive : les **mises à jour progressives**. Un Deployment est l'objet de charge standard pour une application **sans état** (backend, frontend).
 
-```mermaid
-flowchart TB
-    D["<b>Deployment</b><br/>déclare : image, replicas,<br/>stratégie de mise à jour"] --> RS["<b>ReplicaSet</b><br/>maintient N Pods identiques"]
-    RS --> P1["Pod"]
-    RS --> P2["Pod"]
-    RS --> P3["Pod"]
-```
+<Figure src="deployment-replicaset" num="21.1" alt="Un Deployment gère un ReplicaSet, qui maintient trois Pods identiques.">
+  La hiérarchie Deployment, ReplicaSet, Pods. Le ReplicaSet maintient le nombre ; le Deployment ajoute la stratégie de mise à jour, en créant un nouveau ReplicaSet à chaque version.
+</Figure>
 
 Quand vous changez l'image dans le Deployment (v1 → v2), il crée un **nouveau** ReplicaSet (v2) et fait décroître l'ancien tout en faisant croître le nouveau, Pod par Pod : c'est le **rolling update** (ch. 22). Et il garde l'ancien ReplicaSet à zéro réplique, prêt pour un **rollback** instantané. Vous retrouvez le « déploiement sans coupure » du reverse proxy du S1, désormais natif et généralisé.
 
@@ -66,13 +77,9 @@ Quand vous changez l'image dans le Deployment (v1 → v2), il crée un **nouveau
 
 Les Pods vont et viennent, changent d'IP. Comment un frontend joint-il « le backend » de façon stable ? Le **Service** est la réponse : une **adresse IP virtuelle et stable** (et un nom DNS) qui **répartit** le trafic vers l'ensemble des Pods correspondant à son sélecteur de labels.
 
-```mermaid
-flowchart LR
-    F["Pod frontend"] -->|"http://backend:8000<br/>(nom stable)"| SVC["<b>Service 'backend'</b><br/>IP virtuelle stable<br/>selector: app=listify,tier=backend"]
-    SVC --> P1["Pod backend"]
-    SVC --> P2["Pod backend"]
-    SVC -.->|"un Pod meurt, un autre naît :<br/>le Service suit les labels"| P3["Pod backend (nouveau)"]
-```
+<Figure src="service-selector" num="21.2" alt="Le Pod frontend joint le Service backend par un nom stable ; le Service répartit vers les Pods backend et suit par leurs labels ceux qui naissent.">
+  Le Service, point d'accès stable devant des Pods éphémères. Il ne connaît pas les Pods par leur nom mais par leurs labels.
+</Figure>
 
 Le Service, c'est **à la fois** la découverte de services et l'équilibrage de charge du chapitre 19, fournis nativement. C'est le DNS interne du bloc 1 (`DB_HOST=db`) et le load balancer du S1 (TP 6), unifiés et automatiques. Le kube-proxy (ch. 20) programme le réseau pour que l'IP du Service atteigne les bons Pods.
 
@@ -129,8 +136,9 @@ stringData:
   DB_PASSWORD: "un-mot-de-passe-fort"
 ```
 
-!!! danger "Un Secret Kubernetes n'est PAS chiffré par défaut"
-    Piège classique et question d'examen : un Secret est seulement encodé en **base64**, pas chiffré. N'importe qui ayant accès à l'objet (ou à etcd) le lit en clair. La base64 empêche l'affichage accidentel, pas le vol. Pour une vraie protection : chiffrement d'etcd au repos, RBAC strict (ch. 22), et des outils dédiés (Sealed Secrets, un gestionnaire externe type Vault). Le Secret **sépare** le sensible du reste (mieux que le coder en dur, comme l'anti-pattern du S1), mais ne le **protège** pas seul. Le dire honnêtement fait partie de la compétence.
+:::danger[Un Secret Kubernetes n'est PAS chiffré par défaut]
+Piège classique et question d'examen : un Secret est seulement encodé en **base64**, pas chiffré. N'importe qui ayant accès à l'objet (ou à etcd) le lit en clair. La base64 empêche l'affichage accidentel, pas le vol. Pour une vraie protection : chiffrement d'etcd au repos, RBAC strict (ch. 22), et des outils dédiés (Sealed Secrets, un gestionnaire externe type Vault). Le Secret **sépare** le sensible du reste (mieux que le coder en dur, comme l'anti-pattern du S1), mais ne le **protège** pas seul. Le dire honnêtement fait partie de la compétence.
+:::
 
 ## 6. Les Namespaces : cloisonner un cluster
 
@@ -146,12 +154,9 @@ Un Pod jetable ne peut pas garder de données. Pour la base, il faut du **stocka
 - **PersistentVolumeClaim (PVC)** : une **demande** de stockage par une application (« je veux 1 Gio »). Le Pod monte le PVC, pas le PV.
 - **StorageClass** : décrit *comment* provisionner un PV à la demande (quel type de disque), pour l'automatiser (*dynamic provisioning*).
 
-```mermaid
-flowchart LR
-    POD["Pod (db)"] -->|monte| PVC["<b>PVC</b><br/>'je demande 1 Gio'"]
-    PVC -->|"lié à"| PV["<b>PV</b><br/>un disque réel de 1 Gio"]
-    SC["<b>StorageClass</b>"] -.->|"provisionne automatiquement"| PV
-```
+<Figure src="pvc-pv" num="21.3" alt="Le Pod de base de données monte un PVC qui demande 1 Gio ; le PVC est lié à un PV, disque réel, provisionné automatiquement par une StorageClass.">
+  Stockage persistant : le Pod demande (PVC), l'administrateur ou la StorageClass fournit (PV). La demande est découplée de la réalisation.
+</Figure>
 
 Ce découplage (l'application demande, l'infrastructure fournit) est le même esprit que le PVC/PV et l'IaC du S1 : l'application ne connaît pas le disque physique, seulement sa demande. C'est aussi la **Container Storage Interface (CSI)**, pendant de la CNI réseau, entrevue au bloc 1.
 
@@ -159,16 +164,19 @@ Ce découplage (l'application demande, l'infrastructure fournit) est le même es
 
 Un Deployment convient au *stateless*. Pour une application **avec état** et une **identité stable** (une base de données, chaque réplique ayant son propre stockage et un nom fixe), Kubernetes offre le **StatefulSet** : des Pods numérotés (`db-0`, `db-1`), chacun avec son PVC propre et persistant, dans un ordre de démarrage garanti.
 
-!!! question "Faut-il mettre sa base de données dans Kubernetes ? (question d'architecture, C1)"
-    Débat majeur, attendu à l'examen, sans réponse unique mais avec des arguments à maîtriser :
+:::question[Faut-il mettre sa base de données dans Kubernetes ? (question d'architecture, C1)]
+Débat majeur, attendu à l'examen, sans réponse unique mais avec des arguments à maîtriser :
 
-    **Contre** : Kubernetes est conçu pour le jetable et le mobile ; une base est précieuse et sédentaire. Gérer la persistance, les sauvegardes, la réplication, les basculements d'une base *dans* Kubernetes est complexe et risqué. Beaucoup d'équipes préfèrent une **base managée** (RDS, Cloud SQL) ou une VM dédiée, *hors* du cluster : le cluster orchestre le stateless, la base vit à côté.
+**Contre** : Kubernetes est conçu pour le jetable et le mobile ; une base est précieuse et sédentaire. Gérer la persistance, les sauvegardes, la réplication, les basculements d'une base *dans* Kubernetes est complexe et risqué. Beaucoup d'équipes préfèrent une **base managée** (RDS, Cloud SQL) ou une VM dédiée, *hors* du cluster : le cluster orchestre le stateless, la base vit à côté.
 
-    **Pour** : les StatefulSets et les **opérateurs** (des contrôleurs spécialisés qui encodent le savoir-faire d'exploitation d'une base : CloudNativePG, l'opérateur PostgreSQL...) ont beaucoup mûri. Pour l'homogénéité (tout décrit en YAML, tout dans le même plan de contrôle) et sur site (pas de base managée disponible), c'est devenu viable.
+**Pour** : les StatefulSets et les **opérateurs** (des contrôleurs spécialisés qui encodent le savoir-faire d'exploitation d'une base : CloudNativePG, l'opérateur PostgreSQL...) ont beaucoup mûri. Pour l'homogénéité (tout décrit en YAML, tout dans le même plan de contrôle) et sur site (pas de base managée disponible), c'est devenu viable.
 
-    **La position mûre** : ce n'est pas « toujours » ni « jamais », mais « selon ». Sans opérateur éprouvé et sans expertise, on garde la base dehors. En TP, on met une base *simple* dans un StatefulSet pour **apprendre le mécanisme**, en assumant que ce n'est pas ce qu'on ferait pour une base critique en production. Savoir énoncer ce « selon » avec ses critères, c'est la compétence C1.
+**La position mûre** : ce n'est pas « toujours » ni « jamais », mais « selon ». Sans opérateur éprouvé et sans expertise, on garde la base dehors. En TP, on met une base *simple* dans un StatefulSet pour **apprendre le mécanisme**, en assumant que ce n'est pas ce qu'on ferait pour une base critique en production. Savoir énoncer ce « selon » avec ses critères, c'est la compétence C1.
+:::
 
 ## Ce qu'il faut retenir
+
+<div className="retenir">
 
 1. **Pod** : plus petite unité, conteneurs à réseau partagé, **mortel et jetable** (remplacé, jamais réparé ; IP éphémère). Les **labels** relient tout (sélection souple).
 2. **Deployment** (via ReplicaSet) : maintient N répliques d'une app **sans état**, gère **rolling update** et **rollback**. On écrit des Deployments, pas des Pods ni des ReplicaSets.
@@ -178,14 +186,19 @@ Un Deployment convient au *stateless*. Pour une application **avec état** et un
 6. **Namespace** : cloisonnement logique du cluster (environnements, équipes).
 7. **PVC/PV/StorageClass** : stockage persistant, demande découplée de l'offre. **StatefulSet** pour l'état + identité stable. Le débat « base dans K8s ? » se tranche « selon », avec des critères (opérateur, expertise, criticité).
 
+</div>
+
 ## Regard recherche
 
-!!! quote "Pour aller vers la recherche"
-    - **Brendan Burns, David Oppenheimer, « Design Patterns for Container-based Distributed Systems », HotCloud, 2016** (déjà cité au bloc 1) : la justification théorique du Pod et des patterns multi-conteneurs (sidecar, ambassador, adapter). À relire ici, il éclaire *pourquoi* le Pod, et non le conteneur, est l'unité.
-    - **Le pattern « opérateur »** (encoder l'expertise d'exploitation dans un contrôleur) est une idée forte issue de la pratique : cherchez l'« Operator pattern » (CoreOS, 2016) et les **Custom Resource Definitions**. C'est un domaine où recherche et industrie se rejoignent : comment automatiser le savoir d'un expert humain ? Un excellent sujet de projet ou de mémoire.
-    - Sur le **stockage distribué** sous-jacent aux PV (le vrai problème dur) : Kleppmann, *Designing Data-Intensive Applications* (chapitres réplication et cohérence, vus au S3) est la porte d'entrée.
+:::recherche
+- **Brendan Burns, David Oppenheimer, « Design Patterns for Container-based Distributed Systems », HotCloud, 2016** (déjà cité au bloc 1) : la justification théorique du Pod et des patterns multi-conteneurs (sidecar, ambassador, adapter). À relire ici, il éclaire *pourquoi* le Pod, et non le conteneur, est l'unité.
+- **Le pattern « opérateur »** (encoder l'expertise d'exploitation dans un contrôleur) est une idée forte issue de la pratique : cherchez l'« Operator pattern » (CoreOS, 2016) et les **Custom Resource Definitions**. C'est un domaine où recherche et industrie se rejoignent : comment automatiser le savoir d'un expert humain ? Un excellent sujet de projet ou de mémoire.
+- Sur le **stockage distribué** sous-jacent aux PV (le vrai problème dur) : Kleppmann, *Designing Data-Intensive Applications* (chapitres réplication et cohérence, vus au S3) est la porte d'entrée.
+:::
 
 ## Bibliographie du chapitre
+
+<div className="biblio">
 
 ### Sources primaires
 
@@ -200,3 +213,5 @@ Un Deployment convient au *stateless*. Pour une application **avec état** et un
 
 - Les **opérateurs** : la documentation d'un opérateur PostgreSQL (CloudNativePG, Zalando) pour voir concrètement comment on met une base « pour de vrai » dans Kubernetes.
 - Le projet **kube-prometheus-stack** (bloc 3) : un exemple massif d'objets combinés, à explorer une fois les fondamentaux acquis.
+
+</div>
