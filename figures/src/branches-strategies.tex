@@ -1,0 +1,33 @@
+% Ch. 24 : trunk-based contre git-flow
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{cm/.style={circle, draw=#1, fill=#1Bg, line width=.8pt, minimum size=3.4mm, inner sep=0pt}, cm/.default=Enc,
+           br/.style={line width=1.1pt, draw=#1, rounded corners=4pt}}
+  \newcommand{\lab}[3]{\node[font=\sffamily\normalsize\bfseries, text=#3, anchor=east] at (-3,#1) {#2};}
+  % trunk-based
+  \node[ftitle, anchor=west] at (-24,14) {TRUNK-BASED DEVELOPMENT};
+  \draw[br=Enc] (0,0) -- (180,0); \lab{0}{main}{Enc}
+  \foreach \a in {10,40,70,100,130,160}{
+    \draw[br=Sea] (\a,0) -- (\a+4,-8) -- (\a+14,-8) -- (\a+18,0);
+    \node[cm=Sea] at (\a+9,-8) {}; \node[cm] at (\a+18,0) {};
+  }
+  \node[note, anchor=west, text width=60mm] at (0,-16) {branches de quelques heures, fusion au moins quotidienne ; livraison depuis main};
+  % git-flow
+  \node[ftitle, anchor=west] at (-24,-32) {GIT-FLOW (DRIESSEN, 2010)};
+  \def\ym{-44} \def\yh{-54} \def\yr{-64} \def\yd{-74} \def\yf{-86}
+  \draw[br=Plum] (0,\ym) -- (180,\ym); \lab{\ym}{main}{Plum}
+  \draw[br=Brick] (118,\ym) -- (122,\yh) -- (136,\yh) -- (140,\ym); \lab{\yh}{hotfix}{Brick}
+  \draw[br=Ocre] (80,\yd) -- (84,\yr) -- (100,\yr) -- (104,\ym); \lab{\yr}{release}{Ocre}
+  \draw[br=Ocre] (100,\yr) -- (104,\yd);
+  \draw[br=Enc] (0,\yd) -- (180,\yd); \lab{\yd}{develop}{Enc}
+  \draw[br=Sea] (10,\yd) -- (14,\yf) -- (54,\yf) -- (58,\yd); \lab{\yf}{feature}{Sea}
+  \draw[br=Brick] (136,\yh) -- (140,\yd);
+  \foreach \x in {104,140} \node[cm=Plum] at (\x,\ym) {};
+  \foreach \x in {58,104,140} \node[cm] at (\x,\yd) {};
+  \foreach \x in {24,40} \node[cm=Sea] at (\x,\yf) {};
+  \node[cm=Ocre] at (92,\yr) {}; \node[cm=Brick] at (129,\yh) {};
+  \node[note, anchor=west, text width=46mm] at (150,\yf) {cinq types de branches, fonctionnalités vivant des semaines};
+\end{tikzpicture}
+\end{document}

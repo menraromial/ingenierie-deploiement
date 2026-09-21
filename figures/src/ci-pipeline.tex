@@ -1,0 +1,21 @@
+% Ch. 23 : les étapes canoniques d'un pipeline d'intégration continue
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{st/.style={box=#1, text width=28mm, minimum height=24mm}}
+  \node[box=Rule, fill=white, text width=22mm, minimum height=24mm] (c) at (0,0) {\ico[Muted]{code-branch}\\[1mm]\cmd{git push}};
+  \foreach \x/\t/\d/\s/\c [count=\k] in {
+      36/Lint/{style, erreurs\\statiques}/{secondes}/Enc,
+      72/Tests/{unitaires,\\intégration}/{minutes}/Enc,
+     108/Build/{image de\\conteneur}/{minutes}/Ocre,
+     144/Scan/{vulnérabilités\\connues (CVE)}/{minutes}/Brick}{
+    \node[st=\c] (s\k) at (\x,0) {\textbf{\t}\\[.8mm]{\normalsize\color{Muted}\d}};
+    \node[note, below=1.5mm of s\k] {\s};
+  }
+  \node[box=Sea, text width=28mm, minimum height=24mm] (a) at (184,0) {\ico[Sea]{box}\\[1mm]\textbf{Artefact}\sub{publié, versionné}};
+  \draw[flow] (c) -- (s1); \draw[flow] (s1) -- (s2); \draw[flow] (s2) -- (s3); \draw[flow] (s3) -- (s4); \draw[flow] (s4) -- (a);
+  \draw[dflow=Brick, rounded corners=4pt] (s4.north) -- ++(0,9) -| node[pos=.25, above=1mm, note, text=Brick]{une étape échoue : le pipeline s'arrête, le développeur est prévenu en quelques minutes} (c.north);
+  \node[note, anchor=north, text width=130mm, align=flush center] at (90,-30) {du plus rapide au plus lent : les échecs les plus fréquents doivent tomber le plus tôt};
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,22 @@
+% Ch. 26 : architecture de Prometheus
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \foreach \t/\y [count=\k] in {{listify-backend}/24, {node-exporter}/6, {kube-state-metrics}/-12}
+    \node[box=Rule, fill=white, text width=40mm, minimum height=13mm] (c\k) at (0,\y) {\textbf{\t}\\[-.3mm]\cmd{GET /metrics}};
+  \begin{scope}[on background layer]
+    \node[dframe=Muted, fit=(c1)(c3), inner sep=4mm, yshift=3mm, inner ysep=7mm] (tg) {};
+  \end{scope}
+  \node[ftitle, anchor=north] at (tg.north) {CIBLES};
+  \node[box=Plum, text width=46mm, minimum height=36mm] (p) at (74,6) {\ico[Plum]{fire}\enspace\textbf{Prometheus}\\[1.5mm]{\normalsize collecte (scrape)\\toutes les 15 s\\base de séries temporelles\\évalue les règles d'alerte}};
+  \foreach \k in {1,2,3} \draw[flow=Plum] (p.west) -- (c\k.east);
+  \node[elabel, fill=none, text=Plum] at (36,34) {pull};
+  \node[box=Ocre, text width=38mm, minimum height=16mm] (g) at (160,24) {\ico[Ocre]{chart-area}\enspace\textbf{Grafana}\sub{tableaux de bord}};
+  \node[box=Brick, text width=38mm, minimum height=16mm] (am) at (160,-8) {\ico[Brick]{bell}\enspace\textbf{Alertmanager}\sub{regroupe, route}};
+  \node[box=Rule, fill=white, text width=38mm, minimum height=12mm] (n) at (160,-34) {courriel, chat, astreinte};
+  \draw[flow=Ocre] (g.west) -- node[elabel, above=1mm, fill=none]{requêtes PromQL} (p.east |- g.west);
+  \draw[flow=Brick] (p.east |- am.west) -- node[elabel, above=1mm, fill=none]{alertes} (am.west);
+  \draw[flow=Brick] (am) -- (n);
+\end{tikzpicture}
+\end{document}

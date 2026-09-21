@@ -47,8 +47,8 @@ Le S1 était surtout pratique. Le S2 a un **cœur théorique** revendiqué (name
 ## Organisation
 
 - **[Bloc 1](bloc1/index.md) (semaines 1 à 5) : la conteneurisation.** Ce qu'est *réellement* un conteneur (on en construit un à la main, sans moteur), les standards OCI, les images, le réseau et la composition, avec Podman.
-- **Bloc 2 (semaines 6 à 10) : orchestration, Kubernetes.** Le problème de l'orchestration, le modèle mental de la réconciliation, les objets fondamentaux, Helm.
-- **Bloc 3 (semaines 11 à 14) : CI/CD et observabilité.** Du commit à la production, GitOps, monitoring.
+- **[Bloc 2](bloc2/index.md) (semaines 6 à 10) : orchestration, Kubernetes.** Le problème de l'orchestration, le modèle mental de la réconciliation, les objets fondamentaux, Helm.
+- **[Bloc 3](bloc3/index.md) (semaines 11 à 14) : CI/CD et observabilité.** Du commit à la production, GitOps, monitoring.
 
 ## Environnement de travail
 

@@ -1,0 +1,29 @@
+% Ch. 25 : déploiement poussé contre déploiement tiré
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  % push
+  \node[box=Enc, text width=30mm, minimum height=16mm] (g1) at (0,0) {\ico[Enc]{code-branch}\enspace\textbf{Git}};
+  \node[box=Ocre, text width=40mm, minimum height=20mm] (ci1) at (54,0) {\textbf{Pipeline CI}\sub{détient les identifiants}\sub{du cluster}};
+  \node[box=Sea, text width=34mm, minimum height=16mm] (k1) at (124,0) {\ico[Sea]{dharmachakra}\enspace\textbf{Cluster}};
+  \draw[flow] (g1) -- (ci1);
+  \draw[flow=Brick, line width=1pt] (ci1) -- node[elabelc, above=1mm, fill=none]{kubectl apply} (k1);
+  \node[note, text=Brick, anchor=north, text width=110mm, align=flush center] at (56,-14) {le cluster doit accepter des connexions entrantes ; toute fuite des identifiants de la CI ouvre la production};
+  % pull
+  \node[box=Enc, text width=30mm, minimum height=16mm] (g2) at (0,-44) {\ico[Enc]{code-branch}\enspace\textbf{Git}};
+  \node[box=Ocre, text width=40mm, minimum height=20mm] (ci2) at (54,-72) {\textbf{Pipeline CI}\sub{n'écrit que dans Git}};
+  \node[keybox=Sea, text width=30mm, minimum height=14mm] (ag) at (104,-44) {agent GitOps};
+  \draw[flow=Ocre] (ci2.west) -| node[elabel, pos=.25, below=1mm, fill=none]{commit} (g2.south);
+  \draw[flow=Sea, line width=1pt] (ag) -- node[elabel, above=1mm, fill=none]{observe et tire} (g2);
+  \node[box=Sea, fill=white, text width=30mm, minimum height=10mm] (ap) at (104,-64) {applications};
+  \draw[flow=Sea] (ag) -- node[elabel, right=1mm, fill=none]{applique} (ap);
+  \begin{scope}[on background layer]
+    \node[dframe=Sea, fit=(ag)(ap), inner sep=5mm, yshift=3mm, inner ysep=8mm] (k2) {};
+  \end{scope}
+  \node[ftitle, text=Sea, anchor=north east] at (k2.north east) {CLUSTER};
+  \node[ftitle, anchor=west] at (-18,14) {PUSH \textperiodcentered{} LA CI POUSSE VERS LE CLUSTER};
+  \node[ftitle, anchor=west] at (-18,-30) {PULL \textperiodcentered{} LE CLUSTER TIRE DEPUIS GIT};
+  \node[note, text=Sea, anchor=west, text width=46mm] at (132,-54) {aucune connexion entrante ; aucun identifiant du cluster hors du cluster};
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,37 @@
+% Ch. 24 : rolling update, blue-green, canary
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{v1/.style={rectangle, rounded corners=1.5pt, draw=Enc, fill=EncBg, line width=.7pt, minimum width=9mm, minimum height=7mm, font=\sffamily\small\bfseries, text=Enc},
+           v2/.style={rectangle, rounded corners=1.5pt, draw=Sea, fill=SeaBg, line width=.7pt, minimum width=9mm, minimum height=7mm, font=\sffamily\small\bfseries, text=Sea}}
+  \newcommand{\pods}[3]{% #1 x, #2 y, #3 liste de styles
+    \foreach \s [count=\i from 0] in {#3} \node[v\s] at (#1+\i*11,#2) {v\s};}
+  % rolling
+  \node[ftitle, anchor=west] at (0,10) {ROLLING UPDATE};
+  \pods{4}{0}{1,1,1,1}
+  \pods{4}{-10}{2,1,1,1}
+  \pods{4}{-20}{2,2,1,1}
+  \pods{4}{-30}{2,2,2,2}
+  \node[note, anchor=north west, text width=50mm] at (0,-36) {les Pods sont remplacés un par un ; v1 et v2 coexistent pendant la transition};
+  % blue-green
+  \begin{scope}[xshift=66mm]
+    \node[ftitle, anchor=west] at (0,10) {BLUE-GREEN};
+    \pods{4}{-4}{1,1,1,1}
+    \pods{4}{-24}{2,2,2,2}
+    \node[box=Rule, fill=white, text width=14mm, minimum height=7mm] (r) at (56,-14) {\small routeur};
+    \draw[flow, line width=1pt] (r.west) -- ++(-3,0) |- (43,-24);
+    \draw[dflow] (r.west) ++(0,0) -- ++(-3,0) |- (43,-4);
+    \node[note, anchor=north west, text width=56mm] at (0,-36) {deux environnements complets ; on bascule tout le trafic d'un coup, et on peut rebasculer};
+  \end{scope}
+  % canary
+  \begin{scope}[xshift=138mm]
+    \node[ftitle, anchor=west] at (0,10) {CANARY};
+    \pods{4}{-4}{1,1,1,1}
+    \pods{4}{-24}{2}
+    \node[font=\sffamily\normalsize\bfseries, text=Enc, anchor=west] at (46,-4) {95 \%};
+    \node[font=\sffamily\normalsize\bfseries, text=Sea, anchor=west] at (16,-24) {5 \% du trafic};
+    \node[note, anchor=north west, text width=50mm] at (0,-36) {une petite part du trafic va à v2 ; on élargit si les métriques restent bonnes};
+  \end{scope}
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,18 @@
+% Ch. 26 : logs, métriques, traces
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{pil/.style={box=#1, text width=52mm, minimum height=52mm, align=flush left}}
+  \node[pil=Ocre] (l) at (0,0) {\ico[Ocre]{file-alt}\enspace\textbf{Logs}\\[1mm]{\normalsize événements horodatés, un par un}\\[2mm]
+     {\scriptsize\ttfamily 10:42:07 POST /api/tasks 201\\10:42:09 GET /api/tasks 500\\\ \ OperationalError: timeout}\\[2mm]
+     {\normalsize\color{Muted}répond à : \textbf{que s'est-il passé} pour cette requête ?}};
+  \node[pil=Enc] (m) at (62,0) {\ico[Enc]{chart-line}\enspace\textbf{Métriques}\\[1mm]{\normalsize nombres agrégés dans le temps}\\[2mm]
+     {\scriptsize\ttfamily http\_requests\_total\{status="500"\}\\= 42 (+3 depuis 1 min)}\\[2mm]
+     {\normalsize\color{Muted}répond à : \textbf{le système va-t-il bien}, en tendance ?}};
+  \node[pil=Plum] (t) at (124,0) {\ico[Plum]{project-diagram}\enspace\textbf{Traces}\\[1mm]{\normalsize le parcours d'une requête entre services}\\[2mm]
+     {\scriptsize\ttfamily nginx \ \ \ \ \ \ \ 120 ms\\\ \ gunicorn \ \ 115 ms\\\ \ \ \ postgres 108 ms}\\[2mm]
+     {\normalsize\color{Muted}répond à : \textbf{où} le temps est-il perdu ?}};
+  \node[note, anchor=north, text width=170mm, align=flush center] at (62,-30) {coût croissant de gauche à droite en instrumentation ; valeur maximale quand les trois sont reliées (même identifiant de requête)};
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,32 @@
+% Ch. 24 : intégration, livraison et déploiement continus
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{st/.style={box=#1, text width=26mm, minimum height=11mm}}
+  \newcommand{\row}[3]{% #1 y, #2 titre, #3 couleur du dernier passage
+    \node[font=\sffamily\large\bfseries, anchor=east, align=right, text width=44mm] at (-8,#1) {#2};
+    \node[st=Enc]  (a#1) at (12,#1)  {commit};
+    \node[st=Enc]  (b#1) at (46,#1)  {build, tests};
+    \node[st=Ocre] (c#1) at (80,#1)  {artefact};
+    \draw[flow] (a#1) -- (b#1); \draw[flow] (b#1) -- (c#1);
+  }
+  \row{0}{Intégration\\continue}{}
+  \row{-24}{Livraison\\continue}{}
+  \row{-48}{Déploiement\\continu}{}
+  % intégration : s'arrête à l'artefact
+  \node[note, anchor=west] at (97,0) {l'artefact existe et est testé ; rien n'est déployé};
+  % livraison : staging auto, prod manuelle
+  \node[st=Sea] (s1) at (114,-24) {préproduction};
+  \node[st=Plum] (p1) at (168,-24) {production};
+  \draw[flow] (c-24) -- (s1);
+  \draw[flow=Brick, dash pattern=on 3pt off 2pt] (s1) -- node[above=1mm, font=\sffamily\normalsize\bfseries, text=Brick]{\ico[Brick]{hand-paper} décision} (p1);
+  % déploiement : tout est automatique
+  \node[st=Sea] (s2) at (114,-48) {préproduction};
+  \node[st=Plum] (p2) at (168,-48) {production};
+  \draw[flow] (c-48) -- (s2);
+  \draw[flow=Sea] (s2) -- node[above=1mm, elabel, fill=none, text=Sea]{automatique} (p2);
+  \draw[draw=Rule, line width=.5pt] (-52,-12) -- (184,-12);
+  \draw[draw=Rule, line width=.5pt] (-52,-36) -- (184,-36);
+\end{tikzpicture}
+\end{document}

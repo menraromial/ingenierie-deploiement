@@ -1,0 +1,19 @@
+% Ch. 26 : budget d'erreur sur 30 jours (illustration)
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  % axes : x = jours (0-30) -> 0-150 mm ; y = budget restant (0-100 %) -> 0-60 mm
+  \draw[draw=Ink, line width=.8pt, -{Stealth[length=2.5mm]}] (0,0) -- (158,0) node[right, font=\sffamily\normalsize]{jours};
+  \draw[draw=Ink, line width=.8pt, -{Stealth[length=2.5mm]}] (0,0) -- (0,68) node[above, font=\sffamily\normalsize, align=center]{budget d'erreur restant};
+  \foreach \d in {0,5,...,30} { \draw[draw=Ink] (\d*5,0) -- (\d*5,-1.5); \node[below=1.5mm, font=\sffamily\normalsize] at (\d*5,0) {\d}; }
+  \foreach \p in {0,25,50,75,100} { \draw[draw=Ink] (0,\p*.6) -- (-1.5,\p*.6); \node[left=1.5mm, font=\sffamily\normalsize] at (0,\p*.6) {\p\,\%}; \draw[draw=Rule, line width=.4pt] (0,\p*.6) -- (150,\p*.6); }
+  % consommation : lente, incident au jour 12 (-45 %), puis lente ; gel au jour 24
+  \draw[draw=Enc, line width=1.4pt] (0,60) -- (60,55.2) -- (60.5,27.4) -- (120,23.2) -- (150,21.0);
+  \node[circle, fill=Brick, minimum size=3mm, inner sep=0pt] at (60.3,41.3) {};
+  \node[note, text=Brick, anchor=west, text width=52mm] at (64,44) {jour 12 : incident de 20 min,\\46 \% du budget consommé};
+  \draw[draw=Sea, line width=.8pt, dash pattern=on 4pt off 2pt] (0,15) -- (150,15);
+  \node[note, text=Sea, anchor=south east] at (150,15.5) {seuil de prudence (25 \%) : on ralentit les mises en production};
+  \node[box=Enc, fill=white, text width=58mm, align=flush left, anchor=north east] at (156,66) {\normalsize SLO : 99,9 \% de requêtes réussies\\budget : 0,1 \% sur 30 j, soit \textbf{43,2 min}\\d'indisponibilité équivalente};
+\end{tikzpicture}
+\end{document}

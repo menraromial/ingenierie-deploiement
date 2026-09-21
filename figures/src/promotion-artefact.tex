@@ -1,0 +1,16 @@
+% Ch. 24 : promotion d'un artefact unique
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Ocre, text width=62mm, minimum height=18mm] (img) at (0,30)
+       {\ico[Ocre]{box}\enspace\textbf{Une seule image, construite une fois}\\[1mm]{\small\ttfamily listify-backend@sha256:4f2c\ldots}};
+  \foreach \x/\e/\c/\cfg [count=\k] in {-74/dev/Enc/{1 réplique\\base jetable}, 0/préproduction/Sea/{2 répliques\\copie anonymisée}, 74/production/Plum/{3 répliques\\base réelle}}{
+    \node[box=\c, text width=42mm, minimum height=24mm] (e\k) at (\x,-10) {\textbf{\e}\\[1mm]{\normalsize\color{Muted}\cfg}};
+    \draw[flow=Ocre] (img.south) -- ++(0,-6) -| (e\k.north);
+  }
+  \draw[flow, line width=1pt] (e1) -- node[elabel, above=1mm, fill=none]{promotion} (e2);
+  \draw[flow, line width=1pt] (e2) -- node[elabel, above=1mm, fill=none]{promotion} (e3);
+  \node[note, anchor=north, text width=170mm, align=flush center] at (0,-26) {ce qui change d'un environnement à l'autre : la configuration (valeurs, secrets) ; ce qui ne change jamais : l'image, identifiée par son digest};
+\end{tikzpicture}
+\end{document}

@@ -5,6 +5,7 @@ const b2 = 'semestre1/bloc2';
 const b3 = 'semestre1/bloc3';
 const s2b1 = 'semestre2/bloc1';
 const s2b2 = 'semestre2/bloc2';
+const s2b3 = 'semestre2/bloc3';
 
 const sidebars: SidebarsConfig = {
   cours: [
@@ -101,6 +102,17 @@ const sidebars: SidebarsConfig = {
             `${s2b2}/tp/tp16-fil-rouge-complet`,
             `${s2b2}/tp/tp17-diagnostic-pannes`,
             `${s2b2}/tp/tp18-helm`,
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Bloc 3 : CI/CD et observabilité',
+          link: {type: 'doc', id: `${s2b3}/index`},
+          items: [
+            `${s2b3}/cours/integration-continue`,
+            `${s2b3}/cours/livraison-deploiement-continus`,
+            `${s2b3}/cours/gitops`,
+            `${s2b3}/cours/observabilite`,
           ],
         },
       ],

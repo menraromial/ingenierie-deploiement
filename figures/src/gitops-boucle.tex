@@ -1,0 +1,19 @@
+% Ch. 25 : la boucle GitOps
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Rule, fill=white, text width=32mm, minimum height=16mm] (h) at (-14,0) {\ico[Muted]{users}\\[1mm]Équipe};
+  \node[box=Enc, text width=44mm, minimum height=22mm] (g) at (58,0) {\ico[Enc]{code-branch}\enspace\textbf{Dépôt Git}\sub{état \textbf{désiré}}\sub{manifests versionnés}};
+  \node[keybox=Sea, text width=40mm, minimum height=22mm] (a) at (58,-44) {Argo CD\\[-.3mm]{\normalsize\mdseries compare désiré et réel}};
+  \node[box=Sea, text width=44mm, minimum height=22mm] (k) at (140,-44) {\ico[Sea]{dharmachakra}\enspace\textbf{Cluster}\sub{état \textbf{réel}}};
+  \draw[flow] (h) -- node[elabel, above=1mm, fill=none]{pull request,} node[elabel, below=1mm, fill=none]{revue, fusion} (g);
+  \draw[flow=Sea] (a) -- node[elabel, left=1mm, fill=none, align=right]{1. lit l'état\\désiré} (g);
+  \draw[flow=Sea] ([yshift=4mm]a.east) -- node[elabel, above=1mm, fill=none]{2. lit l'état réel} ([yshift=4mm]k.west);
+  \draw[flow=Sea, line width=1pt] ([yshift=-4mm]a.east) -- node[elabel, below=1.5mm, fill=none]{3. applique la différence} ([yshift=-4mm]k.west);
+  \node[box=Brick, fill=BrickBg, text width=40mm, minimum height=14mm] (x) at (140,-78) {\cmd{kubectl edit} manuel\sub{(dérive)}};
+  \draw[flow=Brick] (x) -- (k);
+  \draw[dflow=Sea] (a.south) |- node[pos=.75, below=1mm, note, text=Sea]{auto-réparation : la dérive est annulée} (x.west);
+  \node[note, anchor=west, text width=50mm] at (92,0) {tout changement passe par Git : historique, revue, retour arrière par \cmd{git revert}};
+\end{tikzpicture}
+\end{document}

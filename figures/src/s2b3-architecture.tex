@@ -1,0 +1,28 @@
+% S2 Bloc 3 : du commit à la production, observée
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Rule, fill=white, text width=30mm, minimum height=16mm] (dev) at (0,0) {\ico[Muted]{laptop-code}\\[1mm]Développeur};
+  \node[box=Enc, text width=36mm, minimum height=16mm] (git) at (50,0) {\ico[Enc]{code-branch}\enspace\textbf{Gitea}\sub{dépôt de l'application}};
+  \node[box=Ocre, text width=58mm, minimum height=22mm] (ci) at (122,0) {\ico[Ocre]{cogs}\enspace\textbf{Pipeline CI}\sub{lint, tests, build, scan,}\sub{push de l'image}};
+  \node[box=Rule, fill=white, text width=36mm, minimum height=16mm] (reg) at (122,-34) {\ico[Muted]{warehouse}\enspace\textbf{Registre}};
+  \node[box=Enc, text width=40mm, minimum height=16mm] (cfg) at (50,-34) {\ico[Enc]{code-branch}\enspace\textbf{Dépôt de config}\sub{manifests, tag de l'image}};
+  \node[keybox=Sea, text width=34mm, minimum height=16mm] (argo) at (50,-68) {Argo CD};
+  \node[box=Sea, text width=48mm, minimum height=16mm] (k8s) at (122,-68) {\ico[Sea]{dharmachakra}\enspace\textbf{Cluster kind}\sub{Listify en production}};
+  \node[box=Plum, text width=44mm, minimum height=16mm] (prom) at (122,-100) {\ico[Plum]{chart-line}\enspace\textbf{Prometheus, Grafana}};
+
+  \draw[flow] (dev) -- node[elabelc, above=1mm, fill=none]{git push} (git);
+  \draw[flow] (git) -- node[elabel, above=1mm, fill=none]{déclenche} (ci);
+  \draw[flow=Ocre] (ci) -- node[elabel, right=1mm, fill=none]{image} (reg);
+  \draw[flow=Ocre] ([xshift=6mm]ci.south west) |- node[elabel, pos=.3, left=1mm, fill=none]{met à jour le tag} (cfg.east);
+  \draw[flow=Sea] (cfg) -- node[elabel, left=1mm, fill=none]{observe (pull)} (argo);
+  \draw[flow=Sea] (argo) -- node[elabel, above=1mm, fill=none]{réconcilie} (k8s);
+  \draw[dflow] (reg) -- node[elabel, right=1mm, fill=none]{tire l'image} (k8s);
+  \draw[flow=Plum] (prom) -- node[elabel, right=1mm, fill=none]{collecte les métriques} (k8s);
+
+  \node[ftitle, text=Ocre, anchor=south] at ([yshift=2mm]ci.north) {CH. 23-24 \textperiodcentered{} INTÉGRATION ET LIVRAISON};
+  \node[ftitle, text=Sea, anchor=east] at ([xshift=-3mm]argo.west) {CH. 25 \textperiodcentered{} GITOPS};
+  \node[ftitle, text=Plum, anchor=east] at ([xshift=-3mm]prom.west) {CH. 26 \textperiodcentered{} OBSERVABILITÉ};
+\end{tikzpicture}
+\end{document}
