@@ -1,0 +1,22 @@
+% Ch. 30 : modèle embarqué contre modèle-service
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  % embarqué
+  \node[ftitle, anchor=west] at (-4,20) {MODÈLE EMBARQUÉ DANS L'APPLICATION};
+  \foreach \k/\x in {1/0, 2/40, 3/80} {
+    \node[box=Enc, text width=30mm, minimum height=26mm, align=flush center] (e\k) at (\x,0) {\textbf{backend} \k\\[1mm]{\normalsize code Flask}\\[1mm]\colorbox{OcreBg}{\normalsize modèle 150 Mo}};
+  }
+  \node[note, anchor=west, text width=46mm] at (100,0) {chaque réplique (et chaque worker) charge le modèle ; changer de modèle, c'est redéployer le backend};
+  % service
+  \begin{scope}[yshift=-50mm]
+    \node[ftitle, anchor=west] at (-4,20) {MODÈLE EXPOSÉ COMME UN SERVICE};
+    \foreach \k/\x in {1/0, 2/40, 3/80}
+      \node[box=Enc, text width=30mm, minimum height=16mm] (b\k) at (\x,6) {\textbf{backend} \k\sub{code Flask}};
+    \node[box=Ocre, text width=46mm, minimum height=16mm] (m) at (40,-22) {\textbf{service de prédiction}\sub{2 répliques, versionné à part}};
+    \foreach \k in {1,2,3} \draw[flow=Ocre] (b\k.south) -- ++(0,-5) -| (m.north);
+    \node[note, anchor=west, text width=46mm] at (100,-8) {un saut réseau de plus, mais un déploiement, un dimensionnement et une version propres au modèle};
+  \end{scope}
+\end{tikzpicture}
+\end{document}

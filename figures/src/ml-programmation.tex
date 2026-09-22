@@ -1,0 +1,24 @@
+% Ch. 27 : programmation classique contre apprentissage automatique
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  % programmation classique
+  \node[box=Enc, text width=30mm] (r1) at (0,8) {\textbf{règles}\sub{écrites par vous}};
+  \node[box=Rule, fill=white, text width=30mm] (d1) at (0,-8) {\textbf{données}};
+  \node[keybox=Enc, text width=30mm, minimum height=14mm] (p1) at (52,0) {programme};
+  \node[box=Sea, text width=30mm] (o1) at (104,0) {\textbf{réponses}};
+  \draw[flow] (r1.east) -- (p1.west); \draw[flow] (d1.east) -- (p1.west); \draw[flow] (p1) -- (o1);
+  \node[ftitle, anchor=south west] at (-16,20) {PROGRAMMATION CLASSIQUE};
+  % apprentissage
+  \begin{scope}[yshift=-46mm]
+    \node[box=Rule, fill=white, text width=30mm] (d2) at (0,8) {\textbf{données}};
+    \node[box=Sea, text width=30mm] (a2) at (0,-8) {\textbf{réponses}\sub{attendues (étiquettes)}};
+    \node[keybox=Ocre, text width=30mm, minimum height=14mm] (p2) at (52,0) {apprentissage};
+    \node[box=Enc, text width=30mm] (m2) at (104,0) {\textbf{modèle}\sub{des règles apprises}};
+    \draw[flow] (d2.east) -- (p2.west); \draw[flow] (a2.east) -- (p2.west); \draw[flow] (p2) -- (m2);
+    \node[ftitle, anchor=south west] at (-16,20) {APPRENTISSAGE AUTOMATIQUE};
+  \end{scope}
+  \node[note, anchor=west, text width=46mm] at (124,-46) {le comportement du système dépend désormais des \textbf{données}, pas seulement du code};
+\end{tikzpicture}
+\end{document}

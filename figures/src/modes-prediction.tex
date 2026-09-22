@@ -1,0 +1,30 @@
+% Ch. 30 : trois modes de prédiction
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{st/.style={box=#1, text width=34mm, minimum height=13mm}}
+  \newcommand{\ttl}[2]{\node[ftitle, anchor=west] at (-16,#1) {#2};}
+  % lots
+  \ttl{16}{PAR LOTS (HORS LIGNE)}
+  \node[st=Ocre] (b1) at (0,0) {\textbf{tâche planifiée}\sub{chaque nuit}};
+  \node[keybox=Enc, text width=26mm, minimum height=13mm] (b2) at (56,0) {modèle};
+  \node[db=Plum, minimum width=30mm, minimum height=16mm] (b3) at (112,0) {\textbf{table}\sub{prédictions}};
+  \node[st=Rule, fill=white] (b4) at (168,0) {\textbf{application}\sub{lit la table}};
+  \draw[flow] (b1) -- (b2); \draw[flow] (b2) -- (b3); \draw[flow] (b4) -- (b3);
+  % à la demande
+  \ttl{-20}{À LA DEMANDE (EN LIGNE)}
+  \node[st=Rule, fill=white] (o1) at (0,-36) {\textbf{application}\sub{une requête}};
+  \node[st=Sea, text width=44mm] (o2) at (84,-36) {\textbf{service de prédiction}\sub{répond en quelques ms}};
+  \draw[{Stealth[length=2.2mm,width=1.6mm]}-{Stealth[length=2.2mm,width=1.6mm]}, draw=Ink, line width=.8pt] (o1) -- node[elabel, above=1mm, fill=none]{titre $\rightarrow$ catégorie} (o2);
+  % flux
+  \ttl{-56}{SUR UN FLUX (QUASI TEMPS RÉEL)}
+  \node[st=Rule, fill=white] (s1) at (0,-72) {\textbf{événements}\sub{tâches créées, cochées}};
+  \node[st=Brick] (s2) at (56,-72) {\textbf{bus d'événements}\sub{Kafka (ch. 37)}};
+  \node[keybox=Enc, text width=26mm, minimum height=13mm] (s3) at (112,-72) {modèle};
+  \node[st=Rule, fill=white] (s4) at (168,-72) {\textbf{réaction}\sub{alerte, notification}};
+  \draw[flow] (s1) -- (s2); \draw[flow] (s2) -- (s3); \draw[flow] (s3) -- (s4);
+  \draw[draw=Rule, line width=.5pt] (-18,-9) -- (188,-9);
+  \draw[draw=Rule, line width=.5pt] (-18,-46) -- (188,-46);
+\end{tikzpicture}
+\end{document}

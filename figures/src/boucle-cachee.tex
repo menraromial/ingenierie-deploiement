@@ -1,0 +1,16 @@
+% Ch. 27 : une boucle de rétroaction cachée dans Listify
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[keybox=Enc, text width=34mm, minimum height=14mm] (m) at (0,0) {modèle v\textsubscript{n}};
+  \node[box=Sea, text width=40mm, minimum height=16mm] (s) at (96,0) {\textbf{suggestion affichée}\sub{« catégorie : travail »}};
+  \node[box=Rule, fill=white, text width=40mm, minimum height=16mm] (u) at (96,-34) {\textbf{l'utilisateur accepte}\sub{souvent sans relire}};
+  \node[box=Ocre, text width=40mm, minimum height=16mm] (d) at (0,-34) {\textbf{données d'entraînement}\sub{de la version suivante}};
+  \draw[flow] (m) -- node[elabel, above=1mm, fill=none]{prédit} (s);
+  \draw[flow] (s) -- (u);
+  \draw[flow=Brick, line width=1pt] (u) -- node[elabel, below=1mm, fill=none, text=Brick]{la suggestion devient l'étiquette} (d);
+  \draw[flow] (d) -- node[elabel, left=1mm, fill=none, align=right]{réentraînement\\(v\textsubscript{n+1})} (m);
+  \node[note, anchor=west, text width=46mm] at (124,-17) {le modèle finit par apprendre ses propres prédictions : ses erreurs se renforcent sans qu'aucun test n'échoue};
+\end{tikzpicture}
+\end{document}

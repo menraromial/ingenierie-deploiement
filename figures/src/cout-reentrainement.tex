@@ -1,0 +1,24 @@
+% Ch. 29 : coût quotidien en fonction de l'intervalle de réentraînement
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1.5mm,y=12mm]
+  % axes : T de 0 à 100 jours (1,5 mm/jour), coût de 0 à 6 €/jour (12 mm/€)
+  \draw[draw=Ink, line width=.8pt, -{Stealth[length=2.5mm]}] (0,0) -- (104,0) node[right, font=\sffamily\normalsize]{$T$ (jours)};
+  \draw[draw=Ink, line width=.8pt, -{Stealth[length=2.5mm]}] (0,0) -- (0,6.4) node[above, font=\sffamily\normalsize]{coût (€ par jour)};
+  \foreach \t in {0,20,...,100} { \draw[draw=Ink] (\t,0) -- (\t,-.08); \node[below=1.5mm, font=\sffamily\normalsize] at (\t,0) {\t}; }
+  \foreach \c in {0,1,...,6} { \draw[draw=Ink] (0,\c) -- (-1,\c); \node[left=1.5mm, font=\sffamily\normalsize] at (0,\c) {\c}; \draw[draw=Rule, line width=.3pt] (0,\c) -- (100,\c); }
+  % composantes
+  \draw[draw=Brick, line width=1pt, domain=5:100, samples=60] plot (\x, {30/\x}) node[pos=.02, right=2mm, font=\sffamily\normalsize, text=Brick] {};
+  \draw[draw=Ocre, line width=1pt, domain=0:100] plot (\x, {0.05*\x});
+  \draw[draw=Enc, line width=1.6pt, domain=5:100, samples=80] plot (\x, {0.05*\x + 30/\x});
+  \node[font=\sffamily\normalsize, text=Brick, anchor=west] at (8,4.6) {réentraînements : $30/T$};
+  \node[font=\sffamily\normalsize, text=Ocre, anchor=west] at (82,3.5) {erreurs en plus : $0{,}05\,T$};
+  \node[font=\sffamily\normalsize\bfseries, text=Enc, anchor=west] at (70,5.6) {total};
+  % optimum
+  \draw[draw=Sea, dash pattern=on 3pt off 2pt, line width=.7pt] (24.5,0) -- (24.5,2.449);
+  \node[circle, fill=Sea, minimum size=2.4mm, inner sep=0pt] at (24.5,2.449) {};
+  \draw[draw=Sea, line width=.5pt] (25.5,2.35) -- (40,1.75);
+  \node[font=\sffamily\normalsize, text=Sea, anchor=north west, align=left] at (40,1.85) {optimum : $T^{*} \approx 24{,}5$ j\\2,45 € par jour};
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,23 @@
+% Ch. 28 : ce qui détermine un modèle
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{in/.style={box=#1, text width=46mm, minimum height=12mm, align=flush left}}
+  \node[in=Enc]  (c) at (0,40) {\textbf{code}\sub{\normalsize scripts d'entraînement}};
+  \node[in=Ocre] (d) at (0,24) {\textbf{données}\sub{\normalsize le jeu d'entraînement exact}};
+  \node[in=Sea]  (p) at (0,8)  {\textbf{configuration}\sub{\normalsize hyperparamètres, variables}};
+  \node[in=Plum] (e) at (0,-8) {\textbf{environnement}\sub{\normalsize versions des bibliothèques}};
+  \node[in=Brick](a) at (0,-24){\textbf{aléa}\sub{\normalsize graines aléatoires}};
+  \node[keybox=Ink, text width=30mm, minimum height=16mm] (t) at (66,8) {entraînement};
+  \node[box=Enc, text width=38mm, minimum height=20mm] (m) at (124,8) {\textbf{modèle}\sub{+ ses métriques}};
+  \foreach \n in {c,d,p,e,a} \draw[flow=Muted] (\n.east) -- (t.west);
+  \draw[flow, line width=1pt] (t) -- (m);
+  \node[note, anchor=north, text width=64mm, align=flush center] at (124,-6) {pour reproduire le modèle, il faut figer \textbf{les cinq} entrées ; en oublier une suffit à obtenir un autre modèle};
+  \node[note, anchor=east, text width=26mm, align=flush right] at (-26,40) {Git};
+  \node[note, anchor=east, text width=26mm, align=flush right] at (-26,24) {DVC};
+  \node[note, anchor=east, text width=26mm, align=flush right] at (-26,8) {fichier versionné};
+  \node[note, anchor=east, text width=26mm, align=flush right] at (-26,-8) {versions épinglées, image};
+  \node[note, anchor=east, text width=26mm, align=flush right] at (-26,-24) {graine fixée};
+\end{tikzpicture}
+\end{document}

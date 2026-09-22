@@ -1,0 +1,22 @@
+% Ch. 27 : le code ML n'est qu'une petite partie du système (d'après Sculley et al., 2015)
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{blk/.style={box=#1, text width=34mm, minimum height=15mm}}
+  % couronne des composants
+  \node[blk=Enc]   at (0,34)   {\textbf{configuration}};
+  \node[blk=Enc]   at (50,34)  {\textbf{collecte des données}};
+  \node[blk=Enc]   at (100,34)  {\textbf{vérification des données}};
+  \node[blk=Enc]   at (150,34) {\textbf{extraction des variables}};
+  \node[blk=Sea]   at (0,12)   {\textbf{gestion des ressources}\sub{machines, GPU}};
+  \node[blk=Sea]   at (150,12) {\textbf{outils d'analyse}};
+  \node[blk=Plum]  at (0,-10)  {\textbf{gestion des processus}\sub{orchestration}};
+  \node[blk=Plum]  at (150,-10){\textbf{infrastructure de service}};
+  \node[blk=Ocre]  at (50,-32) {\textbf{surveillance}};
+  \node[blk=Ocre]  at (100,-32) {\textbf{tests, validation}};
+  % le code ML, petit, au centre
+  \node[keybox=Brick, text width=22mm, minimum height=11mm, font=\sffamily\normalsize\bfseries] at (75,1) {code ML};
+  \node[note, anchor=north, text width=60mm, align=flush center] at (75,-8) {l'entraînement et la prédiction :\\une petite fraction du système};
+\end{tikzpicture}
+\end{document}

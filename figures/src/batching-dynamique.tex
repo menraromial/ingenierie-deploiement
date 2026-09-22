@@ -1,0 +1,22 @@
+% Ch. 30 : regroupement dynamique des requêtes
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=3.2mm,y=1mm]
+  % axe temporel 0-40 ms
+  \draw[draw=Ink, line width=.8pt, -{Stealth[length=2.5mm]}] (0,0) -- (44,0) node[right, font=\sffamily\normalsize]{temps (ms)};
+  \foreach \t in {0,10,...,40} { \draw[draw=Ink] (\t,0) -- (\t,-1.5); \node[below=1.5mm, font=\sffamily\normalsize] at (\t,0) {\t}; }
+  % arrivées de requêtes
+  \foreach \t in {0.8,2.1,3.5,4.2,6.0,7.3,8.8,9.5} \draw[flow=Enc] (\t,16) -- (\t,9);
+  \node[font=\sffamily\normalsize, text=Enc, anchor=south west] at (0,17) {8 requêtes arrivent};
+  % fenêtre d'attente
+  \draw[draw=Ocre, fill=OcreBg, line width=.7pt, rounded corners=1pt] (0,2) rectangle (10,8);
+  \node[font=\sffamily\normalsize, text=Ocre] at (5,5) {attente $\le$ 10 ms};
+  % exécution du lot
+  \draw[draw=Sea, fill=SeaBg, line width=.7pt, rounded corners=1pt] (10,2) rectangle (16.6,8);
+  \node[font=\sffamily\normalsize, text=Sea, anchor=west] at (17,5) {un seul appel au modèle : $5 + 8 \times 0{,}2 = 6{,}6$ ms};
+  % réponses
+  \foreach \t in {16.6} \draw[flow=Sea] (\t,9) -- (\t,16);
+  \node[font=\sffamily\normalsize, text=Sea, anchor=south west] at (17.5,12) {8 réponses ensemble};
+\end{tikzpicture}
+\end{document}

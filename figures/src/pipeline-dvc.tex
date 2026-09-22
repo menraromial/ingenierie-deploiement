@@ -1,0 +1,21 @@
+% Ch. 28 : un pipeline DVC, et ce que dvc repro réexécute
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{art/.style={box=Rule, fill=white, text width=30mm, minimum height=11mm},
+           stg/.style={box=#1, text width=30mm, minimum height=15mm}}
+  \node[art] (raw) at (0,0) {\cmd{data/taches.csv}};
+  \node[stg=Sea] (prep) at (44,0) {\textbf{prepare}\sub{à jour : ignoré}};
+  \node[art] (clean) at (88,0) {\cmd{data/train.csv}};
+  \node[stg=Brick] (train) at (132,0) {\textbf{train}\sub{réexécuté}};
+  \node[art] (model) at (176,0) {\cmd{model.joblib}};
+  \node[stg=Brick] (eval) at (176,-30) {\textbf{evaluate}\sub{réexécuté}};
+  \node[art] (met) at (132,-30) {\cmd{metrics.json}};
+  \node[box=Ocre, text width=30mm, minimum height=11mm] (par) at (132,28) {\cmd{params.yaml}\sub{C : 1.0 $\rightarrow$ 0.5}};
+  \draw[flow] (raw) -- (prep); \draw[flow] (prep) -- (clean); \draw[flow] (clean) -- (train); \draw[flow] (train) -- (model);
+  \draw[flow] (model) -- (eval); \draw[flow] (eval) -- (met);
+  \draw[flow=Ocre, line width=1pt] (par) -- node[elabel, right=1mm, fill=none, text=Ocre]{modifié} (train);
+  \node[note, anchor=north, text width=110mm, align=flush center] at (66,-16) {DVC compare les empreintes enregistrées dans \cmd{dvc.lock} : seules les étapes dont une entrée a changé sont relancées, comme \cmd{make}};
+\end{tikzpicture}
+\end{document}

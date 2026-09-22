@@ -1,0 +1,20 @@
+% Ch. 28 : le stockage adressé par le contenu (principe de DVC)
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Ocre, text width=38mm, minimum height=16mm] (f) at (-8,0) {\ico[Ocre]{file-alt}\enspace\textbf{taches.csv}\sub{240 Mio}};
+  \node[keybox=Ink, text width=26mm, minimum height=12mm] (h) at (52,0) {MD5};
+  \node[box=Rule, fill=white, text width=46mm, minimum height=14mm] (id) at (106,0) {\small\ttfamily 3f2a9c\ldots 71e0\\[-.2mm]{\sffamily\normalsize\color{Muted}l'empreinte du contenu}};
+  \draw[flow] (f) -- node[elabel, above=1mm, fill=none]{lit le contenu} (h);
+  \draw[flow] (h) -- (id);
+
+  \node[box=Enc, text width=46mm, minimum height=20mm, align=flush left] (ptr) at (-8,-40) {\textbf{taches.csv.dvc}\\[.5mm]{\small\ttfamily md5: 3f2a9c\ldots 71e0\\size: 251658240}\\[-.3mm]{\sffamily\normalsize\color{Muted}petit fichier, dans Git}};
+  \node[box=Sea, text width=52mm, minimum height=20mm, align=flush left] (cache) at (106,-40) {\textbf{cache DVC}\\[.5mm]{\small\ttfamily .dvc/cache/files/md5/3f/2a9c\ldots}\\[-.3mm]{\sffamily\normalsize\color{Muted}le contenu, rangé sous son empreinte}};
+  \node[box=Plum, text width=52mm, minimum height=14mm] (rem) at (106,-72) {\textbf{stockage distant}\sub{dossier partagé, MinIO, S3}};
+  \draw[flow=Enc] (h.south) |- node[elabel, pos=.75, above=1mm, fill=none]{écrite dans} (ptr.east);
+  \draw[flow=Sea] (id.south) -- node[elabel, right=1mm, fill=none]{le contenu est copié sous ce nom} (cache.north);
+  \draw[{Stealth[length=2.2mm,width=1.6mm]}-{Stealth[length=2.2mm,width=1.6mm]}, draw=Plum, line width=.8pt] (cache) -- node[elabelc, right=1mm, fill=none]{dvc push / dvc pull} (rem);
+  \node[note, anchor=north, text width=60mm, align=flush center] at (-8,-54) {Git versionne l'\textbf{adresse} ;\\DVC stocke le \textbf{contenu}};
+\end{tikzpicture}
+\end{document}

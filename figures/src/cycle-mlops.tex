@@ -1,0 +1,30 @@
+% Ch. 29 : le cycle de vie d'un modèle, deux boucles
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{st/.style={box=#1, text width=30mm, minimum height=13mm}}
+  % boucle d'expérimentation (gauche)
+  \node[st=Ocre] (d) at (0,24)  {\textbf{données}\sub{collecte, instantané}};
+  \node[st=Ocre] (v) at (0,0)   {\textbf{validation}\sub{des données}};
+  \node[st=Ocre] (f) at (0,-24) {\textbf{préparation}\sub{variables}};
+  \node[st=Enc]  (t) at (44,-24){\textbf{entraînement}};
+  \node[st=Enc]  (e) at (44,0)  {\textbf{évaluation}\sub{contre le champion}};
+  \draw[flow] (d) -- (v); \draw[flow] (v) -- (f); \draw[flow] (f) -- (t); \draw[flow] (t) -- (e);
+  \draw[dflow=Muted, rounded corners=4pt] (e.north) |- node[elabel, pos=.75, above=1mm, fill=none]{nouvelle idée} (d.east);
+  % boucle de production (droite)
+  \node[st=Sea]  (p) at (114,0)  {\textbf{promotion}\sub{registre de modèles}};
+  \node[st=Sea]  (s) at (158,0)  {\textbf{service}\sub{prédictions}};
+  \node[st=Plum] (m) at (158,-24){\textbf{surveillance}\sub{qualité, dérive}};
+  \node[box=Brick, text width=30mm, minimum height=13mm] (r) at (114,-24) {\textbf{déclencheur}\sub{dérive, calendrier}};
+  \draw[flow=Sea, line width=1pt] (e) -- node[elabel, above=1mm, fill=none]{meilleur ?} (p);
+  \draw[flow] (p) -- (s); \draw[flow] (s) -- (m); \draw[flow] (m) -- (r);
+  \draw[flow=Brick, rounded corners=4pt] (r.south) -- ++(0,-8) -| node[elabel, pos=.25, below=1mm, fill=none, text=Brick]{réentraînement} (f.south);
+  \begin{scope}[on background layer]
+    \node[dframe=Ocre, fit=(d)(t)(e), inner sep=5mm, yshift=3mm, inner ysep=8mm] (b1) {};
+    \node[dframe=Sea, fit=(p)(s)(m)(r), inner sep=5mm, yshift=3mm, inner ysep=8mm] (b2) {};
+  \end{scope}
+  \node[ftitle, text=Ocre, anchor=north west] at (b1.north west) {EXPÉRIMENTATION};
+  \node[ftitle, text=Sea, anchor=north east] at (b2.north east) {PRODUCTION};
+\end{tikzpicture}
+\end{document}

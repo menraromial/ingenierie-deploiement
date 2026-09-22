@@ -1,0 +1,33 @@
+% Ch. 29 : les trois niveaux de maturité MLOps (d'après Google)
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{st/.style={box=#1, text width=30mm, minimum height=12mm}}
+  \newcommand{\lvl}[3]{\node[font=\sffamily\large\bfseries, text=#2, anchor=east, align=flush right, text width=36mm] at (-20,#1) {#3};}
+  % niveau 0
+  \lvl{0}{Brick}{Niveau 0\\[-.5mm]{\normalsize\mdseries processus manuel}}
+  \node[st=Rule, fill=white] (n0) at (0,0) {\textbf{notebook}\sub{à la main}};
+  \node[st=Rule, fill=white] (m0) at (56,0) {\textbf{fichier modèle}\sub{transmis}};
+  \node[st=Sea] (s0) at (112,0) {\textbf{service}};
+  \draw[flow] (n0) -- node[elabel, above=1mm, fill=none]{envoi} (m0); \draw[flow] (m0) -- node[elabel, above=1mm, fill=none]{déploiement} (s0);
+  \node[note, anchor=west, text width=40mm] at (132,0) {on livre un \textbf{modèle} ; quelques fois par an};
+  % niveau 1
+  \lvl{-30}{Ocre}{Niveau 1\\[-.5mm]{\normalsize\mdseries pipeline automatisé}}
+  \node[st=Enc] (c1) at (0,-30) {\textbf{code du pipeline}\sub{dans Git}};
+  \node[keybox=Ocre, text width=30mm, minimum height=12mm] (p1) at (56,-30) {pipeline d'entraînement};
+  \node[st=Sea] (s1) at (112,-30) {\textbf{service}};
+  \draw[flow] (c1) -- node[elabel, above=1mm, fill=none]{déployé} (p1); \draw[flow] (p1) -- node[elabel, above=1mm, fill=none]{modèle validé} (s1);
+  \draw[dflow=Plum, rounded corners=4pt] (s1.south) -- ++(0,-7) -| node[elabel, pos=.25, below=1mm, fill=none, text=Plum]{déclencheur} (p1.south);
+  \node[note, anchor=west, text width=40mm] at (132,-30) {on livre un \textbf{pipeline} qui réentraîne tout seul (CT)};
+  % niveau 2
+  \lvl{-66}{Sea}{Niveau 2\\[-.5mm]{\normalsize\mdseries CI/CD du pipeline}}
+  \node[st=Enc] (c2) at (0,-66) {\textbf{code du pipeline}\sub{dans Git}};
+  \node[keybox=Enc, text width=30mm, minimum height=12mm] (ci2) at (56,-66) {CI/CD\\[-.3mm]{\normalsize\mdseries tests, build, déploiement}};
+  \node[keybox=Ocre, text width=30mm, minimum height=12mm] (p2) at (112,-66) {pipeline d'entraînement};
+  \node[st=Sea] (s2) at (168,-66) {\textbf{service}};
+  \draw[flow] (c2) -- (ci2); \draw[flow] (ci2) -- (p2); \draw[flow] (p2) -- (s2);
+  \draw[dflow=Plum, rounded corners=4pt] (s2.south) -- ++(0,-7) -| (p2.south);
+  \node[note, anchor=north, text width=90mm, align=flush center] at (84,-80) {le pipeline lui-même est testé et livré automatiquement à chaque commit};
+\end{tikzpicture}
+\end{document}

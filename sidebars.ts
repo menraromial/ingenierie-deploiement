@@ -120,7 +120,19 @@ const sidebars: SidebarsConfig = {
         },
       ],
     },
-    'semestre3/index',
+    {
+      type: 'category',
+      label: 'Semestre 3',
+      link: {type: 'doc', id: 'semestre3/index'},
+      items: [
+        {
+          type: 'category',
+          label: 'Bloc 1 : pourquoi le ML en production est différent',
+          link: {type: 'doc', id: 'semestre3/bloc1/index'},
+          items: ['semestre3/bloc1/cours/dette-technique-ml', 'semestre3/bloc1/cours/versionner-donnees-modeles', 'semestre3/bloc1/cours/cycle-vie-mlops', 'semestre3/bloc1/cours/modes-mise-a-disposition', 'semestre3/bloc1/tp/tp22-notebook-irreproductible'],
+        },
+      ],
+    },
   ],
 };
 

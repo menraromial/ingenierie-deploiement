@@ -1,0 +1,21 @@
+% Ch. 27 : le décalage entre l'entraînement et le service
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{st/.style={box=#1, text width=34mm, minimum height=14mm}}
+  \node[ftitle, anchor=west] at (-18,14) {ENTRAÎNEMENT (NOTEBOOK)};
+  \node[st=Rule, fill=white] (t0) at (0,0) {« Acheter du LAIT »};
+  \node[st=Enc] (t1) at (48,0) {\textbf{minuscules}\sub{« acheter du lait »}};
+  \node[st=Enc] (t2) at (96,0) {\textbf{mots}\sub{acheter, du, lait}};
+  \node[st=Sea] (t3) at (144,0) {\textbf{modèle}\sub{« courses » : 0,93}};
+  \foreach \a/\b in {t0/t1,t1/t2,t2/t3} \draw[flow] (\a) -- (\b);
+  \node[ftitle, anchor=west] at (-18,-22) {SERVICE (API RÉÉCRITE)};
+  \node[st=Rule, fill=white] (s0) at (0,-36) {« Acheter du LAIT »};
+  \node[st=Brick, fill=BrickBg, dash pattern=on 3pt off 2pt] (s1) at (48,-36) {\textbf{étape oubliée}\sub{pas de minuscules}};
+  \node[st=Enc] (s2) at (96,-36) {\textbf{mots}\sub{Acheter, du, LAIT}};
+  \node[st=Brick] (s3) at (144,-36) {\textbf{modèle}\sub{« travail » : 0,41}};
+  \foreach \a/\b in {s0/s1,s1/s2,s2/s3} \draw[flow] (\a) -- (\b);
+  \node[note, anchor=north, text width=150mm, align=flush center] at (72,-46) {« Acheter » et « LAIT » sont absents du vocabulaire appris : le modèle ne voit presque plus rien, répond au hasard, et aucune erreur n'est levée};
+\end{tikzpicture}
+\end{document}

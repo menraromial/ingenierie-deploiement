@@ -1,6 +1,6 @@
 ---
 title: "Vue d'ensemble"
-sidebar_label: "Semestre 3"
+sidebar_label: "Vue d'ensemble"
 hide_title: true
 ---
 
@@ -17,33 +17,38 @@ import ChapterHead from '@site/src/components/ChapterHead';
 **Prérequis :** S1 + S2 ; bases de Python et de machine learning (un modèle scikit-learn suffit ; ce n'est **pas** un cours de ML, c'est un cours d'industrialisation du ML).
 
 :::info[Contenu en cours de rédaction]
-Le contenu détaillé de ce semestre sera publié bloc par bloc, dans l'ordre du parcours. Le plan ci-dessous est contractuel.
+Le semestre est publié chapitre par chapitre, dans l'ordre du parcours. La numérotation poursuit celle des semestres précédents : chapitres 27 à 38, TP 22 à 31. Le plan ci-dessous est contractuel.
 :::
+
+## Le fil rouge : Listify apprend à suggérer une catégorie
+
+Listify reste l'application déployée depuis le semestre 1. On lui ajoute un modèle d'apprentissage automatique qui, à la saisie d'une tâche, **suggère une catégorie** (travail, courses, maison, administratif, loisirs). Ce modèle simple, un classifieur de textes, suffit à faire surgir tous les problèmes du semestre : reproductibilité, suivi des expériences, orchestration de l'entraînement, service des prédictions, dérive des données. Le chapitre 27 raconte comment il se dégrade en silence quand on le déploie sans précaution.
 
 ## Plan du semestre
 
-### Bloc 1 : pourquoi le ML en production est différent (semaines 1 à 3)
+### [Bloc 1](bloc1/index.md) : pourquoi le ML en production est différent (semaines 1 à 3)
 
-- Dette technique du ML : lecture guidée du papier *Hidden Technical Debt in Machine Learning Systems* (Google, NeurIPS 2015).
-- Les trois axes de versionnement : code (Git), données (DVC), modèles (registres) ; reproductibilité d'une expérience.
-- Cycle de vie MLOps et niveaux de maturité 0/1/2 (Google) ; patterns de serving (batch, temps réel, streaming).
-- **TP 1 et 2** : le notebook « recherche » irreproductible (chaos volontaire), puis restructuration en projet propre versionné avec DVC.
+- [Ch. 27](bloc1/cours/27-dette-technique-ml.md) : pourquoi le ML en production est différent, la dette technique cachée (Sculley et al., NeurIPS 2015).
+- [Ch. 28](bloc1/cours/28-versionner-donnees-modeles.md) : versionner le code, les données et le modèle ; reproductibilité d'une expérience (DVC).
+- [Ch. 29](bloc1/cours/29-cycle-vie-mlops.md) : le cycle de vie MLOps et ses niveaux de maturité 0, 1 et 2 (Google).
+- [Ch. 30](bloc1/cours/30-modes-mise-a-disposition.md) : les modes de mise à disposition d'un modèle (batch, temps réel, flux ; modèle embarqué ou modèle-service).
+- **[TP 22](bloc1/tp/tp22-notebook-irreproductible.md) et TP 23** : le notebook « recherche » irreproductible (chaos volontaire), puis restructuration en projet propre versionné avec DVC.
 
 ### Bloc 2 : outillage du cycle de vie, MLflow et Airflow (semaines 4 à 8)
 
-- Suivi d'expériences : MLflow Tracking, Models (pyfunc), Model Registry.
-- Orchestration de workflows : le DAG ; orchestrateur de *services* (Kubernetes) vs orchestrateur de *tâches* (Airflow).
-- Airflow : scheduler, executor, tâches idempotentes, backfill, capteurs, XCom.
-- Serving : FastAPI, validation Pydantic, tests de charge, conteneurisation.
-- **TP 3 à 6** : instrumentation MLflow, API de serving déployée sur le cluster du S2, DAG complet d'entraînement, chaîne intégrée « CD du modèle ».
+- Ch. 31 : suivi d'expériences et registre de modèles (MLflow Tracking, Models, Model Registry).
+- Ch. 32 : orchestrer des tâches, le DAG et Airflow (scheduler, executor, tâches idempotentes, backfill, capteurs, XCom) ; orchestrateur de *services* contre orchestrateur de *tâches*.
+- Ch. 33 : servir un modèle (FastAPI, validation Pydantic, tests de charge, conteneurisation).
+- **TP 24 à 27** : instrumentation MLflow, API de serving déployée sur le cluster du S2, DAG complet d'entraînement, chaîne intégrée « CD du modèle ».
 
 ### Bloc 3 : Kubeflow, monitoring des modèles et Big Data (semaines 9 à 13)
 
-- ML sur Kubernetes : Kubeflow Pipelines, KServe ; comparaison critique avec Airflow.
-- Monitoring spécifique au ML : data drift, concept drift, performance différée, Evidently.
-- Big Data : les 3V, MapReduce, Spark (comprendre le shuffle), Parquet vs CSV, Kafka, lakehouse en panorama.
-- Éthique et responsabilité de la mise en production d'IA : biais à l'échelle, équité, RGPD, model cards.
-- **TP 7 à 10** : Spark en local sur plusieurs Go, Kafka KRaft, boucle de drift complète avec ré-entraînement automatique, KServe en découverte.
+- Ch. 34 : le ML sur Kubernetes (Kubeflow Pipelines, KServe), comparaison critique avec Airflow.
+- Ch. 35 : surveiller un modèle, dérive des données et des concepts, performance différée (Evidently).
+- Ch. 36 : big data et calcul distribué (les 3V, MapReduce, Spark et le shuffle, Parquet contre CSV, lakehouse en panorama).
+- Ch. 37 : les flux de données (Kafka, traitements en continu).
+- Ch. 38 : éthique et responsabilité de la mise en production d'IA (biais à l'échelle, équité, RGPD, model cards).
+- **TP 28 à 31** : Spark en local sur plusieurs Go, Kafka KRaft, boucle de drift complète avec ré-entraînement automatique, KServe en découverte.
 
 ## Évaluation du semestre
 

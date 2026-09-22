@@ -1,0 +1,27 @@
+% TP 22 : chaque entrée perdue et l'indice qui la trahit
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{
+    ent/.style={box=#1, text width=30mm, minimum height=15mm, font=\sffamily\large\bfseries},
+    perdu/.style={box=Brick, fill=white, text width=50mm, minimum height=15mm, align=flush left, font=\sffamily\normalsize},
+    indice/.style={box=Sea, text width=64mm, minimum height=15mm, align=flush left, font=\sffamily\normalsize},
+  }
+  \node[ftitle] at (0,12) {ENTRÉE (CH. 28)};
+  \node[ftitle] at (50,12) {CE QUI A DISPARU};
+  \node[ftitle] at (117,12) {L'INDICE QUI LA TRAHIT};
+  \foreach \i/\c/\e/\p/\d in {
+    0/Enc/{Code}/{la fonction \texttt{nettoyer}, définie dans une cellule supprimée}/{la sortie de \texttt{df.head()} : titres en minuscules, sans espaces autour},
+    1/Plum/{Données}/{le fichier : \texttt{export\_final.csv} n'existe nulle part}/{les formes affichées : \texttt{(20000, 3)} puis \texttt{(19853, 3)}},
+    2/Ocre/{Paramètres}/{les valeurs de \texttt{seuil} et de \texttt{C\_best}}/{\texttt{X.shape} = \texttt{(19853, 1081)} ; l'attribut \texttt{C} du modèle sérialisé},
+    3/Sea/{Environnement}/{les versions des bibliothèques, jamais notées}/{l'avertissement au chargement du pickle : version 1.7.2},
+    4/Brick/{Aléa}/{la graine du découpage, jamais fixée}/{la précision \texttt{0.94208...} : fouille des graines, puis comparaison des coefficients}} {
+    \node[ent=\c] (e\i) at (0,-\i*20) {\e};
+    \node[perdu] (p\i) at (50,-\i*20) {\p};
+    \node[indice] (d\i) at (117,-\i*20) {\d};
+    \draw[flow=Muted] (e\i) -- (p\i);
+    \draw[flow=Muted] (p\i) -- (d\i);
+  }
+\end{tikzpicture}
+\end{document}
