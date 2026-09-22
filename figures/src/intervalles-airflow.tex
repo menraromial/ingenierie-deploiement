@@ -1,0 +1,25 @@
+% Ch. 32 : intervalles de données, run_after et rattrapage
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \draw[draw=Ink, line width=.8pt, -{Stealth[length=2.5mm]}] (0,0) -- (176,0);
+  \foreach \i/\j in {0/15, 1/16, 2/17, 3/18, 4/19} {
+    \pgfmathsetmacro\x{\i*40}
+    \draw[draw=Ink] (\x,0) -- (\x,-2);
+    \node[below=2mm, font=\sffamily\normalsize] at (\x,0) {\j\ à 3 h};
+  }
+  \foreach \i/\etat/\c in {0/{rattrapée}/Ocre, 1/{rattrapée}/Ocre, 2/{rattrapée}/Ocre} {
+    \pgfmathsetmacro\x{\i*40}
+    \draw[draw=\c, fill=\c Bg, line width=.7pt, rounded corners=1pt] (\x+1,4) rectangle (\x+39,14);
+    \node[font=\sffamily\normalsize, text=\c] at (\x+20,9) {\etat};
+    \draw[flow=\c] (\x+39,16) -- (\x+39,4.5);
+  }
+  \node[font=\sffamily\normalsize, anchor=west, text=Ocre] at (0,30) {\texttt{airflow backfill create --from-date 2026-09-15 --to-date 2026-09-18} : trois exécutions rattrapées};
+  \node[font=\sffamily\normalsize, anchor=east, text=Sea] at (176,20) {exécution planifiée};
+  \draw[draw=Sea, fill=SeaBg, line width=.7pt, rounded corners=1pt] (121,4) rectangle (159,14);
+  \node[font=\sffamily\normalsize, text=Sea] at (140,9) {intervalle du 18};
+  \draw[flow=Sea] (159,17) -- (159,4.5);
+  \node[note, anchor=north west, text width=150mm] at (0,-10) {une exécution ne démarre qu'à la \emph{fin} de l'intervalle qu'elle traite : la flèche marque \texttt{run\_after}, la boîte l'intervalle de données que la tâche doit lire};
+\end{tikzpicture}
+\end{document}

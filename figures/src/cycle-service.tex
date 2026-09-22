@@ -1,0 +1,18 @@
+% Ch. 33 : démarrage d'une réplique et sondes
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=6mm,y=1mm]
+  \draw[draw=Ink, line width=.8pt, -{Stealth[length=2.5mm]}] (0,0) -- (22,0) node[right, font=\sffamily\normalsize]{temps (s)};
+  \foreach \t in {0,2,...,20} { \draw[draw=Ink] (\t,0) -- (\t,-2); \node[below=1.5mm, font=\sffamily\normalsize] at (\t,0) {\t}; }
+  \draw[draw=Plum, fill=PlumBg, line width=.7pt, rounded corners=1pt] (0,4) rectangle (2.5,14);
+  \node[font=\sffamily\normalsize, text=Plum, anchor=south, rotate=0] at (1.25,15.5) {démarrage du conteneur};
+  \draw[draw=Ocre, fill=OcreBg, line width=.7pt, rounded corners=1pt] (2.5,4) rectangle (8.5,14);
+  \node[font=\sffamily\normalsize, text=Ocre] at (5.5,9) {chargement : 6 s};
+  \draw[draw=Sea, fill=SeaBg, line width=.7pt, rounded corners=1pt] (8.5,4) rectangle (21,14);
+  \node[font=\sffamily\normalsize, text=Sea] at (15,9) {réplique prête : elle reçoit du trafic};
+  \draw[flow=Sea] (8.5,30) -- (8.5,15);
+  \node[font=\sffamily\normalsize, text=Sea, anchor=south] at (8.5,31) {la sonde de disponibilité passe au vert};
+  \node[note, anchor=north west, text width=120mm] at (0,-8) {une sonde de vivacité trop impatiente tuerait la réplique pendant le chargement : son délai initial doit dépasser ce temps};
+\end{tikzpicture}
+\end{document}

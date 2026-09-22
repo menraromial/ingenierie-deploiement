@@ -1,0 +1,20 @@
+% Ch. 32 : les composants d'Airflow 3
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Rule, fill=white, text width=36mm, minimum height=16mm] (bundle) at (0,26) {\textbf{dossier de DAGs}\sub{fichiers Python versionnés}};
+  \node[keybox=Enc, text width=40mm, minimum height=16mm] (sched) at (60,26) {\textbf{ordonnanceur}\sub{quoi lancer, et quand}};
+  \node[db=Plum, minimum width=44mm, minimum height=18mm] (db) at (132,26) {\textbf{base de métadonnées}\sub{runs, états, XCom}};
+  \node[box=Sea, text width=40mm, minimum height=16mm] (api) at (60,-4) {\textbf{serveur d'API}\sub{interface web + API d'exécution}};
+  \node[box=Ocre, text width=40mm, minimum height=16mm] (exec) at (60,-32) {\textbf{exécuteur}\sub{Local, Celery, Kubernetes}};
+  \foreach \k/\y in {1/-14, 2/-32, 3/-50} \node[box=Ocre, text width=28mm, minimum height=13mm] (w\k) at (132,\y) {\textbf{worker} \k};
+  \draw[flow=Enc] (bundle) -- node[elabel, above=1mm, fill=none]{lecture} (sched);
+  \draw[flow=Plum] (sched) -- (db);
+  \draw[flow=Plum] (api.east) -| (db.south);
+  \draw[flow=Ocre] (sched.south) -- node[elabel, right=1mm, fill=none]{tâches à exécuter} (api.north);
+  \draw[flow=Ocre] (api.south) -- (exec.north);
+  \foreach \k in {1,2,3} \draw[flow=Ocre] (exec.east) -- ++(6,0) |- (w\k.west);
+  \draw[dflow=Sea] (w1.east) -- ++(10,0) |- node[elabel, pos=.25, right=1mm, fill=none, align=left]{état et XCom\\(API d'exécution)} (api.east);
+\end{tikzpicture}
+\end{document}

@@ -37,8 +37,8 @@ Listify reste l'application déployée depuis le semestre 1. On lui ajoute un mo
 ### [Bloc 2](bloc2/index.md) : outillage du cycle de vie, MLflow et Airflow (semaines 4 à 8)
 
 - [Ch. 31](bloc2/cours/31-suivi-experiences-mlflow.md) : suivi d'expériences et registre de modèles (MLflow Tracking, Models, Model Registry).
-- Ch. 32 : orchestrer des tâches, le DAG et Airflow (scheduler, executor, tâches idempotentes, backfill, capteurs, XCom) ; orchestrateur de *services* contre orchestrateur de *tâches*.
-- Ch. 33 : servir un modèle (FastAPI, validation Pydantic, tests de charge, conteneurisation).
+- [Ch. 32](bloc2/cours/32-orchestrer-dag-airflow.md) : orchestrer des tâches, le DAG et Airflow (scheduler, executor, tâches idempotentes, backfill, capteurs, XCom) ; orchestrateur de *services* contre orchestrateur de *tâches*.
+- [Ch. 33](bloc2/cours/33-servir-un-modele.md) : servir un modèle (FastAPI, validation Pydantic, tests de charge, conteneurisation).
 - **TP 24 à 27** : instrumentation MLflow, API de serving déployée sur le cluster du S2, DAG complet d'entraînement, chaîne intégrée « CD du modèle ».
 
 ### Bloc 3 : Kubeflow, monitoring des modèles et Big Data (semaines 9 à 13)

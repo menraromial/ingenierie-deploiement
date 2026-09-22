@@ -1,0 +1,33 @@
+% Ch. 33 : débit et latence mesurés, 1 worker contre 4 workers
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}
+  % ---- panneau gauche : débit ----
+  \begin{scope}[x=.8mm, y=.045mm]
+    \draw[draw=Ink, line width=.8pt, -{Stealth[length=2.5mm]}] (0,0) -- (115,0) node[right, font=\sffamily\normalsize]{concurrence};
+    \draw[draw=Ink, line width=.8pt, -{Stealth[length=2.5mm]}] (0,0) -- (0,1100) node[above, font=\sffamily\normalsize]{requêtes par seconde};
+    \foreach \c in {0,25,...,100} { \draw[draw=Ink] (\c,0) -- (\c,-25); \node[below=1.5mm, font=\sffamily\normalsize] at (\c,0) {\c}; }
+    \foreach \d in {0,250,...,1000} { \draw[draw=Ink] (0,\d) -- (-2,\d); \node[left=1.5mm, font=\sffamily\normalsize] at (0,\d) {\d}; \draw[draw=Rule, line width=.3pt] (0,\d) -- (110,\d); }
+    \draw[draw=Sea, line width=1.4pt] (1,286) -- (10,291) -- (50,268);
+    \foreach \x/\y in {1/286, 10/291, 50/268} \node[circle, fill=Sea, minimum size=2mm, inner sep=0pt] at (\x,\y) {};
+    \draw[draw=Ocre, line width=1.4pt] (10,952) -- (50,804) -- (100,861);
+    \foreach \x/\y in {10/952, 50/804, 100/861} \node[circle, fill=Ocre, minimum size=2mm, inner sep=0pt] at (\x,\y) {};
+    \node[font=\sffamily\normalsize, text=Ocre, anchor=west] at (52,960) {4 workers};
+    \node[font=\sffamily\normalsize, text=Sea, anchor=west] at (52,200) {1 worker};
+  \end{scope}
+  % ---- panneau droit : latence ----
+  \begin{scope}[xshift=125mm, x=.8mm, y=.22mm]
+    \draw[draw=Ink, line width=.8pt, -{Stealth[length=2.5mm]}] (0,0) -- (115,0) node[right, font=\sffamily\normalsize]{concurrence};
+    \draw[draw=Ink, line width=.8pt, -{Stealth[length=2.5mm]}] (0,0) -- (0,220) node[above, font=\sffamily\normalsize]{latence médiane (ms)};
+    \foreach \c in {0,25,...,100} { \draw[draw=Ink] (\c,0) -- (\c,-5); \node[below=1.5mm, font=\sffamily\normalsize] at (\c,0) {\c}; }
+    \foreach \d in {0,50,...,200} { \draw[draw=Ink] (0,\d) -- (-2,\d); \node[left=1.5mm, font=\sffamily\normalsize] at (0,\d) {\d}; \draw[draw=Rule, line width=.3pt] (0,\d) -- (110,\d); }
+    \draw[draw=Sea, line width=1.4pt] (1,3.3) -- (10,32.6) -- (50,176.7);
+    \foreach \x/\y in {1/3.3, 10/32.6, 50/176.7} \node[circle, fill=Sea, minimum size=2mm, inner sep=0pt] at (\x,\y) {};
+    \draw[draw=Ocre, line width=1.4pt] (10,8.4) -- (50,45.4) -- (100,105.2);
+    \foreach \x/\y in {10/8.4, 50/45.4, 100/105.2} \node[circle, fill=Ocre, minimum size=2mm, inner sep=0pt] at (\x,\y) {};
+    \node[font=\sffamily\normalsize, text=Sea, anchor=east] at (48,190) {1 worker};
+    \node[font=\sffamily\normalsize, text=Ocre, anchor=west] at (86,88) {4 workers};
+  \end{scope}
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,20 @@
+% Ch. 32 : le DAG d'entraînement de Listify
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{t/.style={box=#1, text width=30mm, minimum height=14mm}}
+  \node[t=Plum] (ext) at (0,0) {\textbf{extraire}\sub{export du jour}};
+  \node[t=Plum] (val) at (42,0) {\textbf{valider}\sub{schéma, catégories}};
+  \node[t=Enc] (ent) at (84,0) {\textbf{entraîner}\sub{run MLflow}};
+  \node[t=Ocre] (dec) at (126,0) {\textbf{décider}\sub{branchement}};
+  \node[t=Sea] (pro) at (172,12) {\textbf{promouvoir}\sub{alias champion}};
+  \node[t=Brick] (ale) at (172,-14) {\textbf{alerter}\sub{le candidat est refusé}};
+  \foreach \a/\b in {ext/val, val/ent, ent/dec} \draw[flow] (\a) -- (\b);
+  \draw[flow=Sea] (dec.east) -- ++(8,0) |- (pro.west);
+  \draw[flow=Brick] (dec.east) -- ++(8,0) |- (ale.west);
+  \node[elabel, anchor=south, text=Sea] at (140,14) {précision $\ge$ seuil};
+  \node[elabel, anchor=north, text=Brick] at (149,-16) {sinon};
+  \node[note, anchor=north west, text width=80mm] at (0,-22) {chaque tâche est un processus distinct : elle peut échouer, être relancée, s'exécuter sur une autre machine};
+\end{tikzpicture}
+\end{document}

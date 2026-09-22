@@ -24,8 +24,8 @@ Chaque chapitre ajoute une pièce au dépôt `listify-ml` du TP 23, sans rien je
 | Semaine | CM | TP |
 |---|---|---|
 | 4 | [Ch. 31 : Suivre les expériences et gérer les modèles avec MLflow](cours/31-suivi-experiences-mlflow.md) | TP 24 : instrumenter l'entraînement avec MLflow |
-| 5 | Ch. 32 : Orchestrer des tâches, le DAG et Airflow | TP 24 (fin) |
-| 6 | Ch. 33 : Servir un modèle | TP 25 : servir le modèle promu, sur le cluster du semestre 2 |
+| 5 | [Ch. 32 : Orchestrer des tâches, le DAG et Airflow](cours/32-orchestrer-dag-airflow.md) | TP 24 (fin) |
+| 6 | [Ch. 33 : Servir un modèle](cours/33-servir-un-modele.md) | TP 25 : servir le modèle promu, sur le cluster du semestre 2 |
 | 7 |  | TP 26 : le DAG d'entraînement complet, avec promotion conditionnelle |
 | 8 |  | TP 27 : la chaîne intégrée, livraison continue du modèle |
 
