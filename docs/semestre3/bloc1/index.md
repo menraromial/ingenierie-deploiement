@@ -10,7 +10,7 @@ import ChapterHead from '@site/src/components/ChapterHead';
   kicker="Semestre 3 · Bloc 1"
   title="Bloc 1 : pourquoi le ML en production est différent"
   lecture="5 min"
-  competences={['C1', 'C2', 'C4']}
+  competences={['C1', 'C2', 'C5']}
 />
 
 **Semaines 1 à 3.** Vous savez déployer, automatiser et observer une application classique. Ce bloc montre pourquoi cela ne suffit plus dès qu'une partie du comportement est **apprise à partir des données** : un modèle se dégrade sans que personne n'y touche, sa panne ne lève aucune erreur, et le résultat d'un entraînement dépend de données, de paramètres et d'aléas qu'il faut savoir figer pour le reproduire.
@@ -24,8 +24,8 @@ Au semestre 1, on déployait à la main avant d'automatiser, pour savoir ce que 
 | Semaine | CM | TP |
 |---|---|---|
 | 1 | [Ch. 27 : Pourquoi le ML en production est différent](cours/27-dette-technique-ml.md) | [TP 22 : le notebook irreproductible (chaos volontaire)](tp/tp22-notebook-irreproductible.md) |
-| 2 | [Ch. 28 : Versionner le code, les données et le modèle](cours/28-versionner-donnees-modeles.md) | TP 23 : du notebook au projet reproductible, avec DVC |
-| 3 | [Ch. 29 : Le cycle de vie MLOps](cours/29-cycle-vie-mlops.md) ; [Ch. 30 : Les modes de mise à disposition d'un modèle](cours/30-modes-mise-a-disposition.md) | TP 23 (fin) |
+| 2 | [Ch. 28 : Versionner le code, les données et le modèle](cours/28-versionner-donnees-modeles.md) | [TP 23 : du notebook au projet reproductible, avec DVC](tp/tp23-projet-reproductible-dvc.md) |
+| 3 | [Ch. 29 : Le cycle de vie MLOps](cours/29-cycle-vie-mlops.md) ; [Ch. 30 : Les modes de mise à disposition d'un modèle](cours/30-modes-mise-a-disposition.md) | [TP 23](tp/tp23-projet-reproductible-dvc.md) (fin) |
 
 ## Ce que vous saurez faire à la fin du bloc
 

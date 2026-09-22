@@ -10,14 +10,14 @@ import Figure from '@site/src/components/Figure';
 <ChapterHead
   kicker="Semestre 3 · Bloc 1 · Travaux pratiques 22"
   title="Autopsie d'un notebook irreproductible"
-  competences={['C1', 'C4']}
+  competences={['C5', 'C6']}
 />
 
 :::fiche
 - **Durée** : 4 h
 - **Prérequis** : Python 3.11 ou plus récent, `git` ; chapitres 27 et 28
 - **Livrables** : le dépôt Git du kit avec un commit par correction ; le journal d'autopsie ; le modèle reconstruit et la preuve qu'il est identique à celui de Claire ; la mesure honnête de sa précision ; la liste de ce qu'il aurait fallu enregistrer
-- **Compétences travaillées** : C1 (analyser un système existant), C4 (qualité, reproductibilité)
+- **Compétences travaillées** : C5 (industrialiser le cycle de vie d'un produit d'IA : reproductibilité d'un entraînement), C6 (diagnostiquer un système existant)
 
 Claire, data scientist de l'équipe Listify, a construit le classifieur qui suggère une catégorie à la saisie d'une tâche. Elle annonce 94 % de bonnes réponses, laisse un notebook, un modèle entraîné et trois fichiers de données, puis part sur un autre projet. On vous demande de mettre son modèle en production. Vous allez d'abord découvrir que personne ne sait le refaire, puis mener l'enquête pour retrouver, une à une, les cinq entrées du chapitre 28. Toutes les commandes et tous les résultats de ce TP ont été obtenus sur un poste Linux avec Python 3.14, scikit-learn 1.9.1 et 1.7.2, pandas 3.0 et JupyterLab 4.6.
 :::

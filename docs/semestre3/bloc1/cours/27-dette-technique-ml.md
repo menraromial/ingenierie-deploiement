@@ -11,7 +11,7 @@ import Figure from '@site/src/components/Figure';
   kicker="Semestre 3 · Bloc 1 · Chapitre 27"
   title="Pourquoi le ML en production est différent : la dette technique cachée"
   lecture="50 min"
-  competences={['C1', 'C4']}
+  competences={['C1', 'C5']}
 />
 
 :::objectifs

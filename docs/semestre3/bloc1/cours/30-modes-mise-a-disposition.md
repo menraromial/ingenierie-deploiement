@@ -11,7 +11,7 @@ import Figure from '@site/src/components/Figure';
   kicker="Semestre 3 · Bloc 1 · Chapitre 30"
   title="Les modes de mise à disposition d'un modèle"
   lecture="50 min"
-  competences={['C1', 'C2']}
+  competences={['C1', 'C5']}
 />
 
 :::objectifs

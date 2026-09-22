@@ -1,0 +1,31 @@
+% TP 23 : ce que versionne Git, ce que versionne DVC, et où chacun est poussé
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{
+    fic/.style={box=#1, text width=40mm, minimum height=8mm, font=\ttfamily\normalsize, align=flush left},
+  }
+  % poste
+  \node[ftitle, anchor=west] at (-4,46) {VOTRE POSTE : \texttt{listify-ml/}};
+  \node[ftitle, anchor=west, text=Enc] at (0,38) {versionné par Git};
+  \node[fic=Enc] (src) at (22,30) {src/, tests/};
+  \node[fic=Enc] (par) at (22,20) {params.yaml, dvc.yaml};
+  \node[fic=Enc] (lock) at (22,10) {dvc.lock};
+  \node[fic=Enc] (ptr) at (22,0) {data/taches.csv.dvc};
+  \node[ftitle, anchor=west, text=Ocre] at (58,38) {suivi par DVC (ignoré par Git)};
+  \node[fic=Ocre] (csv) at (80,30) {data/taches.csv};
+  \node[fic=Ocre] (prep) at (80,20) {data/prepared/};
+  \node[fic=Ocre] (mod) at (80,10) {model.joblib};
+  \node[db=Ocre, minimum width=40mm, minimum height=13mm, font=\ttfamily\normalsize] (cache) at (80,-4) {.dvc/cache};
+  \node[frame, fit=(src)(ptr)(csv)(cache), inner sep=5mm] (poste) {};
+  % distants
+  \node[box=Enc, text width=58mm, minimum height=18mm] (forge) at (165,24) {\textbf{Forge Gitea}\sub{\texttt{localhost:3300}\\ \texttt{etudiant/listify-ml}}};
+  \node[db=Ocre, minimum width=62mm, minimum height=20mm] (stock) at (165,-4) {\textbf{Stockage DVC}\sub{\texttt{\textasciitilde/dvc-stockage/files/md5/...}}};
+  \draw[flow=Enc] (poste.east |- forge.west) -- node[elabelc, above=1mm, fill=none]{git push} (forge.west);
+  \draw[flow=Ocre] (cache.east) -- node[elabelc, above=1mm, fill=none]{dvc push} (stock.west);
+  % pointeur
+  \draw[dflow=Muted] (ptr.east) -- (51,0) |- (csv.west);
+  \node[font=\sffamily\small, text=Muted, anchor=north] at (51,-1.5) {md5};
+\end{tikzpicture}
+\end{document}

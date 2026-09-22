@@ -1,0 +1,16 @@
+% Ch. 31 : architecture d'un serveur de suivi MLflow
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Rule, fill=white, text width=40mm, minimum height=14mm] (script) at (0,22) {\textbf{script d'entraînement}\sub{mlflow.log\_*}};
+  \node[box=Rule, fill=white, text width=40mm, minimum height=14mm] (nav) at (0,0) {\textbf{navigateur}\sub{interface, comparaisons}};
+  \node[box=Rule, fill=white, text width=40mm, minimum height=14mm] (svc) at (0,-22) {\textbf{service de prédiction}\sub{models:/...@champion}};
+  \node[keybox=Enc, text width=40mm, minimum height=58mm] (srv) at (68,0) {\textbf{serveur de suivi}\\[1mm]{\normalsize mlflow server}\\{\normalsize API REST, port 5000}};
+  \node[db=Plum, minimum width=44mm, minimum height=20mm] (db) at (162,16) {\textbf{base de métadonnées}\sub{PostgreSQL, SQLite}};
+  \node[db=Ocre, minimum width=44mm, minimum height=20mm] (art) at (162,-18) {\textbf{stockage d'artefacts}\sub{S3, MinIO, disque}};
+  \foreach \n in {script, nav, svc} \draw[flow=Ink] (\n.east) -- (srv.west |- \n.east);
+  \draw[flow=Plum] (srv.east |- db.west) -- node[elabel, above=1mm, fill=none]{runs, paramètres, métriques} (db.west);
+  \draw[flow=Ocre] (srv.east |- art.west) -- node[elabel, above=1mm, fill=none]{fichiers, modèles} (art.west);
+\end{tikzpicture}
+\end{document}

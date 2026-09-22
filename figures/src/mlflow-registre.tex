@@ -1,0 +1,19 @@
+% Ch. 31 : registre de modèles, versions et alias
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[ftitle, anchor=west] at (-20,32) {MODÈLE ENREGISTRÉ : \texttt{listify-categorie}};
+  \foreach \v/\x/\d in {1/0/{C = 5, min\_df = 3\\test : 87,50 \%}, 2/48/{C = 20, min\_df = 2\\test : 87,58 \%}, 3/96/{données v3\\en évaluation}} {
+    \node[box=Enc, text width=36mm, minimum height=18mm] (v\v) at (\x,0) {\textbf{version \v}\\[.5mm]{\normalsize \d}};
+    \node[box=Rule, fill=white, text width=36mm, minimum height=9mm, font=\ttfamily\normalsize] (r\v) at (\x,-24) {run};
+    \draw[dflow=Muted] (v\v.south) -- node[elabel, right=1mm, fill=none]{lignage} (r\v.north);
+  }
+  \node[state=Sea, font=\sffamily\large\bfseries] (champ) at (0,22) {@champion};
+  \node[state=Ocre, font=\sffamily\large\bfseries] (chal) at (96,22) {@challenger};
+  \draw[flow=Sea] (champ) -- (v1.north);
+  \draw[flow=Ocre] (chal) -- (v3.north);
+  \node[box=Brick, fill=white, font=\sffamily\normalsize, text width=36mm] (tag) at (48,22) {étiquette\\\texttt{decision = refuse}};
+  \draw[dflow=Brick] (tag) -- (v2.north);
+\end{tikzpicture}
+\end{document}

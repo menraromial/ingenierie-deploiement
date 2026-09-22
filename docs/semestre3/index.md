@@ -32,11 +32,11 @@ Listify reste l'application déployée depuis le semestre 1. On lui ajoute un mo
 - [Ch. 28](bloc1/cours/28-versionner-donnees-modeles.md) : versionner le code, les données et le modèle ; reproductibilité d'une expérience (DVC).
 - [Ch. 29](bloc1/cours/29-cycle-vie-mlops.md) : le cycle de vie MLOps et ses niveaux de maturité 0, 1 et 2 (Google).
 - [Ch. 30](bloc1/cours/30-modes-mise-a-disposition.md) : les modes de mise à disposition d'un modèle (batch, temps réel, flux ; modèle embarqué ou modèle-service).
-- **[TP 22](bloc1/tp/tp22-notebook-irreproductible.md) et TP 23** : le notebook « recherche » irreproductible (chaos volontaire), puis restructuration en projet propre versionné avec DVC.
+- **[TP 22](bloc1/tp/tp22-notebook-irreproductible.md) et [TP 23](bloc1/tp/tp23-projet-reproductible-dvc.md)** : le notebook « recherche » irreproductible (chaos volontaire), puis restructuration en projet propre versionné avec DVC.
 
-### Bloc 2 : outillage du cycle de vie, MLflow et Airflow (semaines 4 à 8)
+### [Bloc 2](bloc2/index.md) : outillage du cycle de vie, MLflow et Airflow (semaines 4 à 8)
 
-- Ch. 31 : suivi d'expériences et registre de modèles (MLflow Tracking, Models, Model Registry).
+- [Ch. 31](bloc2/cours/31-suivi-experiences-mlflow.md) : suivi d'expériences et registre de modèles (MLflow Tracking, Models, Model Registry).
 - Ch. 32 : orchestrer des tâches, le DAG et Airflow (scheduler, executor, tâches idempotentes, backfill, capteurs, XCom) ; orchestrateur de *services* contre orchestrateur de *tâches*.
 - Ch. 33 : servir un modèle (FastAPI, validation Pydantic, tests de charge, conteneurisation).
 - **TP 24 à 27** : instrumentation MLflow, API de serving déployée sur le cluster du S2, DAG complet d'entraînement, chaîne intégrée « CD du modèle ».

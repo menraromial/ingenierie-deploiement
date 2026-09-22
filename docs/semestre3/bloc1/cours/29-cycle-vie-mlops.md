@@ -11,7 +11,7 @@ import Figure from '@site/src/components/Figure';
   kicker="Semestre 3 · Bloc 1 · Chapitre 29"
   title="Le cycle de vie MLOps et ses niveaux de maturité"
   lecture="45 min"
-  competences={['C1', 'C2']}
+  competences={['C4', 'C5']}
 />
 
 :::objectifs

@@ -11,7 +11,7 @@ import Figure from '@site/src/components/Figure';
   kicker="Semestre 3 · Bloc 1 · Chapitre 28"
   title="Versionner le code, les données et le modèle : la reproductibilité"
   lecture="50 min"
-  competences={['C2', 'C4']}
+  competences={['C2', 'C5']}
 />
 
 :::objectifs

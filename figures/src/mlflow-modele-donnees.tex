@@ -1,0 +1,23 @@
+% Ch. 31 : expérience, runs, et ce que contient un run
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[keybox=Enc, text width=44mm, minimum height=14mm] (exp) at (0,0) {\textbf{Expérience}\\{\normalsize listify-categorie}};
+  \foreach \i/\n in {0/{C1-min\_df1}, 1/{C5-min\_df3}, 2/{C20-min\_df2}} {
+    \node[box=Enc, text width=36mm, minimum height=10mm, font=\ttfamily\normalsize] (r\i) at (58,14-\i*14) {\n};
+    \draw[flow=Enc] (exp.east) -- ++(4,0) |- (r\i.west);
+  }
+  \node[ftitle] at (58,26) {RUNS};
+  % détail d'un run
+  \node[box=Ocre, text width=50mm, minimum height=10mm, align=flush left, font=\sffamily\normalsize] (p) at (128,22) {\textbf{paramètres}\quad C = 20, min\_df = 2};
+  \node[box=Ocre, text width=50mm, minimum height=10mm, align=flush left, font=\sffamily\normalsize] (m) at (128,9) {\textbf{métriques}\quad precision\_val = 0,898};
+  \node[box=Ocre, text width=50mm, minimum height=10mm, align=flush left, font=\sffamily\normalsize] (t) at (128,-4) {\textbf{étiquettes}\quad donnees = v2};
+  \node[box=Ocre, text width=50mm, minimum height=10mm, align=flush left, font=\sffamily\normalsize] (a) at (128,-17) {\textbf{artefacts}\quad fichiers, graphiques};
+  \node[dframe=Ocre, fit=(p)(a), inner sep=3mm, label={[ftitle]above:CONTENU D'UN RUN}] (run) {};
+  \draw[dflow=Ocre] (r2.east) -- (run.west |- r2.east);
+  % modèle journalisé
+  \node[box=Sea, text width=50mm, minimum height=14mm] (lm) at (128,-46) {\textbf{Modèle journalisé}\sub{\texttt{models:/m-2889...} : MLmodel, model.skops, signature, environnement}};
+  \draw[flow=Sea] (run.south) -- node[elabelc, right=2mm, fill=none]{log\_model} (lm.north);
+\end{tikzpicture}
+\end{document}
