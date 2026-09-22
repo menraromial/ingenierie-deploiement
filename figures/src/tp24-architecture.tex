@@ -1,0 +1,17 @@
+% TP 24 : la pile MLflow montée sur le poste
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Rule, fill=white, text width=46mm, minimum height=20mm] (poste) at (0,0) {\textbf{dépôt listify-ml}\sub{\texttt{dvc repro}, campagne, promotion}};
+  \node[box=Enc, text width=44mm, minimum height=20mm] (srv) at (76,0) {\textbf{mlflow-serveur}\sub{\texttt{localhost:5001}}};
+  \node[db=Plum, minimum width=46mm, minimum height=19mm] (db) at (160,24) {\textbf{mlflow-db}\sub{PostgreSQL, port 55433}};
+  \node[db=Ocre, minimum width=46mm, minimum height=19mm] (minio) at (160,-24) {\textbf{mlflow-minio}\sub{\texttt{localhost:9000}}};
+  \draw[flow=Enc] (poste) -- node[elabel, above=1mm, fill=none]{métadonnées} (srv);
+  \draw[flow=Plum] (srv.east) -- ++(6,0) |- node[elabel, pos=.75, above=1mm, fill=none]{runs, registre} (db.west);
+  \draw[flow=Ocre] (poste.south) -- ++(0,-40) -| (minio.south);
+  \node[elabel, text=Ocre, anchor=north] at (70,-39) {artefacts : modèles, exemples};
+  \node[note, anchor=north west, text width=92mm] at (0,-56) {le client écrit les artefacts \emph{directement} dans le stockage objet : le serveur ne garde que les métadonnées};
+  \node[dframe=Muted, fit=(srv)(db)(minio), inner sep=7mm, label={[ftitle]above:RÉSEAU DE CONTENEURS \texttt{mlflow-net}}] {};
+\end{tikzpicture}
+\end{document}
