@@ -182,3 +182,9 @@ code { border: 0; }
 
 /* ---------- touches clavier ---------- */
 kbd { font-family: var(--font-ui); font-size: .82em; box-shadow: none; border: 1px solid var(--c-rule); border-bottom-width: 2px; }
+
+/* ---------- pas de ligatures dans le code : « != » doit rester « != » (pas « ≠ ») ---------- */
+code, pre, kbd, .prism-code {
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}

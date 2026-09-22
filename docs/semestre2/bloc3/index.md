@@ -46,7 +46,7 @@ Vous retrouverez l'idée centrale du parcours sous une forme nouvelle. Au S1, An
 | 11 | [Ch. 23 : L'intégration continue](cours/23-integration-continue.md) | [TP 19](tp/tp19-forge-premier-pipeline.md) : forge locale Gitea, runner, premier pipeline (lint et tests) |
 | 12 | [Ch. 24 : Livraison et déploiement continus](cours/24-livraison-deploiement-continus.md) | [TP 20](tp/tp20-livraison-gitops.md) (partie A) : pipeline complet, build, push, scan, commit du tag |
 | 13 | [Ch. 25 : GitOps](cours/25-gitops.md) | [TP 20](tp/tp20-livraison-gitops.md) (partie B) : Argo CD, un commit met à jour la production |
-| 14 | [Ch. 26 : Observabilité](cours/26-observabilite.md) | TP 21 : Prometheus, Grafana et une alerte sur le taux d'erreurs |
+| 14 | [Ch. 26 : Observabilité](cours/26-observabilite.md) | [TP 21](tp/tp21-observabilite.md) : Prometheus, Grafana et une alerte sur le taux d'erreurs |
 
 ## Ce que vous saurez faire à la fin du bloc
 

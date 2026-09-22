@@ -223,6 +223,8 @@ sum by (route) (rate(listify_http_requests_total[5m]))
 
 La seconde requête est la plus importante du chapitre : c'est le **taux d'erreurs** des signaux dorés, un nombre entre 0 et 1 que l'alerte de la section 8 surveillera.
 
+Deux précautions, découvertes en vrai au [TP 21](../tp/tp21-observabilite.md). D'abord, tant qu'aucune réponse 5xx n'a eu lieu, la série des erreurs **n'existe pas** : la somme d'un ensemble vide est vide, et la division renvoie un résultat vide au lieu de 0. Pour un tableau de bord, on écrit donc `(sum(rate(...{status=~"5.."}[5m])) or vector(0)) / sum(rate(...[5m]))`. Ensuite, un taux d'erreurs qui compte les requêtes des sondes de Kubernetes (`/api/health`, interrogée toutes les 5 secondes sur chaque pod) mesure autre chose que l'expérience des utilisateurs : on filtre ces requêtes par `route!="/api/health"`.
+
 ### 6.4 Quantiles de latence : `histogram_quantile()`
 
 La **moyenne** de latence est un indicateur trompeur : si 95 % des requêtes prennent 50 ms et 5 % prennent 4 s, la moyenne vaut environ 250 ms, une valeur que personne n'a vécue. On raisonne en **quantiles** : le quantile 95 (p95) est la durée en dessous de laquelle se trouvent 95 % des requêtes. Un histogramme Prometheus stocke des compteurs cumulés par tranche (`le` signifie *less or equal*), et `histogram_quantile()` en déduit le quantile par interpolation linéaire à l'intérieur de la tranche concernée.

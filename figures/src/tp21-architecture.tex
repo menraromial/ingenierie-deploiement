@@ -1,0 +1,36 @@
+% TP 21 : la supervision de Listify
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  % ---- namespace listify
+  \foreach \k/\y in {1/10, 2/0, 3/-10}
+    \node[box=Enc, text width=34mm, minimum height=8mm] (b\k) at (0,\y) {backend \cmd{/metrics}};
+  \node[box=Rule, fill=white, text width=34mm, align=flush left, minimum height=26mm] (obj) at (0,-42)
+       {\textbf{déclarés dans Git}\\[.5mm]{\normalsize ServiceMonitor\\PrometheusRule\\ConfigMap du tableau\\de bord}};
+  \begin{scope}[on background layer]
+    \node[dframe=Enc, fit=(b1)(obj), inner sep=4mm, yshift=3mm, inner ysep=7mm] (ns) {};
+  \end{scope}
+  \node[ftitle, text=Enc, anchor=north west] at (ns.north west) {NAMESPACE LISTIFY (ARGO CD)};
+
+  % ---- namespace monitoring
+  \node[box=Plum, text width=40mm, minimum height=32mm] (prom) at (92,0) {\ico[Plum]{fire}\enspace\textbf{Prometheus}\sub{scrape toutes les 15 s}\sub{évalue l'alerte}};
+  \node[box=Sea, text width=36mm, minimum height=12mm] (op) at (92,-42) {\textbf{opérateur}\sub{lit ServiceMonitor, règles}};
+  \node[box=Brick, text width=36mm, minimum height=14mm] (am) at (158,10) {\ico[Brick]{bell}\enspace\textbf{Alertmanager}};
+  \node[box=Ocre, text width=36mm, minimum height=16mm] (graf) at (158,-10) {\ico[Ocre]{chart-area}\enspace\textbf{Grafana}\sub{tableau de bord Listify}};
+
+  \foreach \k in {1,2,3} \draw[flow=Plum] (prom.west) -- (b\k.east);
+  \node[elabel, fill=none, text=Plum] at (44,17) {collecte (pull)};
+  \draw[flow=Sea] (obj.east) -- node[elabel, above=1mm, fill=none]{lit} (op.west);
+  \draw[flow=Sea] (op.north) -- node[elabel, right=1mm, fill=none]{configure} (prom.south);
+  \draw[flow=Brick] (prom.east |- am.west) -- node[elabel, above=1mm, fill=none]{alertes} (am.west);
+  \draw[flow=Ocre] (graf.west) -- node[elabel, below=1mm, fill=none]{PromQL} (prom.east |- graf.west);
+  % sidecar : sous tous les composants, puis remonte jusqu'à Grafana
+  \draw[dflow=Ocre] (obj.south) -- ++(0,-7) -| node[elabel, pos=.25, below=1mm, fill=none]{le sidecar de Grafana charge le tableau de bord} (graf.south);
+
+  \begin{scope}[on background layer]
+    \node[dframe=Plum, fit=(prom)(op)(am)(graf), inner sep=5mm, yshift=3mm, inner ysep=8mm] (mon) {};
+  \end{scope}
+  \node[ftitle, text=Plum, anchor=north east] at (mon.north east) {NAMESPACE MONITORING (HELM)};
+\end{tikzpicture}
+\end{document}

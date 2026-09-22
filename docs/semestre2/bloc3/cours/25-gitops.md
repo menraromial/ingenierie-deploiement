@@ -138,7 +138,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: http://host.containers.internal:3000/etudiant/listify-config.git
+    repoURL: http://host.containers.internal:3300/etudiant/listify-config.git
     targetRevision: main            # la branche qui fait foi
     path: chart                     # le chart Helm de Listify dans ce dépôt
     helm:

@@ -6,10 +6,10 @@
   \node[box=Rule, fill=white, text width=38mm, minimum height=22mm] (dev) at (0,0)
        {\ico[Muted]{laptop-code}\\[1mm]\textbf{Vous}\sub{navigateur, git}};
   \node[box=Enc, text width=40mm, minimum height=22mm] (gitea) at (70,0)
-       {\ico[Enc]{code-branch}\enspace\textbf{Gitea 1.27}\sub{dépôt listify, Actions}\sub{port 3000}};
+       {\ico[Enc]{code-branch}\enspace\textbf{Gitea 1.27}\sub{dépôt listify, Actions}\sub{port 3300}};
   \node[box=Ocre, text width=40mm, minimum height=22mm] (run) at (140,0)
        {\ico[Ocre]{cogs}\enspace\textbf{act\_runner 0.6}\sub{attend des jobs}};
-  \draw[flow] (dev) -- node[elabelc, above=1mm, fill=none, pos=.42]{localhost:3000} node[elabel, below=1mm, fill=none, pos=.42]{git push} (gitea);
+  \draw[flow] (dev) -- node[elabelc, above=1mm, fill=none, pos=.42]{localhost:3300} node[elabel, below=1mm, fill=none, pos=.42]{git push} (gitea);
   \draw[{Stealth[length=2.2mm,width=1.6mm]}-{Stealth[length=2.2mm,width=1.6mm]}, draw=Ocre, line width=.8pt] (gitea) -- node[elabel, above=1mm, fill=none]{jobs, journaux} (run);
 
   \node[box=Plum, text width=44mm, minimum height=14mm] (sock) at (140,-34) {\textbf{Podman de l'hôte}\sub{via son socket API}};
@@ -20,7 +20,7 @@
   \draw[flow=Plum] (sock.west) -| ([xshift=12mm]job.north);
   \draw[flow=Plum] (sock) -- (db);
   \draw[flow=Sea] ([yshift=-4mm]job.east) -- node[elabelc, below=1mm, fill=none]{DB\_HOST=db} ([yshift=-4mm]db.west);
-  \draw[flow=Sea] ([xshift=-12mm]job.north) -- node[elabelc, left=1mm, fill=none, align=right]{clone via\\host.containers.internal:3000} ([xshift=-12mm]gitea.south);
+  \draw[flow=Sea] ([xshift=-12mm]job.north) -- node[elabelc, left=1mm, fill=none, align=right]{clone via\\host.containers.internal:3300} ([xshift=-12mm]gitea.south);
   \begin{scope}[on background layer]
     \node[dframe=Sea, fit=(job)(db), inner sep=5mm, yshift=3mm, inner ysep=8mm] (net) {};
   \end{scope}

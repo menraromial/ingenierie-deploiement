@@ -32,10 +32,10 @@ Vous allez retrouver, à chaque étape, la question des points de vue réseau du
 
 | Qui | Adresse de Gitea | Pourquoi |
 |---|---|---|
-| Vous (navigateur, `git`, `podman push`) | `localhost:3000` | Le port est publié sur votre poste |
-| Les conteneurs (runner, jobs, Trivy) | `host.containers.internal:3000` | Nom ajouté par Podman dans chaque conteneur |
-| Le nœud kind (containerd, qui tire les images) | `host.containers.internal:3000` | Le nœud est un conteneur Podman |
-| Les pods du cluster (Argo CD) | `host.containers.internal:3000` | À condition de l'apprendre au DNS du cluster (étape 7) |
+| Vous (navigateur, `git`, `podman push`) | `localhost:3300` | Le port est publié sur votre poste |
+| Les conteneurs (runner, jobs, Trivy) | `host.containers.internal:3300` | Nom ajouté par Podman dans chaque conteneur |
+| Le nœud kind (containerd, qui tire les images) | `host.containers.internal:3300` | Le nœud est un conteneur Podman |
+| Les pods du cluster (Argo CD) | `host.containers.internal:3300` | À condition de l'apprendre au DNS du cluster (étape 7) |
 
 ## Partie A : la livraison continue
 
@@ -45,14 +45,14 @@ Première séance : du `git push` au commit de configuration. Le cluster n'inter
 
 ```bash
 podman start gitea act-runner 2>/dev/null     # si vous les aviez arrêtés au TP 19
-curl -s http://localhost:3000/api/healthz | grep -o '"status": *"[a-z]*"' | head -1   # "status": "pass"
+curl -s http://localhost:3300/api/healthz | grep -o '"status": *"[a-z]*"' | head -1   # "status": "pass"
 podman logs --tail 1 act-runner               # ... declare successfully
 free -g                                       # comptez 6 Go disponibles pour la partie B
 ```
 
 ## Étape 1 : le registre intégré à Gitea (30 min)
 
-Gitea n'est pas qu'une forge : il contient un **registre de conteneurs** conforme à la *distribution spec* de l'OCI (ch. 16), comme GitHub avec GHCR. Une image `localhost:3000/etudiant/listify-backend` y est rangée sous votre compte. On s'en sert à la place du registre `registry:2` du TP 14 : un service de moins, et les images apparaissent à côté du code, dans l'onglet **Paquets**.
+Gitea n'est pas qu'une forge : il contient un **registre de conteneurs** conforme à la *distribution spec* de l'OCI (ch. 16), comme GitHub avec GHCR. Une image `localhost:3300/etudiant/listify-backend` y est rangée sous votre compte. On s'en sert à la place du registre `registry:2` du TP 14 : un service de moins, et les images apparaissent à côté du code, dans l'onglet **Paquets**.
 
 Le registre est servi en HTTP, sans TLS. Il faut le déclarer à Podman comme registre non sécurisé, dans votre configuration utilisateur. **Attention** : si le fichier `~/.config/containers/registries.conf` n'existe pas encore, il **remplace** entièrement le fichier système ; on part donc d'une copie de celui-ci :
 
@@ -63,7 +63,7 @@ cat >> ~/.config/containers/registries.conf <<'EOF'
 
 # Registre intégré à la forge Gitea locale (bloc 3 du S2) : HTTP, donc « insecure »
 [[registry]]
-location = "localhost:3000"
+location = "localhost:3300"
 insecure = true
 EOF
 ```
@@ -71,10 +71,10 @@ EOF
 Vérifiez à la main que le registre accepte une image, avant de confier ce travail à la CI :
 
 ```bash
-podman login localhost:3000 --username etudiant          # votre mot de passe Gitea
+podman login localhost:3300 --username etudiant          # votre mot de passe Gitea
 cd ~/Github/edu/listify
-podman build -t localhost:3000/etudiant/listify-backend:manuel backend
-podman push localhost:3000/etudiant/listify-backend:manuel
+podman build -t localhost:3300/etudiant/listify-backend:manuel backend
+podman push localhost:3300/etudiant/listify-backend:manuel
 ```
 
 L'image apparaît dans votre profil Gitea, onglet **Paquets**. Elle est publique, comme votre compte : on peut la tirer **sans identifiants**, ce qui évitera d'en fournir au cluster.
@@ -94,9 +94,9 @@ L'API de Gitea permet d'automatiser ces deux gestes, utile pour votre runbook :
 ```bash
 TOKEN=$(curl -s -u etudiant:VOTRE_MOT_DE_PASSE -H 'Content-Type: application/json' \
   -d '{"name":"ci-listify","scopes":["write:repository","write:package"]}' \
-  http://localhost:3000/api/v1/users/etudiant/tokens | jq -r .sha1)
+  http://localhost:3300/api/v1/users/etudiant/tokens | jq -r .sha1)
 curl -s -u etudiant:VOTRE_MOT_DE_PASSE -H 'Content-Type: application/json' -X PUT \
-  -d "{\"data\":\"$TOKEN\"}" http://localhost:3000/api/v1/repos/etudiant/listify/actions/secrets/CI_TOKEN
+  -d "{\"data\":\"$TOKEN\"}" http://localhost:3300/api/v1/repos/etudiant/listify/actions/secrets/CI_TOKEN
 ```
 :::
 
@@ -129,7 +129,7 @@ version: 1.0.0
 ```yaml title="chart/values.yaml"
 # Valeurs par défaut du chart Listify. Chaque environnement les surcharge
 # dans son propre fichier (values-prod.yaml pour la production).
-registry: localhost:3000/etudiant   # le registre de conteneurs intégré à Gitea
+registry: localhost:3300/etudiant   # le registre de conteneurs intégré à Gitea
 
 backend:
   replicas: 2
@@ -295,7 +295,7 @@ Vérifiez sans rien déployer, puis poussez :
 helm lint chart -f values-prod.yaml          # 1 chart(s) linted, 0 chart(s) failed
 helm template listify chart -f values-prod.yaml | grep -E 'image:|replicas:'
 git add -A && git commit -m "Chart de Listify et valeurs de production"
-git remote add origin http://localhost:3000/etudiant/listify-config.git
+git remote add origin http://localhost:3300/etudiant/listify-config.git
 git push origin main
 ```
 
@@ -309,22 +309,22 @@ Ajoutez ce troisième job à la fin de `.gitea/workflows/ci.yaml`, dans le dép�
     needs: tests
     if: gitea.event_name == 'push'   # pas pour les pull requests : on ne livre que main
     env:
-      REGISTRY: localhost:3000/etudiant
+      REGISTRY: localhost:3300/etudiant
       TAG: ${{ gitea.sha }}          # tag unique et traçable : l'empreinte du commit
       DOCKER_BUILDKIT: "0"           # constructeur classique : c'est Podman qui construit, et garde l'image
     steps:
       - uses: actions/checkout@v4
 
       - name: Fournir les identifiants du registre
-        # Pas de « docker login » : il testerait localhost:3000 DEPUIS le conteneur du job,
+        # Pas de « docker login » : il testerait localhost:3300 DEPUIS le conteneur du job,
         # où localhost n'est pas Gitea. On écrit directement le fichier d'identifiants ;
-        # c'est le Podman de l'hôte qui poussera, et pour lui localhost:3000 est bien Gitea.
+        # c'est le Podman de l'hôte qui poussera, et pour lui localhost:3300 est bien Gitea.
         env:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
         run: |
           mkdir -p ~/.docker
           AUTH=$(printf 'etudiant:%s' "$CI_TOKEN" | base64 -w0)
-          printf '{"auths":{"localhost:3000":{"auth":"%s"}}}' "$AUTH" > ~/.docker/config.json
+          printf '{"auths":{"localhost:3300":{"auth":"%s"}}}' "$AUTH" > ~/.docker/config.json
 
       - name: Construire les deux images, sur une image de base à jour (--pull)
         run: |
@@ -341,12 +341,12 @@ Ajoutez ce troisième job à la fin de `.gitea/workflows/ci.yaml`, dans le dép�
           for img in listify-backend listify-frontend; do
             docker run --rm -v trivy-cache:/root/.cache/trivy docker.io/aquasec/trivy:0.72.0 \
               image --insecure --severity CRITICAL --ignore-unfixed --exit-code 1 \
-              "host.containers.internal:3000/etudiant/$img:$TAG"
+              "host.containers.internal:3300/etudiant/$img:$TAG"
           done
 
       - name: Mettre à jour le tag dans le dépôt de configuration
         run: |
-          git clone "http://etudiant:${{ secrets.CI_TOKEN }}@host.containers.internal:3000/etudiant/listify-config.git" config
+          git clone "http://etudiant:${{ secrets.CI_TOKEN }}@host.containers.internal:3300/etudiant/listify-config.git" config
           cd config
           sed -i "s/^  tag: .*/  tag: \"$TAG\"/" values-prod.yaml
           git -c user.name="ci" -c user.email="ci@listify.local" commit -am "Déployer listify ${TAG:0:7}"
@@ -359,7 +359,7 @@ C'est la question centrale du job, et la clé de toutes ses pannes. Le job tourn
 
 | Ligne | Échec observé sans elle | Explication |
 |---|---|---|
-| Fichier `~/.docker/config.json` écrit à la main | `docker login localhost:3000` : `dial tcp [::1]:3000: connect: connection refused` | Le client `docker` récent vérifie les identifiants **depuis le conteneur du job**, où `localhost` n'est pas Gitea. Le push, lui, est fait par Podman sur l'hôte, pour qui `localhost:3000` est bien Gitea. On fournit donc les identifiants sans vérification préalable. |
+| Fichier `~/.docker/config.json` écrit à la main | `docker login localhost:3300` : `dial tcp [::1]:3300: connect: connection refused` | Le client `docker` récent vérifie les identifiants **depuis le conteneur du job**, où `localhost` n'est pas Gitea. Le push, lui, est fait par Podman sur l'hôte, pour qui `localhost:3300` est bien Gitea. On fournit donc les identifiants sans vérification préalable. |
 | `-f backend/Containerfile` | `open Dockerfile: no such file or directory` | Le client `docker` cherche un fichier nommé `Dockerfile` ; nos fichiers s'appellent `Containerfile` (TP 12). |
 | `DOCKER_BUILDKIT: "0"` | `docker push` : `failed to find image` | Sans elle, le client `docker` construit avec **BuildKit**, dans un conteneur à part, et l'image n'arrive jamais dans le stockage de Podman. Le constructeur classique, lui, est implémenté par Podman. Si vous avez eu cet échec, supprimez le conteneur laissé derrière : `podman rm -f buildx_buildkit_default`. |
 
@@ -422,7 +422,7 @@ Seconde séance : un cluster qui se met à jour tout seul à partir du dépôt d
 
 ## Étape 6 : un cluster qui sait tirer depuis Gitea (45 min)
 
-Les nœuds kind doivent tirer les images `localhost:3000/...`. Or, pour containerd dans le nœud, `localhost` est le nœud lui-même. On déclare donc un **miroir** : « pour le registre `localhost:3000`, va en réalité chercher les images sur `host.containers.internal:3000` ». containerd lit ces règles dans un dossier par registre, `/etc/containerd/certs.d/`, qu'on active à la création du cluster.
+Les nœuds kind doivent tirer les images `localhost:3300/...`. Or, pour containerd dans le nœud, `localhost` est le nœud lui-même. On déclare donc un **miroir** : « pour le registre `localhost:3300`, va en réalité chercher les images sur `host.containers.internal:3300` ». containerd lit ces règles dans un dossier par registre, `/etc/containerd/certs.d/`, qu'on active à la création du cluster.
 
 Supprimez l'ancien cluster s'il existe, puis créez le nouveau (dans le scope délégué, voir TP 15) :
 
@@ -442,19 +442,20 @@ containerdConfigPatches:
 export KIND_EXPERIMENTAL_PROVIDER=podman
 systemd-run --user --scope --property=Delegate=yes kind delete cluster --name listify   # si besoin
 systemd-run --user --scope --property=Delegate=yes kind create cluster --config ~/forge/kind-config.yaml
+kubectl wait --for=condition=Ready node --all --timeout=180s   # le nœud est NotReady quelques secondes
 kubectl get nodes          # listify-control-plane   Ready
 ```
 
 Déclarez le miroir **dans** le nœud, puis vérifiez que containerd tire bien votre image manuelle de l'étape 1 :
 
 ```bash
-podman exec listify-control-plane sh -c 'mkdir -p "/etc/containerd/certs.d/localhost:3000" && cat > "/etc/containerd/certs.d/localhost:3000/hosts.toml" <<EOF
-server = "http://localhost:3000"
+podman exec listify-control-plane sh -c 'mkdir -p "/etc/containerd/certs.d/localhost:3300" && cat > "/etc/containerd/certs.d/localhost:3300/hosts.toml" <<EOF
+server = "http://localhost:3300"
 
-[host."http://host.containers.internal:3000"]
+[host."http://host.containers.internal:3300"]
   capabilities = ["pull", "resolve"]
 EOF
-crictl pull localhost:3000/etudiant/listify-backend:manuel'
+crictl pull localhost:3300/etudiant/listify-backend:manuel'
 # Image is up to date for sha256:...
 ```
 
@@ -479,7 +480,7 @@ Le bloc `hosts` sert le nom demandé, et `fallthrough` passe toutes les autres r
 ```bash
 kubectl run dnstest --rm -i --restart=Never --pod-running-timeout=5m \
   --image=docker.io/curlimages/curl:8.10.1 -- \
-  curl -s -o /dev/null -w "%{http_code}\n" http://host.containers.internal:3000/api/healthz
+  curl -s -o /dev/null -w "%{http_code}\n" http://host.containers.internal:3300/api/healthz
 # 200
 ```
 
@@ -522,7 +523,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: http://host.containers.internal:3000/etudiant/listify-config.git
+    repoURL: http://host.containers.internal:3300/etudiant/listify-config.git
     targetRevision: main
     path: chart
     helm:
@@ -549,7 +550,7 @@ Dans l'interface d'Argo CD, l'application `listify` déroule l'arbre de ses ress
 
 ```bash
 kubectl -n listify get deploy backend -o jsonpath='{.spec.template.spec.containers[0].image}'; echo
-# localhost:3000/etudiant/listify-backend:<empreinte du commit>
+# localhost:3300/etudiant/listify-backend:<empreinte du commit>
 kubectl -n listify port-forward service/frontend 8088:80
 # navigateur : http://localhost:8088, Listify fonctionne ; ajoutez une tâche
 ```
@@ -637,7 +638,7 @@ L'image revient à celle du commit précédent : lors de la validation, en quinz
 
 | Symptôme | Cause | Remède | Origine |
 |---|---|---|---|
-| `docker login` : `dial tcp [::1]:3000: connect: connection refused` | La vérification a lieu dans le conteneur du job | Fichier `~/.docker/config.json` (§4.1) | vécue |
+| `docker login` : `dial tcp [::1]:3300: connect: connection refused` | La vérification a lieu dans le conteneur du job | Fichier `~/.docker/config.json` (§4.1) | vécue |
 | `docker build` : `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock` | Montage automatique d'act_runner : sur l'hôte, ce chemin désignait le socket d'un démon Docker réservé à root | `docker_host: "-"` et montage explicite du socket Podman (TP 19, §4.2) | vécue |
 | `docker build` : `no such file or directory` sur `/var/run/docker.sock` | Montage demandé par `options` mais absent de `valid_volumes` | Ajouter le chemin à `valid_volumes` | vécue |
 | `open Dockerfile: no such file or directory` | Fichier nommé `Containerfile` | `-f backend/Containerfile` | vécue |
@@ -648,7 +649,7 @@ L'image revient à celle du commit précédent : lors de la validation, en quinz
 | Argo CD met plusieurs minutes à voir le commit | Interrogation périodique de Git | Annotation `refresh=normal`, ou webhook | vécue |
 | `curl` : réponse vide sur `localhost:8088` après une mise à jour | Le `port-forward` visait un Pod remplacé | Relancer le tunnel | vécue |
 | `podman push` : `http: server gave HTTP response to HTTPS client` | Registre non déclaré `insecure` | `registries.conf` (étape 1) | prévisible |
-| Pods `ErrImagePull` même avec un bon tag, `connection refused` vers `localhost:3000` | Fichier `hosts.toml` absent du nœud (cluster recréé) | Refaire l'étape 6 | prévisible |
+| Pods `ErrImagePull` même avec un bon tag, `connection refused` vers `localhost:3300` | Fichier `hosts.toml` absent du nœud (cluster recréé) | Refaire l'étape 6 | prévisible |
 | Application en erreur : `lookup host.containers.internal ... no such host` | Entrée CoreDNS absente | Étape 7 | prévisible |
 | Pods `CreateContainerConfigError` | Secret `listify-db` absent | Étape 9 | prévisible |
 

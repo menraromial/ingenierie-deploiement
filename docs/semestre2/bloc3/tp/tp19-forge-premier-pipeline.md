@@ -24,11 +24,11 @@ Vous installez sur votre poste l'équivalent d'un GitHub privé : une forge **Gi
 
 ## Ce que vous allez construire
 
-<Figure src="tp19-architecture" num="TP19.1" alt="Vous poussez sur Gitea (localhost:3000) ; le runner act_runner récupère les jobs et demande au Podman de l'hôte de créer, dans un réseau propre au job, le conteneur du job et un service PostgreSQL ; le job clone le dépôt par host.containers.internal:3000 et joint la base par le nom db.">
+<Figure src="tp19-architecture" num="TP19.1" alt="Vous poussez sur Gitea (localhost:3300) ; le runner act_runner récupère les jobs et demande au Podman de l'hôte de créer, dans un réseau propre au job, le conteneur du job et un service PostgreSQL ; le job clone le dépôt par host.containers.internal:3300 et joint la base par le nom db.">
   Ce que vous allez construire. Trois conteneurs longue durée (Gitea, le runner, et plus tard votre cluster) et des conteneurs jetables, créés pour chaque job puis détruits. Le runner ne fait rien lui-même : il demande au Podman de votre poste de créer les conteneurs.
 </Figure>
 
-Retenez dès maintenant la particularité de cette architecture, source de la plupart des pannes du bloc : **plusieurs points de vue réseau coexistent**. Pour votre navigateur, Gitea est à `localhost:3000`. Pour un conteneur, `localhost` désigne le conteneur lui-même ; il atteint votre poste, et donc Gitea, par le nom spécial `host.containers.internal`, que Podman ajoute automatiquement dans tous les conteneurs.
+Retenez dès maintenant la particularité de cette architecture, source de la plupart des pannes du bloc : **plusieurs points de vue réseau coexistent**. Pour votre navigateur, Gitea est à `localhost:3300`. Pour un conteneur, `localhost` désigne le conteneur lui-même ; il atteint votre poste, et donc Gitea, par le nom spécial `host.containers.internal`, que Podman ajoute automatiquement dans tous les conteneurs.
 
 ## Étape 0 : préparer le poste (15 min)
 
@@ -41,13 +41,13 @@ podman pull docker.io/library/postgres:16-alpine
 podman pull docker.gitea.com/runner-images:ubuntu-latest     # 1,66 Go : le plus long
 ```
 
-Vérifiez que le port 3000, celui de la forge, est libre :
+Vérifiez que le port 3300, celui de la forge, est libre :
 
 ```bash
-ss -tln | grep ':3000 '          # aucune ligne = libre
+ss -tln | grep ':3300 '          # aucune ligne = libre
 ```
 
-S'il est occupé, choisissez un autre port (par exemple 3300) et remplacez `3000` partout dans le TP, **y compris dans les adresses `host.containers.internal:3000`**.
+S'il est occupé, choisissez un autre port (par exemple 3400) et remplacez `3300` partout dans le TP, **y compris dans les adresses `host.containers.internal:3300`**.
 
 :::note[Le cluster kind n'est pas nécessaire aujourd'hui]
 Le TP 19 n'utilise pas Kubernetes. Si votre cluster kind du bloc 2 tourne encore, vous pouvez le supprimer pour libérer de la mémoire ; le TP 20 en recrée un, configuré différemment.
@@ -62,9 +62,10 @@ Gitea est un conteneur unique, avec une base SQLite intégrée : idéal pour un 
 ```bash
 podman volume create gitea-data
 
-podman run -d --name gitea -p 3000:3000 -v gitea-data:/data \
+podman run -d --name gitea -p 3300:3300 -v gitea-data:/data \
+  -e GITEA__server__HTTP_PORT=3300 \
   -e GITEA__database__DB_TYPE=sqlite3 \
-  -e GITEA__server__ROOT_URL=http://host.containers.internal:3000/ \
+  -e GITEA__server__ROOT_URL=http://host.containers.internal:3300/ \
   -e GITEA__server__PUBLIC_URL_DETECTION=auto \
   -e GITEA__server__DISABLE_SSH=true \
   -e GITEA__security__INSTALL_LOCK=true \
@@ -72,15 +73,16 @@ podman run -d --name gitea -p 3000:3000 -v gitea-data:/data \
   docker.io/gitea/gitea:1.27.3
 
 # attendre que la forge réponde (une vingtaine de secondes au premier démarrage)
-until curl -sf http://localhost:3000/api/healthz >/dev/null; do sleep 2; done; echo "Gitea prête"
+until curl -sf http://localhost:3300/api/healthz >/dev/null; do sleep 2; done; echo "Gitea prête"
 ```
 
-Chaque variable `GITEA__section__CLE` remplace la clé `CLE` de la section `[section]` du fichier de configuration de Gitea : c'est la configuration par l'environnement du facteur III des *Twelve-Factor Apps* (ch. 24), appliquée à un logiciel tiers. Les deux premières lignes de `server` méritent une explication, car elles résolvent le problème des points de vue réseau :
+Chaque variable `GITEA__section__CLE` remplace la clé `CLE` de la section `[section]` du fichier de configuration de Gitea : c'est la configuration par l'environnement du facteur III des *Twelve-Factor Apps* (ch. 24), appliquée à un logiciel tiers. Les lignes de `server` méritent une explication, car elles résolvent le problème des points de vue réseau :
 
 | Variable | Rôle |
 |---|---|
-| `ROOT_URL=http://host.containers.internal:3000/` | L'adresse « officielle » de la forge. Gitea la transmet aux jobs, qui s'en servent pour cloner le dépôt. Elle doit donc être joignable **depuis un conteneur**. |
-| `PUBLIC_URL_DETECTION=auto` | Pour les liens de l'interface web, Gitea utilise l'adresse par laquelle **vous** l'avez contactée (`localhost:3000`). Sans elle, les liens de l'interface pointeraient vers `host.containers.internal`, que votre navigateur ne sait pas résoudre. |
+| `HTTP_PORT=3300` | Le port d'écoute de Gitea **dans** son conteneur. Par défaut 3000 ; on le fait coïncider avec le port publié sur le poste, pour n'avoir qu'un seul numéro en tête. |
+| `ROOT_URL=http://host.containers.internal:3300/` | L'adresse « officielle » de la forge. Gitea la transmet aux jobs, qui s'en servent pour cloner le dépôt. Elle doit donc être joignable **depuis un conteneur**. |
+| `PUBLIC_URL_DETECTION=auto` | Pour les liens de l'interface web, Gitea utilise l'adresse par laquelle **vous** l'avez contactée (`localhost:3300`). Sans elle, les liens de l'interface pointeraient vers `host.containers.internal`, que votre navigateur ne sait pas résoudre. |
 | `INSTALL_LOCK=true` | Saute l'assistant d'installation web : la configuration est entièrement déclarée. |
 | `DISABLE_REGISTRATION=true` | Personne ne peut créer de compte : c'est votre forge privée. |
 
@@ -95,12 +97,12 @@ podman exec -u git gitea gitea admin user create --admin \
 # New user 'etudiant' has been successfully created!
 ```
 
-Ouvrez **http://localhost:3000** dans votre navigateur et connectez-vous. Le reste du TP utilise le nom d'utilisateur `etudiant` ; si vous en choisissez un autre, adaptez les chemins (`etudiant/listify`).
+Ouvrez **http://localhost:3300** dans votre navigateur et connectez-vous. Le reste du TP utilise le nom d'utilisateur `etudiant` ; si vous en choisissez un autre, adaptez les chemins (`etudiant/listify`).
 
 <details className="controle">
 <summary>Point de contrôle n° 1 : la forge répond</summary>
 
-- `curl -s http://localhost:3000/api/healthz` renvoie `"status": "pass"`.
+- `curl -s http://localhost:3300/api/healthz` renvoie `"status": "pass"`.
 - Vous êtes connecté dans l'interface web, et le menu de votre avatar propose « Administration du site ».
 - Au runbook : la commande de lancement, et la raison des deux variables `ROOT_URL` et `PUBLIC_URL_DETECTION`, dans vos mots.
 
@@ -112,7 +114,7 @@ Dans l'interface, cliquez sur **+** puis **Nouveau dépôt** : nom `listify`, d�
 
 ```bash
 cd ~/Github/edu/listify                  # adaptez à votre chemin
-git remote add forge http://localhost:3000/etudiant/listify.git
+git remote add forge http://localhost:3300/etudiant/listify.git
 git push forge main                      # identifiants : etudiant et votre mot de passe
 ```
 
@@ -352,7 +354,7 @@ TOKEN=$(podman exec -u git gitea gitea actions generate-runner-token | tail -1)
 
 podman volume create runner-data
 podman run -d --name act-runner \
-  -e GITEA_INSTANCE_URL=http://host.containers.internal:3000 \
+  -e GITEA_INSTANCE_URL=http://host.containers.internal:3300 \
   -e GITEA_RUNNER_REGISTRATION_TOKEN=$TOKEN \
   -e GITEA_RUNNER_NAME=poste-etudiant \
   -e CONFIG_FILE=/config.yaml \
@@ -428,7 +430,7 @@ git commit -m "CI : lint et tests"
 git push forge main
 ```
 
-Dans l'interface, ouvrez l'onglet **Actions** du dépôt : une exécution « CI : lint et tests » apparaît, avec ses deux jobs. Cliquez sur un job pour suivre son journal en direct. Vous y lirez, dans l'ordre : le démarrage du conteneur du job, le clone du dépôt depuis `http://host.containers.internal:3000/etudiant/listify`, l'installation de Python 3.12, puis les commandes du workflow. Pour le job `tests`, le service `db` démarre d'abord ; le job ne commence qu'une fois la sonde `pg_isready` réussie.
+Dans l'interface, ouvrez l'onglet **Actions** du dépôt : une exécution « CI : lint et tests » apparaît, avec ses deux jobs. Cliquez sur un job pour suivre son journal en direct. Vous y lirez, dans l'ordre : le démarrage du conteneur du job, le clone du dépôt depuis `http://host.containers.internal:3300/etudiant/listify`, l'installation de Python 3.12, puis les commandes du workflow. Pour le job `tests`, le service `db` démarre d'abord ; le job ne commence qu'une fois la sonde `pg_isready` réussie.
 
 Temps mesurés lors de la validation du TP, image de job déjà téléchargée : environ 3 minutes par job, dont l'essentiel en téléchargements (actions depuis github.com, paquets pip). Sur une bonne connexion, c'est nettement moins. **Sans** le téléchargement préalable de l'étape 0, le premier job attend en plus l'image de 1,66 Go : comptez plus de dix minutes.
 
@@ -481,7 +483,7 @@ Complétez le runbook : les commandes de lancement de Gitea et du runner, la con
 
 ## Point de contrôle final
 
-- [ ] Gitea répond sur `localhost:3000`, le dépôt `listify` y est poussé
+- [ ] Gitea répond sur `localhost:3300`, le dépôt `listify` y est poussé
 - [ ] Le runner `poste-etudiant` est « En ligne »
 - [ ] Les tests : 3 unitaires et 4 d'intégration, verts en local et dans le pipeline
 - [ ] Le workflow `ci.yaml` (lint puis tests) est vert sur `main`
@@ -497,8 +499,8 @@ Colonne « Origine » : **vécue** signifie rencontrée lors de la validation du
 |---|---|---|---|
 | Le premier job reste des minutes sur « Downloading » | L'image de job (1,66 Go) n'était pas téléchargée | Étape 0 ; ou patienter, le téléchargement n'a lieu qu'une fois | vécue |
 | `podman run ... act_runner generate-config` ne rend jamais la main | Le script d'entrée de l'image ignore la commande | `--entrypoint act_runner` (encadré de l'étape 4.3) | vécue |
-| Le runner ne s'enregistre pas : `connection refused` | `GITEA_INSTANCE_URL=http://localhost:3000` : dans le conteneur du runner, `localhost` est le runner | Utiliser `host.containers.internal:3000` | prévisible |
-| Le job échoue au clone : impossible de joindre l'hôte | `ROOT_URL` de Gitea laissé à `http://localhost:3000/` | `ROOT_URL=http://host.containers.internal:3000/` avec `PUBLIC_URL_DETECTION=auto` | prévisible |
+| Le runner ne s'enregistre pas : `connection refused` | `GITEA_INSTANCE_URL=http://localhost:3300` : dans le conteneur du runner, `localhost` est le runner | Utiliser `host.containers.internal:3300` | prévisible |
+| Le job échoue au clone : impossible de joindre l'hôte | `ROOT_URL` de Gitea laissé à `http://localhost:3300/` | `ROOT_URL=http://host.containers.internal:3300/` avec `PUBLIC_URL_DETECTION=auto` | prévisible |
 | Après un push, **aucune** exécution n'apparaît dans Actions | Le workflow est un YAML invalide ; Gitea l'ignore sans message. Cas vécu : un nom d'étape contenant « `: ` » (`name: Construire (--pull : image à jour)`) | Valider le YAML (`python3 -c "import yaml; yaml.safe_load(open('.gitea/workflows/ci.yaml'))"`), mettre la valeur entre guillemets | vécue |
 | `ModuleNotFoundError: No module named 'app'` dans pytest | `pytest.ini` absent ou mal placé | `backend/pytest.ini` avec `pythonpath = .` | prévisible |
 | Tests d'intégration en erreur de connexion, de façon intermittente | Le service `db` n'était pas encore prêt | Les `options` de sonde de santé du service | prévisible |
