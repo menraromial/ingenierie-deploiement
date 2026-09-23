@@ -1,0 +1,28 @@
+% TP 26 : le DAG et ce que chaque tâche touche
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{t/.style={box=#1, text width=28mm, minimum height=13mm}}
+  \node[t=Plum] (ext) at (0,0) {\textbf{extraire}\sub{\texttt{\{\{ ds \}\}}}};
+  \node[t=Enc] (ree) at (38,0) {\textbf{reentrainer}\sub{\texttt{dvc repro}}};
+  \node[t=Enc] (pro) at (76,0) {\textbf{promouvoir}\sub{McNemar}};
+  \node[t=Ocre] (dec) at (114,0) {\textbf{decider}\sub{branchement}};
+  \node[t=Sea] (red) at (158,12) {\textbf{redeployer}\sub{\texttt{rollout restart}}};
+  \node[t=Rule, fill=white] (con) at (158,-12) {\textbf{conserver}\sub{rien à faire}};
+  \foreach \a/\b in {ext/ree, ree/pro, pro/dec} \draw[flow] (\a) -- (\b);
+  \draw[flow=Sea] (dec.east) -- ++(7,0) |- (red.west);
+  \draw[flow=Muted] (dec.east) -- ++(7,0) |- (con.west);
+  % ce que touchent les tâches
+  \node[db=Plum, minimum width=30mm, minimum height=13mm] (base) at (0,-34) {\textbf{base}\sub{toutes les tâches}};
+  \node[box=Rule, fill=white, text width=46mm, minimum height=13mm] (depot) at (57,-34) {\textbf{dépôt listify-ml}\sub{\texttt{data/}, \texttt{dvc.lock}, \texttt{run.json}}};
+  \node[db=Ocre, minimum width=30mm, minimum height=13mm] (reg) at (114,-34) {\textbf{registre}\sub{MLflow}};
+  \node[box=Sea, text width=30mm, minimum height=13mm] (k8s) at (204,12) {\textbf{cluster}\sub{2 répliques}};
+  \draw[dflow=Plum] (base.north) -- (ext.south);
+  \draw[dflow=Muted] (ext.south east) -- (depot.north west);
+  \draw[dflow=Muted] (ree.south) -- (depot.north);
+  \draw[dflow=Ocre] (pro.south) -- (reg.north west);
+  \draw[dflow=Sea] (red.east) -- (k8s.west);
+  \node[note, anchor=north west, text width=150mm] at (-15,-44) {le dépôt est un état \emph{partagé} : deux exécutions simultanées s'y marchent dessus (étape 6)};
+\end{tikzpicture}
+\end{document}
