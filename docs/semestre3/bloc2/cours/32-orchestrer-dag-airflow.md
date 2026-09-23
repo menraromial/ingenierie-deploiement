@@ -21,7 +21,7 @@ import Figure from '@site/src/components/Figure';
 - décrire un traitement comme un **DAG** de tâches **idempotentes** et **atomiques**, et justifier ce découpage ;
 - nommer les composants d'Airflow et dire lequel fait quoi quand une tâche s'exécute ;
 - écrire un DAG avec le Task SDK, passer des valeurs entre tâches, brancher selon un résultat, gérer les réessais ;
-- raisonner sur le temps dans Airflow : intervalle de données, `run_after`, rattrapage, fuseaux horaires ;
+- raisonner sur le temps dans Airflow : date logique, calendrier à déclenchement ou à intervalles, rattrapage, fuseaux horaires ;
 - choisir un exécuteur et dimensionner le parallélisme ; distinguer un orchestrateur de **tâches** d'un orchestrateur de **services** comme Kubernetes.
 :::
 
@@ -146,8 +146,8 @@ SEUIL = 0.85
 )
 def entrainement_listify():
     @task
-    def extraire(data_interval_start=None, data_interval_end=None) -> dict:
-        return {"lignes": 19200, "debut": str(data_interval_start), "fin": str(data_interval_end)}
+    def extraire(logical_date=None) -> dict:
+        return {"lignes": 19200, "jusqu_au": str(logical_date)}
 
     @task
     def valider(export: dict) -> dict:
@@ -184,7 +184,7 @@ Quatre points à relever.
 - **Le graphe se déduit du code.** `valider(extraire())` crée la dépendance ; l'opérateur `>>` l'exprime explicitement quand il n'y a pas de valeur à passer.
 - **`@task.branch` choisit un chemin.** La fonction renvoie le nom de la tâche à exécuter ; les autres branches sont marquées **ignorées** (*skipped*), état distinct de « réussie » et de « échouée ».
 - **Les réessais sont déclaratifs** : `retries` et `retry_delay` dans `default_args` s'appliquent à toutes les tâches.
-- **Les paramètres temporels sont injectés** : en déclarant `data_interval_start` et `data_interval_end`, la tâche reçoit l'intervalle qu'elle doit traiter (§5).
+- **Les paramètres temporels sont injectés** : en déclarant `logical_date`, la tâche reçoit l'instant que représente l'exécution, et définit ses données par rapport à lui (§5).
 
 ### 4.2 Exécuter et observer
 
@@ -217,22 +217,35 @@ Comparons deux façons d'enchaîner `extraire` et `entrainer` sur l'export de Li
 La règle : **XCom transporte des références, pas des données**. Un identifiant, un chemin, un nombre, une décision.
 :::
 
-## 5. Le temps : intervalles, rattrapage, fuseaux
+## 5. Le temps : date logique, rattrapage, fuseaux
 
 C'est la partie d'Airflow qui surprend le plus, et celle qui explique le plus d'erreurs de débutant.
 
-### 5.1 Une exécution traite un intervalle
+### 5.1 Chaque exécution représente un instant : la date logique
 
-Un DAG planifié ne s'exécute pas « à un instant » : chaque exécution traite un **intervalle de données** (*data interval*), et ne démarre qu'à la **fin** de cet intervalle, puisque avant, les données de l'intervalle ne sont pas toutes arrivées.
+Une exécution ne représente pas « le moment où elle tourne » : elle porte une **date logique** (*logical date*), l'instant qu'elle est censée représenter. L'exécution planifiée du lundi 3 h a pour date logique le lundi 3 h, qu'elle tourne à l'heure, avec vingt minutes de retard, ou trois mois plus tard lors d'un rattrapage.
 
-<Figure src="intervalles-airflow" num="32.3" alt="Une ligne de temps graduée du 15 au 19 à 3 h. Trois intervalles consécutifs, du 15 au 16, du 16 au 17 et du 17 au 18, sont marqués « rattrapée » : ce sont les exécutions créées par la commande airflow backfill create du 15 au 18. Un quatrième intervalle, du 18 au 19, correspond à l'exécution planifiée. Chaque flèche part de la fin de l'intervalle : une exécution ne démarre qu'à la fin de l'intervalle qu'elle traite.">
-  Intervalles de données et rattrapage. L'exécution qui démarre le 18 à 3 h traite les données du 17 à 3 h au 18 à 3 h.
+Ce que l'on associe à cette date dépend du **calendrier** (*timetable*), et c'est là qu'Airflow 3 a changé :
+
+| Calendrier | Date logique | Données associées | Comment l'obtenir |
+|---|---|---|---|
+| `CronTriggerTimetable` | L'instant du déclenchement | Aucun intervalle : début et fin sont confondus | **Défaut d'Airflow 3** pour un `schedule` écrit en `cron` |
+| `CronDataIntervalTimetable` | Le **début** d'un intervalle | L'intervalle entre deux déclenchements ; l'exécution part à sa **fin** | Défaut d'Airflow 2 ; en Airflow 3, `schedule=CronDataIntervalTimetable("0 3 * * *", timezone="Europe/Paris")` ou l'option `[scheduler] create_cron_data_intervals = True` |
+
+Le second modèle est celui de la plupart des tutoriels écrits pour Airflow 2 : chaque exécution traite exactement une tranche de données, de la fin de la précédente jusqu'à son propre déclenchement. Le premier est plus proche de `cron` : l'exécution représente un instant, et la tâche décide elle-même quelles données lui correspondent, **par rapport à cet instant** (« les tâches créées avant la date logique », « les 24 heures qui précèdent »).
+
+<Figure src="intervalles-airflow" num="32.3" alt="Une ligne de temps graduée du 15 au 19 à 3 h. Les déclenchements du 15, du 16 et du 17 sont marqués « rattrapée » : ce sont les exécutions créées par airflow backfill create du 15 au 18. Le déclenchement du 18 est l'exécution planifiée. Chaque exécution a pour date logique l'instant de son déclenchement, et ne considère que les données antérieures à cet instant.">
+  Dates logiques et rattrapage, avec le calendrier par défaut d'Airflow 3. Chaque exécution représente un instant ; ses données s'arrêtent à cet instant.
 </Figure>
 
-Cette convention rend les tâches **reproductibles** : une tâche qui reçoit `data_interval_start` et `data_interval_end` et n'utilise **jamais** l'heure courante donnera le même résultat qu'elle soit exécutée à l'heure ou trois mois plus tard. C'est l'équivalent, pour le temps, de l'interdiction d'entraîner sur une source vivante du chapitre 28.
+:::warning[Un piège vécu en préparant ce cours]
+Avec un simple `schedule="0 3 * * *"`, une tâche qui lit `data_interval_start` et `data_interval_end` reçoit **deux fois la même valeur** dans Airflow 3. Lors de la préparation, `airflow dags test` a affiché `intervalle [2026-09-17 00:00:00+00:00, 2026-09-17 00:00:00+00:00]`. Une tâche recopiée d'un exemple Airflow 2, qui « traite les données de l'intervalle », ne traite alors **rien**, sans la moindre erreur. Soit on raisonne sur la date logique, soit on choisit explicitement `CronDataIntervalTimetable`.
+:::
+
+Dans les deux cas, la règle de fond est la même, et elle rend les tâches **reproductibles** : une tâche qui définit ses données à partir de la date logique, et n'utilise **jamais** l'heure courante, donne le même résultat qu'elle soit exécutée à l'heure ou trois mois plus tard. C'est l'équivalent, pour le temps, de l'interdiction d'entraîner sur une source vivante du chapitre 28.
 
 :::danger[Ne jamais écrire `datetime.now()` dans une tâche]
-Une tâche qui lit l'heure courante produit un résultat différent à chaque exécution, et un rattrapage recalcule alors tout sur les données d'aujourd'hui au lieu de celles du jour rejoué. Utilisez les paramètres d'intervalle fournis par Airflow.
+Une tâche qui lit l'heure courante produit un résultat différent à chaque exécution, et un rattrapage recalcule alors tout sur les données d'aujourd'hui au lieu de celles du jour rejoué. Utilisez la date logique fournie par Airflow.
 :::
 
 ### 5.2 Rattraper le passé
@@ -257,7 +270,7 @@ backfill__2026-09-15T01:00:00+00:00     | success | 2026-09-15T01:00:00+00:00
 
 Trois observations, chacune instructive :
 
-1. **Trois exécutions, pas quatre.** La fenêtre du 15 au 18 contient trois intervalles complets (15 → 16, 16 → 17, 17 → 18).
+1. **Trois exécutions, pas quatre.** La borne `--to-date 2026-09-18` s'entend le 18 à minuit ; le déclenchement du 18 à 3 h tombe après. Un essai à blanc sur un autre DAG, hebdomadaire, le confirme : `--from-date 2025-07-07 --to-date 2025-07-21 --dry-run` annonce les exécutions du 7 et du 14, pas celle du 21.
 2. **`01:00:00+00:00`, alors que le DAG dit 3 h.** Le calendrier est interprété dans le fuseau du `start_date` (`Europe/Paris`), et Airflow stocke tout en temps universel : 3 h à Paris en été, c'est 1 h UTC. Le même DAG s'exécutera à 2 h UTC en hiver, et l'heure locale restera 3 h, y compris les nuits de changement d'heure.
 3. **Le préfixe du `run_id` dit l'origine** : `scheduled__`, `backfill__` ou `manual__`. La ligne `scheduled__` est l'exécution normale, créée dès que le DAG a été réactivé.
 :::
@@ -343,7 +356,7 @@ Le DAG de la figure 32.1 assemble les outils des chapitres précédents, chacun 
 
 | Tâche | Ce qu'elle fait | Outil |
 |---|---|---|
-| `extraire` | Exporte les tâches de l'intervalle, dépose un fichier, le versionne | SQL, DVC (ch. 28) |
+| `extraire` | Exporte les tâches créées avant la date logique, dépose un fichier, le versionne | SQL, DVC (ch. 28) |
 | `valider` | Vérifie schéma, catégories, volume ; échoue bruyamment | Le script `prepare.py` du TP 23 |
 | `entrainer` | Entraîne, journalise paramètres et métriques, enregistre le modèle | MLflow (ch. 31) |
 | `decider` | Compare le candidat au champion sur les mêmes données | McNemar (ch. 29) |
@@ -358,6 +371,7 @@ Deux principes de conception, qui valent pour tout DAG de ML :
 ## 9. Pièges classiques
 
 - **Du code lourd au niveau du fichier.** Le fichier du DAG est réévalué à chaque relecture, toutes les quelques dizaines de secondes. Une requête à une base ou un chargement de données écrit **en dehors** d'une fonction de tâche s'exécute à chaque relecture, et ralentit tout l'ordonnanceur. Tout le travail va dans les tâches.
+- **Un exemple d'Airflow 2 recopié tel quel.** Il lit `data_interval_start` et `data_interval_end`, qui sont égaux avec le calendrier par défaut d'Airflow 3 : la tâche ne traite rien, sans erreur (§5.1).
 - **`catchup=True` oublié.** Un `start_date` ancien et un rattrapage automatique déclenchent des centaines d'exécutions au premier démarrage. Mettre `catchup=False` et rattraper explicitement.
 - **Un `start_date` dynamique.** `start_date=pendulum.now()` change à chaque relecture du fichier : le DAG ne se déclenche jamais, ou de façon erratique. La date de début est une constante.
 - **Des secrets dans le code du DAG.** Les identifiants vont dans les connexions et variables d'Airflow, elles-mêmes reliées à un gestionnaire de secrets, jamais dans le fichier versionné (chapitre 9).
@@ -371,7 +385,7 @@ Deux principes de conception, qui valent pour tout DAG de ML :
 2. On décrit un traitement comme un **DAG** de tâches **idempotentes** (rejouable sans effet de bord) et **atomiques** (une tâche, une chose).
 3. Les données passent par le **stockage**, pas par l'orchestrateur : **XCom transporte des références**, pas des tableaux.
 4. Airflow 3 : ordonnanceur, base de métadonnées, serveur d'API (interface **et** API d'exécution), exécuteur et workers. Sans serveur d'API, les tâches restent bloquées.
-5. Une exécution traite un **intervalle de données** et démarre à sa **fin**. Une tâche ne lit jamais l'heure courante : elle reçoit son intervalle.
+5. Chaque exécution représente un instant, sa **date logique**. Dans Airflow 3, un calendrier `cron` n'a par défaut **pas d'intervalle** (`CronTriggerTimetable`) ; les intervalles d'Airflow 2 se demandent explicitement (`CronDataIntervalTimetable`). Une tâche ne lit jamais l'heure courante : elle définit ses données par rapport à la date logique.
 6. Le calendrier s'interprète dans le fuseau du `start_date` et se stocke en UTC : « 3 h » reste 3 h locales, y compris au changement d'heure.
 7. `catchup=False` par défaut, rattrapage explicite avec `airflow backfill create` ; le préfixe du `run_id` dit l'origine de chaque exécution.
 8. L'**exécuteur** fixe le lieu d'exécution : Local, Celery (workers chauds, tâches courtes) ou Kubernetes (un pod par tâche, isolation, coût de démarrage). Les tâches lourdes se déportent dans des pods dédiés.
@@ -388,7 +402,7 @@ L'orchestration de flux de travaux est un domaine ancien, né dans le calcul sci
 
 - **Ewa Deelman et al., « Pegasus: A framework for mapping complex scientific workflows onto distributed systems », *Scientific Programming*, 2005.** Un système qui transforme un flux de travaux abstrait en plan d'exécution sur des ressources distribuées, avec optimisation et reprise sur erreur.
 - **Bertram Ludäscher et al., « Scientific workflow management and the Kepler system », *Concurrency and Computation*, 2006.** L'autre grande famille : des flux de travaux composés visuellement, avec une sémantique explicite de l'exécution.
-- **Tyler Akidau et al., « The Dataflow Model », *VLDB*, 2015.** La distinction entre **temps de l'événement** et **temps de traitement**, et la gestion des données arrivées en retard. C'est la formalisation de ce que l'intervalle de données d'Airflow traite de façon pragmatique ; elle sera centrale au chapitre 37.
+- **Tyler Akidau et al., « The Dataflow Model », *VLDB*, 2015.** La distinction entre **temps de l'événement** et **temps de traitement**, et la gestion des données arrivées en retard. C'est la formalisation de ce que la date logique d'Airflow traite de façon pragmatique ; elle sera centrale au chapitre 37.
 - **Ewa Deelman et al., « The future of scientific workflows », *International Journal of High Performance Computing Applications*, 2018.** Un état des lieux et des défis ouverts : hétérogénéité des ressources, reproductibilité, flux de travaux pilotés par les données.
 - **D. Sculley et al., « Hidden Technical Debt in Machine Learning Systems », *NeurIPS*, 2015.** Les « jungles de pipelines » du chapitre 27 : la dette que l'orchestration discipline, sans la supprimer.
 

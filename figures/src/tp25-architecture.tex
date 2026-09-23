@@ -1,0 +1,21 @@
+% TP 25 : le service de prédiction dans le cluster, le registre sur l'hôte
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  % cluster
+  \foreach \k/\y in {1/14, 2/-10}
+    \node[box=Sea, text width=44mm, minimum height=17mm] (p\k) at (56,\y) {\textbf{pod \k}\sub{2 workers, modèle en mémoire}};
+  \node[box=Enc, text width=36mm, minimum height=14mm] (svc) at (0,2) {\textbf{Service}\sub{NodePort 30080}};
+  \foreach \k in {1,2} \draw[flow=Sea] (svc.east) -- ++(5,0) |- (p\k.west);
+  \node[dframe=Muted, fit=(svc)(p1)(p2), inner sep=7mm, label={[ftitle]above:CLUSTER KIND \texttt{listify}}] (cluster) {};
+  % hôte
+  \node[box=Ocre, text width=52mm, minimum height=16mm] (mlflow) at (152,16) {\textbf{serveur MLflow}\sub{\texttt{host.containers.internal:5001}}};
+  \node[db=Plum, minimum width=54mm, minimum height=18mm] (minio) at (152,-16) {\textbf{MinIO}\sub{\texttt{host.containers.internal:9000}}};
+  \draw[dflow=Ocre] (p1.east) -- node[elabel, above=1mm, fill=none]{quel modèle ?} (mlflow.west);
+  \draw[dflow=Plum] (p2.east) -- node[elabel, below=1mm, fill=none]{téléchargement} (minio.west);
+  \node[box=Rule, fill=white, text width=36mm, minimum height=12mm] (curl) at (0,-40) {\textbf{votre poste}\sub{\texttt{curl localhost:30080}}};
+  \draw[flow] (curl.north) -- (svc.south);
+  \node[note, anchor=north west, text width=96mm] at (18,-40) {le nom \texttt{host.containers.internal} est ajouté à CoreDNS : il désigne, depuis les pods, la passerelle du réseau kind, c'est-à-dire votre poste};
+\end{tikzpicture}
+\end{document}

@@ -1,25 +1,24 @@
-% Ch. 32 : intervalles de données, run_after et rattrapage
+% Ch. 32 : dates logiques et rattrapage avec le calendrier par défaut d'Airflow 3
 \documentclass[border=6pt]{standalone}
 \usepackage{coursfig}
 \begin{document}
 \begin{tikzpicture}[x=1mm,y=1mm]
-  \draw[draw=Ink, line width=.8pt, -{Stealth[length=2.5mm]}] (0,0) -- (176,0);
+  \draw[draw=Ink, line width=.8pt, -{Stealth[length=2.5mm]}] (-6,0) -- (176,0);
   \foreach \i/\j in {0/15, 1/16, 2/17, 3/18, 4/19} {
     \pgfmathsetmacro\x{\i*40}
     \draw[draw=Ink] (\x,0) -- (\x,-2);
     \node[below=2mm, font=\sffamily\normalsize] at (\x,0) {\j\ à 3 h};
   }
-  \foreach \i/\etat/\c in {0/{rattrapée}/Ocre, 1/{rattrapée}/Ocre, 2/{rattrapée}/Ocre} {
+  % données disponibles jusqu'à chaque instant
+  \foreach \i/\c in {0/Ocre, 1/Ocre, 2/Ocre, 3/Sea} {
     \pgfmathsetmacro\x{\i*40}
-    \draw[draw=\c, fill=\c Bg, line width=.7pt, rounded corners=1pt] (\x+1,4) rectangle (\x+39,14);
-    \node[font=\sffamily\normalsize, text=\c] at (\x+20,9) {\etat};
-    \draw[flow=\c] (\x+39,16) -- (\x+39,4.5);
+    \draw[draw=\c, fill=\c Bg, line width=.5pt] (-6,4+\i*3.2) rectangle (\x,6.4+\i*3.2);
+    \node[circle, fill=\c, minimum size=3.2mm, inner sep=0pt] at (\x,5.2+\i*3.2) {};
   }
-  \node[font=\sffamily\normalsize, anchor=west, text=Ocre] at (0,30) {\texttt{airflow backfill create --from-date 2026-09-15 --to-date 2026-09-18} : trois exécutions rattrapées};
-  \node[font=\sffamily\normalsize, anchor=east, text=Sea] at (176,20) {exécution planifiée};
-  \draw[draw=Sea, fill=SeaBg, line width=.7pt, rounded corners=1pt] (121,4) rectangle (159,14);
-  \node[font=\sffamily\normalsize, text=Sea] at (140,9) {intervalle du 18};
-  \draw[flow=Sea] (159,17) -- (159,4.5);
-  \node[note, anchor=north west, text width=150mm] at (0,-10) {une exécution ne démarre qu'à la \emph{fin} de l'intervalle qu'elle traite : la flèche marque \texttt{run\_after}, la boîte l'intervalle de données que la tâche doit lire};
+  \node[font=\sffamily\normalsize, text=Ocre, anchor=west] at (82,6.6) {rattrapées : 15, 16 et 17};
+  \node[font=\sffamily\normalsize, text=Sea, anchor=west] at (124,14.8) {planifiée : 18};
+  \node[font=\sffamily\normalsize, text=Muted, anchor=west] at (158,5.2) {19 : à venir};
+  \node[font=\sffamily\normalsize, anchor=west, text=Ocre] at (-6,26) {\texttt{airflow backfill create --from-date 2026-09-15 --to-date 2026-09-18}};
+  \node[note, anchor=north west, text width=165mm] at (-6,-10) {chaque point est la \emph{date logique} d'une exécution, l'instant de son déclenchement ; chaque barre, les données antérieures à cet instant, les seules que l'exécution doit lire. La borne du 18 s'entend à minuit : le déclenchement du 18 à 3 h n'est pas rattrapé};
 \end{tikzpicture}
 \end{document}

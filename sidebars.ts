@@ -135,7 +135,7 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: 'Bloc 2 : outiller le cycle de vie, MLflow et Airflow',
           link: {type: 'doc', id: 'semestre3/bloc2/index'},
-          items: ['semestre3/bloc2/cours/suivi-experiences-mlflow', 'semestre3/bloc2/cours/orchestrer-dag-airflow', 'semestre3/bloc2/cours/servir-un-modele', 'semestre3/bloc2/tp/tp24-suivi-mlflow'],
+          items: ['semestre3/bloc2/cours/suivi-experiences-mlflow', 'semestre3/bloc2/cours/orchestrer-dag-airflow', 'semestre3/bloc2/cours/servir-un-modele', 'semestre3/bloc2/tp/tp24-suivi-mlflow', 'semestre3/bloc2/tp/tp25-servir-modele-cluster'],
         },
       ],
     },
