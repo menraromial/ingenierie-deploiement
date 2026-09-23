@@ -48,7 +48,7 @@ Listify reste l'application déployée depuis le semestre 1. On lui ajoute un mo
 - Ch. 36 : big data et calcul distribué (les 3V, MapReduce, Spark et le shuffle, Parquet contre CSV, lakehouse en panorama).
 - Ch. 37 : les flux de données (Kafka, traitements en continu).
 - Ch. 38 : éthique et responsabilité de la mise en production d'IA (biais à l'échelle, équité, RGPD, model cards).
-- **TP 28 à 31** : KServe en découverte (TP 28), boucle de dérive complète avec réentraînement automatique (TP 29), Spark en local sur plusieurs Go (TP 30), Kafka en mode KRaft (TP 31).
+- **TP 28 à 31** : KServe en découverte ([TP 28](bloc3/tp/tp28-kserve.md)), boucle de dérive complète avec réentraînement automatique (TP 29), Spark en local sur plusieurs Go (TP 30), Kafka en mode KRaft (TP 31).
 
 ## Évaluation du semestre
 

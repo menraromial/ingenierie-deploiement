@@ -189,17 +189,17 @@ Le contrôleur de KServe transforme cette déclaration en ressources concrètes 
 
 ### 3.2 Deux modes de déploiement
 
-KServe s'installe selon deux modes, et le choix est structurant.
+KServe fonctionne selon deux modes, et le choix est structurant. Dans la version 0.20, utilisée au TP 28, ils s'appellent *Knative* (le défaut de l'installation, anciennement *Serverless*) et *Standard* (anciennement *RawDeployment*) ; on choisit le second pour un objet donné par l'annotation `serving.kserve.io/deploymentMode: Standard`.
 
-| | Mode *serverless* (Knative) | Mode *RawDeployment* |
+| | Mode *Knative* (sans serveur) | Mode *Standard* |
 |---|---|---|
 | Ressources créées | Services Knative | `Deployment`, `Service`, `HorizontalPodAutoscaler` ordinaires |
 | Mise à l'échelle | Sur le nombre de requêtes, **jusqu'à zéro réplique** | Sur le processeur ou la mémoire, au moins une réplique |
-| Répartition canari | Native (révisions Knative) | Plus limitée |
-| Dépendances | Knative et une passerelle réseau (Istio, Kourier...) | Aucune au-delà de KServe |
+| Répartition canari | Native (révisions Knative) | **Non** : `canaryTrafficPercent` est ignoré sans erreur, et la nouvelle version reçoit 100 % du trafic (vérifié au TP 28) |
+| Dépendances | Knative et une passerelle réseau (Istio, Kourier...) | cert-manager seulement |
 | Premier appel après inactivité | **Démarrage à froid** : téléchargement et chargement du modèle | Immédiat |
 
-Le mode *serverless* est séduisant pour un parc de nombreux modèles peu sollicités : une réplique qui ne sert personne ne coûte rien. Mais il ramène le problème mesuré au chapitre 33 : un modèle de Listify met 15 secondes à se charger, que le premier utilisateur après une période d'inactivité subira. Pour un service sur le chemin critique, comme la suggestion de catégorie, on garde au moins une réplique chaude (`minReplicas: 1`), ou l'on choisit le mode *RawDeployment*.
+Le mode *Knative* est séduisant pour un parc de nombreux modèles peu sollicités : une réplique qui ne sert personne ne coûte rien. Mais il ramène le problème mesuré au chapitre 33 : un modèle de Listify met 15 secondes à se charger, que le premier utilisateur après une période d'inactivité subira. Pour un service sur le chemin critique, comme la suggestion de catégorie, on garde au moins une réplique chaude (`minReplicas: 1`), ou l'on choisit le mode *Standard*.
 
 :::exemple[Exemple 34.3 : ce que coûte le passage à zéro]
 Une équipe sert 40 modèles, chacun sollicité en moyenne 2 heures par jour, avec une réplique de 500 Mio par modèle quand il est actif.
@@ -217,6 +217,7 @@ KServe standardise le service ; il ne supprime pas les problèmes des chapitres 
 
 - **Le chemin du modèle.** `storageUri` désigne un emplacement **figé** dans le stockage. Le registre MLflow et son alias `champion` ne sont pas compris nativement : il faut qu'une étape de la chaîne (le DAG du TP 26, ou la CI du TP 27) traduise « la version championne » en une URI, et mette à jour l'`InferenceService`. C'est d'ailleurs ce qui le rend compatible avec GitOps : la version servie est écrite dans un fichier versionné.
 - **Le prétraitement.** Le serveur scikit-learn appelle `predict` sur ce qu'on lui envoie. Si le modèle attend un tableau à une colonne `titre` (chapitre 31, §5.3), le client doit envoyer exactement ce format, ou l'on ajoute un **transformateur** KServe devant le prédicteur.
+- **L'environnement du serveur.** Le serveur scikit-learn de KServe 0.20 embarque **scikit-learn 1.5.2** et Python 3.11. Un modèle entraîné avec scikit-learn 1.9.1, comme celui de Listify, se charge avec un `InconsistentVersionWarning` : c'est exactement la situation du TP 22. Au TP 28, les prédictions se sont révélées identiques sur 4 800 titres, mais rien ne le garantit en général ; on le vérifie à chaque changement de version, ou l'on fournit son propre environnement de service (`ServingRuntime`) avec les bonnes versions.
 - **La surveillance de la qualité.** KServe expose des métriques de service (latence, erreurs), pas la dérive des données ni la qualité des prédictions : c'est l'objet du chapitre 35.
 
 Le TP 28 déploiera le modèle de Listify avec KServe, et comparera, chiffres à l'appui, cet objet de quelques lignes au service écrit à la main au TP 25.
@@ -263,7 +264,7 @@ On peut utiliser Argo Workflows **directement**, sans Kubeflow : on décrit alor
 3. Chaque étape coûte au moins **deux pods** (un *driver*, une exécution). Mesuré : 156 s pour 45 s de travail utile, soit environ 37 s d'orchestration par étape. On découpe en **peu d'étapes substantielles**, et l'on préconstruit les images au lieu d'installer les paquets à chaque exécution.
 4. Le **cache** réutilise les étapes dont la spécification et les entrées n'ont pas changé (56 s, aucun pod d'exécution) ; il suppose des étapes déterministes.
 5. **KServe** remplace le service écrit à la main par un `InferenceService` : un format, un emplacement, et KServe fournit l'initialisation, le serveur, la mise à l'échelle et le canari.
-6. Le mode *serverless* peut descendre à **zéro réplique** (douze fois moins de mémoire dans l'exemple 34.3) au prix de **démarrages à froid** ; pour un service sur le chemin critique, on garde une réplique chaude.
+6. Le mode *Knative* peut descendre à **zéro réplique** (douze fois moins de mémoire dans l'exemple 34.3) au prix de **démarrages à froid** ; pour un service sur le chemin critique, on garde une réplique chaude.
 7. KServe ne comprend ni l'alias du registre, ni le prétraitement, ni la dérive : il faut encore une chaîne qui traduit « le champion » en emplacement, et une surveillance de la qualité.
 8. **Airflow** excelle sur le temps et le rattrapage ; **Kubeflow Pipelines** sur l'isolation, les artefacts et le lignage. Le vrai critère de choix est le coût d'exploitation de la plateforme.
 
@@ -289,7 +290,7 @@ Piste d'innovation : l'exemple 34.1 montre qu'un tiers seulement de la durée d'
 ### Sources primaires
 
 - Documentation de Kubeflow Pipelines : « Components », « Pipelines », « Caching ». [kubeflow.org/docs/components/pipelines](https://www.kubeflow.org/docs/components/pipelines/)
-- Documentation de KServe : « InferenceService », « Serverless and RawDeployment ». [kserve.github.io/website](https://kserve.github.io/website/)
+- Documentation de KServe : « InferenceService », modes de déploiement *Knative* et *Standard*. [kserve.github.io/website](https://kserve.github.io/website/)
 - Documentation d'Argo Workflows. [argoproj.github.io/workflows](https://argoproj.github.io/workflows/)
 
 ### Lectures recommandées

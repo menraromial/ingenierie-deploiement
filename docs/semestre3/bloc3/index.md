@@ -23,7 +23,7 @@ Les chapitres 34 à 37 élargissent la chaîne dans quatre directions : l'orches
 
 | Semaine | CM | TP |
 |---|---|---|
-| 9 | [Ch. 34 : Le ML sur Kubernetes, Kubeflow Pipelines et KServe](cours/34-ml-sur-kubernetes.md) | TP 28 : servir le modèle avec KServe |
+| 9 | [Ch. 34 : Le ML sur Kubernetes, Kubeflow Pipelines et KServe](cours/34-ml-sur-kubernetes.md) | [TP 28 : servir le modèle avec KServe](tp/tp28-kserve.md) |
 | 10 | Ch. 35 : Surveiller un modèle, la dérive | TP 29 : la boucle de dérive complète, avec réentraînement automatique |
 | 11 | Ch. 36 : Big data et calcul distribué | TP 30 : Spark en local sur plusieurs gigaoctets |
 | 12 | Ch. 37 : Les flux de données | TP 31 : Kafka en mode KRaft |
