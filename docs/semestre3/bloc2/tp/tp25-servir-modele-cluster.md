@@ -1,4 +1,4 @@
-e---
+---
 title: "TP 25 : Servir le modèle promu sur le cluster"
 sidebar_label: "TP 25 : Servir le modèle sur le cluster"
 hide_title: true
