@@ -27,7 +27,7 @@ Chaque chapitre ajoute une pièce au dépôt `listify-ml` du TP 23, sans rien je
 | 5 | [Ch. 32 : Orchestrer des tâches, le DAG et Airflow](cours/32-orchestrer-dag-airflow.md) | [TP 24](tp/tp24-suivi-mlflow.md) (fin) |
 | 6 | [Ch. 33 : Servir un modèle](cours/33-servir-un-modele.md) | [TP 25 : servir le modèle promu, sur le cluster du semestre 2](tp/tp25-servir-modele-cluster.md) |
 | 7 |  | [TP 26 : le DAG d'entraînement complet, avec promotion conditionnelle](tp/tp26-dag-airflow.md) |
-| 8 |  | TP 27 : la chaîne intégrée, livraison continue du modèle |
+| 8 |  | [TP 27 : la chaîne intégrée, livraison continue du modèle](tp/tp27-chaine-integree.md) |
 
 ## Ce que vous saurez faire à la fin du bloc
 

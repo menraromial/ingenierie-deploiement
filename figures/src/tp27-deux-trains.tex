@@ -1,0 +1,27 @@
+% TP 27 : deux trains de livraison, un même service
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{e/.style={box=#1, text width=27mm, minimum height=14mm}}
+  % train du code
+  \node[ftitle, anchor=west, text=Enc] at (-14,30) {TRAIN DU CODE : À CHAQUE COMMIT};
+  \node[e=Rule, fill=white] (push) at (0,18) {\textbf{git push}\sub{listify-ml}};
+  \node[e=Enc] (ci) at (36,18) {\textbf{CI Gitea}\sub{tests, image}};
+  \node[e=Enc] (conf) at (72,18) {\textbf{listify-ml-config}\sub{tag de l'image}};
+  \node[e=Enc] (argo) at (108,18) {\textbf{Argo CD}\sub{synchronise}};
+  \draw[flow=Enc] (push) -- (ci); \draw[flow=Enc] (ci) -- (conf); \draw[flow=Enc] (conf) -- (argo);
+  % train du modèle
+  \node[ftitle, anchor=west, text=Ocre] at (-14,-8) {TRAIN DU MODÈLE : CHAQUE LUNDI};
+  \node[e=Ocre] (dag) at (0,-20) {\textbf{DAG Airflow}\sub{réentraîner}};
+  \node[e=Ocre] (mc) at (36,-20) {\textbf{McNemar}\sub{promouvoir ?}};
+  \node[db=Ocre, minimum width=27mm, minimum height=14mm] (reg) at (72,-20) {\textbf{registre}\sub{\texttt{@champion}}};
+  \node[e=Ocre] (rr) at (108,-20) {\textbf{rollout restart}\sub{recharger}};
+  \draw[flow=Ocre] (dag) -- (mc); \draw[flow=Ocre] (mc) -- (reg); \draw[flow=Ocre] (reg) -- (rr);
+  % service
+  \node[box=Sea, text width=50mm, minimum height=26mm, align=flush center] (svc) at (160,0) {\textbf{service en production}\\[1mm]{\normalsize image du commit \texttt{45e34bb}}\\{\normalsize modèle de la version 4}};
+  \draw[flow=Enc] (argo.east) -- ++(6,0) |- ([yshift=5mm]svc.west);
+  \draw[flow=Ocre] (rr.east) -- ++(6,0) |- ([yshift=-5mm]svc.west);
+  \node[note, anchor=north west, text width=170mm] at (-14,-32) {changer le code ne change pas le modèle, et promouvoir un modèle ne reconstruit pas l'image : \texttt{/sante} affiche les deux versions};
+\end{tikzpicture}
+\end{document}
