@@ -137,6 +137,12 @@ const sidebars: SidebarsConfig = {
           link: {type: 'doc', id: 'semestre3/bloc2/index'},
           items: ['semestre3/bloc2/cours/suivi-experiences-mlflow', 'semestre3/bloc2/cours/orchestrer-dag-airflow', 'semestre3/bloc2/cours/servir-un-modele', 'semestre3/bloc2/tp/tp24-suivi-mlflow', 'semestre3/bloc2/tp/tp25-servir-modele-cluster', 'semestre3/bloc2/tp/tp26-dag-airflow', 'semestre3/bloc2/tp/tp27-chaine-integree'],
         },
+        {
+          type: 'category',
+          label: 'Bloc 3 : le ML à l\'échelle, surveillé et responsable',
+          link: {type: 'doc', id: 'semestre3/bloc3/index'},
+          items: ['semestre3/bloc3/cours/ml-sur-kubernetes'],
+        },
       ],
     },
   ],

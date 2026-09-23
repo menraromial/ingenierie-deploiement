@@ -1,0 +1,22 @@
+% Ch. 34 : chronologie mesurée d'une exécution, puis de la même servie par le cache
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=0.95mm,y=1mm]
+  \draw[draw=Ink, line width=.8pt, -{Stealth[length=2.5mm]}] (0,-30) -- (166,-30) node[right, font=\sffamily\normalsize]{s};
+  \foreach \t in {0,20,...,160} { \draw[draw=Ink] (\t,-30) -- (\t,-31.5); \node[below=1.5mm, font=\sffamily\normalsize] at (\t,-30) {\t}; }
+  % première exécution (0 = soumission, pods à partir de 0)
+  \node[ftitle, anchor=west] at (0,34) {PREMIÈRE EXÉCUTION : 156 s};
+  \fill[OcreBg, draw=Ocre] (0,24) rectangle (156,30);
+  \node[font=\sffamily\normalsize, text=Ocre, anchor=west] at (2,27) {orchestration : pods \emph{driver}, planification, démarrage};
+  \fill[SeaBg, draw=Sea] (42,14) rectangle (56,20); \node[font=\sffamily\small, text=Sea] at (49,17) {extraire};
+  \fill[SeaBg, draw=Sea] (73,14) rectangle (100,20); \node[font=\sffamily\small, text=Sea] at (86.5,17) {entraîner};
+  \fill[SeaBg, draw=Sea] (135,14) rectangle (139,20);
+  \node[font=\sffamily\small, text=Sea, anchor=west] at (140,17) {annoncer};
+  \node[font=\sffamily\normalsize, text=Sea, anchor=west] at (0,9) {travail utile : 14 + 27 + 4 = 45 s, installation des paquets comprise};
+  % seconde exécution
+  \node[ftitle, anchor=west] at (0,-12) {MÊMES ENTRÉES, CACHE : 56 s};
+  \fill[OcreBg, draw=Ocre] (0,-22) rectangle (56,-16);
+  \node[font=\sffamily\normalsize, text=Ocre, anchor=west] at (58,-19) {5 pods \emph{driver}, aucun pod d'exécution};
+\end{tikzpicture}
+\end{document}

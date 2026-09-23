@@ -1,0 +1,20 @@
+% Ch. 34 : ce que KServe fabrique à partir d'un InferenceService
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Rule, fill=white, text width=40mm, minimum height=22mm, align=flush left, font=\ttfamily\small] (is) at (0,0) {kind: InferenceService\\predictor:\\\ \ model:\\\ \ \ \ modelFormat: sklearn\\\ \ \ \ storageUri: s3://...};
+  \node[keybox=Enc, text width=30mm, minimum height=15mm] (ctl) at (52,0) {\textbf{contrôleur KServe}};
+  \draw[flow] (is) -- (ctl);
+  \node[dframe=Sea, minimum width=66mm, minimum height=40mm, label={[ftitle]above:POD DU PRÉDICTEUR}] (pod) at (120,0) {};
+  \node[box=Ocre, text width=50mm, minimum height=11mm, font=\sffamily\normalsize] (init) at (120,10) {\textbf{storage-initializer}\ (init)};
+  \node[box=Sea, text width=50mm, minimum height=11mm, font=\sffamily\normalsize] (srv) at (120,-8) {\textbf{serveur de modèle}\ (sklearn, V1/V2)};
+  \draw[flow=Ocre] (init) -- node[elabel, right=1mm, fill=none]{modèle copié} (srv);
+  \draw[flow=Enc] (ctl) -- (pod.west);
+  \node[db=Plum, minimum width=30mm, minimum height=14mm] (s3) at (190,10) {\textbf{stockage}\sub{S3, MinIO}};
+  \draw[dflow=Plum] (s3.west) -- (init.east);
+  \node[box=Rule, fill=white, text width=42mm, minimum height=12mm] (cli) at (196,-14) {\textbf{client}\sub{\texttt{/v1/models/...:predict}}};
+  \draw[flow] (cli.west) -- (srv.east);
+  \node[note, anchor=north west, text width=190mm] at (-20,-26) {le même objet déclare le format du modèle et son emplacement ; KServe fournit le serveur, la mise à l'échelle et la répartition du trafic entre versions};
+\end{tikzpicture}
+\end{document}

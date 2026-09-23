@@ -41,14 +41,14 @@ Listify reste l'application déployée depuis le semestre 1. On lui ajoute un mo
 - [Ch. 33](bloc2/cours/33-servir-un-modele.md) : servir un modèle (FastAPI, validation Pydantic, tests de charge, conteneurisation).
 - **[TP 24](bloc2/tp/tp24-suivi-mlflow.md), [TP 25](bloc2/tp/tp25-servir-modele-cluster.md), [TP 26](bloc2/tp/tp26-dag-airflow.md) et [TP 27](bloc2/tp/tp27-chaine-integree.md)** : instrumentation MLflow, API de serving déployée sur le cluster du S2, DAG complet d'entraînement, chaîne intégrée « CD du modèle ».
 
-### Bloc 3 : Kubeflow, monitoring des modèles et Big Data (semaines 9 à 13)
+### [Bloc 3](bloc3/index.md) : Kubeflow, monitoring des modèles et Big Data (semaines 9 à 13)
 
-- Ch. 34 : le ML sur Kubernetes (Kubeflow Pipelines, KServe), comparaison critique avec Airflow.
+- [Ch. 34](bloc3/cours/34-ml-sur-kubernetes.md) : le ML sur Kubernetes (Kubeflow Pipelines, KServe), comparaison critique avec Airflow.
 - Ch. 35 : surveiller un modèle, dérive des données et des concepts, performance différée (Evidently).
 - Ch. 36 : big data et calcul distribué (les 3V, MapReduce, Spark et le shuffle, Parquet contre CSV, lakehouse en panorama).
 - Ch. 37 : les flux de données (Kafka, traitements en continu).
 - Ch. 38 : éthique et responsabilité de la mise en production d'IA (biais à l'échelle, équité, RGPD, model cards).
-- **TP 28 à 31** : Spark en local sur plusieurs Go, Kafka KRaft, boucle de drift complète avec ré-entraînement automatique, KServe en découverte.
+- **TP 28 à 31** : KServe en découverte (TP 28), boucle de dérive complète avec réentraînement automatique (TP 29), Spark en local sur plusieurs Go (TP 30), Kafka en mode KRaft (TP 31).
 
 ## Évaluation du semestre
 

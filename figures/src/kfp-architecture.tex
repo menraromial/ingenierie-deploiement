@@ -1,0 +1,27 @@
+% Ch. 34 : ce que devient un pipeline Kubeflow
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Rule, fill=white, text width=32mm, minimum height=15mm] (py) at (0,0) {\textbf{pipeline Python}\sub{\texttt{@dsl.component}}};
+  \node[box=Rule, fill=white, text width=32mm, minimum height=15mm] (ir) at (52,0) {\textbf{YAML compilé}\sub{221 lignes, schéma 2.1}};
+  \node[box=Enc, text width=32mm, minimum height=15mm] (api) at (104,0) {\textbf{serveur KFP}\sub{API, interface}};
+  \node[box=Enc, text width=34mm, minimum height=15mm] (argo) at (156,0) {\textbf{Argo Workflows}\sub{contrôleur}};
+  \draw[flow] (py) -- node[elabel, above=1mm, fill=none]{compiler} (ir);
+  \draw[flow] (ir) -- node[elabel, above=1mm, fill=none]{soumettre} (api);
+  \draw[flow=Enc] (api) -- (argo);
+  \foreach \k/\n/\x in {1/extraire/122, 2/entrainer/158, 3/annoncer/194} {
+    \node[box=Ocre, text width=28mm, minimum height=10mm, font=\sffamily\normalsize] (d\k) at (\x,-24) {pod \emph{driver}};
+    \node[box=Sea, text width=28mm, minimum height=12mm] (i\k) at (\x,-40) {\textbf{\n}\sub{pod d'exécution}};
+    \draw[flow=Ocre] (d\k) -- (i\k);
+  }
+  \draw[flow=Enc] (argo.south) -- ++(0,-6) -| (d1.north);
+  \draw[flow=Enc] (argo.south) -- ++(0,-6) -| (d2.north);
+  \draw[flow=Enc] (argo.south) -- ++(0,-6) -| (d3.north);
+  \node[db=Plum, minimum width=32mm, minimum height=14mm] (mysql) at (52,-32) {\textbf{MySQL}\sub{métadonnées}};
+  \node[db=Plum, minimum width=32mm, minimum height=14mm] (sw) at (0,-32) {\textbf{SeaweedFS}\sub{artefacts}};
+  \draw[dflow=Plum] (i1.west) -- ++(-6,0) |- (mysql.east);
+  \draw[dflow=Plum] (mysql.west) -- (sw.east);
+  \node[note, anchor=north west, text width=150mm] at (-16,-52) {chaque étape devient au moins deux pods : un \emph{driver}, qui résout les entrées et consulte le cache, puis le conteneur qui exécute le code ; les artefacts passent par le stockage objet, les métadonnées par la base};
+\end{tikzpicture}
+\end{document}
