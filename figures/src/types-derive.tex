@@ -1,0 +1,11 @@
+% Ch. 35 : trois façons pour le monde de changer sous le modèle
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{c/.style={box=#1, text width=52mm, minimum height=38mm, align=flush left, font=\sffamily\normalsize}}
+  \node[c=Plum] (a) at (0,0) {\textbf{\large Dérive des entrées}\\[1mm] $P(x)$ change, la règle $P(y \mid x)$ non.\\[2mm] De nouveaux collègues, de nouveaux dossiers : des titres que le modèle n'a jamais vus.\\[2mm] \emph{Visible sans étiquettes.}};
+  \node[c=Ocre] (b) at (60,0) {\textbf{\large Dérive des classes}\\[1mm] $P(y)$ change.\\[2mm] À la rentrée scolaire, la part des tâches « administratif » double.\\[2mm] \emph{Visible sur la répartition des prédictions, si le modèle suit.}};
+  \node[c=Brick] (c) at (120,0) {\textbf{\large Dérive de concept}\\[1mm] $P(y \mid x)$ change.\\[2mm] « Répondre aux mails » passe de « administratif » à « travail ».\\[2mm] \emph{Invisible dans les entrées : il faut les étiquettes.}};
+\end{tikzpicture}
+\end{document}

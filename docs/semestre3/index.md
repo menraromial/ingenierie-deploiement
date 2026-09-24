@@ -44,7 +44,7 @@ Listify reste l'application déployée depuis le semestre 1. On lui ajoute un mo
 ### [Bloc 3](bloc3/index.md) : Kubeflow, monitoring des modèles et Big Data (semaines 9 à 13)
 
 - [Ch. 34](bloc3/cours/34-ml-sur-kubernetes.md) : le ML sur Kubernetes (Kubeflow Pipelines, KServe), comparaison critique avec Airflow.
-- Ch. 35 : surveiller un modèle, dérive des données et des concepts, performance différée (Evidently).
+- [Ch. 35](bloc3/cours/35-surveiller-derive.md) : surveiller un modèle, dérive des données et des concepts, performance différée (Evidently).
 - Ch. 36 : big data et calcul distribué (les 3V, MapReduce, Spark et le shuffle, Parquet contre CSV, lakehouse en panorama).
 - Ch. 37 : les flux de données (Kafka, traitements en continu).
 - Ch. 38 : éthique et responsabilité de la mise en production d'IA (biais à l'échelle, équité, RGPD, model cards).

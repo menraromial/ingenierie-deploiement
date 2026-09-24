@@ -141,7 +141,7 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: 'Bloc 3 : le ML à l\'échelle, surveillé et responsable',
           link: {type: 'doc', id: 'semestre3/bloc3/index'},
-          items: ['semestre3/bloc3/cours/ml-sur-kubernetes', 'semestre3/bloc3/tp/tp28-kserve'],
+          items: ['semestre3/bloc3/cours/ml-sur-kubernetes', 'semestre3/bloc3/tp/tp28-kserve', 'semestre3/bloc3/cours/surveiller-derive'],
         },
       ],
     },

@@ -1,0 +1,13 @@
+% Ch. 35 : ce que l'on sait, et quand
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \draw[draw=Ink, line width=.8pt, -{Stealth[length=2.5mm]}] (0,0) -- (196,0) node[right, font=\sffamily\normalsize]{temps};
+  \foreach \x/\t in {0/{prédiction}, 40/{+ 1 jour}, 100/{+ 7 jours}, 150/{+ 30 jours}} { \draw[draw=Ink] (\x,0) -- (\x,-2); \node[below=2mm, font=\sffamily\normalsize] at (\x,0) {\t}; }
+  \fill[PlumBg, draw=Plum] (0,6) rectangle (190,12); \node[font=\sffamily\normalsize, text=Plum, anchor=west] at (2,9) {entrées, confiance, mots inconnus : \emph{immédiatement}};
+  \fill[OcreBg, draw=Ocre] (40,15) rectangle (190,21); \node[font=\sffamily\normalsize, text=Ocre, anchor=west] at (42,18) {corrections explicites de l'utilisateur : une partie des étiquettes};
+  \fill[EncBg, draw=Enc] (100,24) rectangle (190,30); \node[font=\sffamily\normalsize, text=Enc, anchor=west] at (102,27) {tâche cochée sans correction : étiquette implicite};
+  \fill[SeaBg, draw=Sea] (150,33) rectangle (190,39); \node[font=\sffamily\normalsize, text=Sea, anchor=east] at (148,36) {audit manuel d'un échantillon};
+\end{tikzpicture}
+\end{document}
