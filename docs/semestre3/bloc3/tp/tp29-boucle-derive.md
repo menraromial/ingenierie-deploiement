@@ -366,8 +366,10 @@ Laissez tourner et observez, dans l'interface d'Airflow (vue « Grid » des deux
 | 14:30:57 | Nouveau modèle servi |
 | 14:35:00 | Surveillance : `23672 mots sur 10m, dont 3.36% inconnus`, puis `dérive confirmée, mais un réentraînement a déjà été lancé à 2026-09-24T12:30:01` (heure UTC) ; rien |
 | 14:36:14 | Prometheus, sur cinq minutes : 0,69 % de mots inconnus |
+| 14:40:00 | Surveillance : `23633 mots sur 10m, dont 1.46% inconnus du modèle (seuil 2%)` ; rien, et cette fois sans l'aide du repos |
+| 14:41:09 | Prometheus, sur cinq minutes : 1,37 % |
 
-La boucle complète, du déclenchement au nouveau modèle servi, a pris **57 secondes**. Regardez la ligne de 14 h 35 : sur dix minutes, la fenêtre mélange encore le trafic mesuré avec l'ancien modèle et celui du nouveau, et la part reste au-dessus du seuil (3,36 %). Sans la période de repos, la surveillance aurait relancé un entraînement inutile. Sur les cinq dernières minutes, qui ne contiennent que le nouveau modèle, le signal est tombé à 0,69 %, sous le niveau de départ du chapitre 35. Le script de trafic, lui, a compté **une** requête en échec sur 6000 : celle qui est arrivée pendant le remplacement de l'unique réplique. Le délai de détection, lui, dépend de la période de la surveillance et de la fenêtre : ici cinq minutes au plus pour la première lecture utile.
+La boucle complète, du déclenchement au nouveau modèle servi, a pris **57 secondes**. Regardez la ligne de 14 h 35 : sur dix minutes, la fenêtre mélange encore le trafic mesuré avec l'ancien modèle et celui du nouveau, et la part reste au-dessus du seuil (3,36 %). Sans la période de repos, la surveillance aurait relancé un entraînement inutile. Sur cinq minutes, qui ne contiennent que le nouveau modèle, le signal oscille entre 0,7 et 1,4 % selon les titres que le script rejoue à ce moment-là ; à 14 h 40, la fenêtre de dix minutes elle-même est redescendue sous le seuil, et la surveillance s'est tue d'elle-même. Le script de trafic, lui, a compté **une** requête en échec sur 6000 : celle qui est arrivée pendant le remplacement de l'unique réplique. Le délai de détection, lui, dépend de la période de la surveillance et de la fenêtre : ici cinq minutes au plus pour la première lecture utile.
 
 <details className="controle">
 <summary>Point de contrôle 5</summary>
