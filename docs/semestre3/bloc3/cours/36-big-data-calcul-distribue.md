@@ -221,7 +221,7 @@ La conversion avec Spark prend 45,8 s (une lecture du CSV, une écriture) et pro
 | Parquet, compression Snappy (défaut) | 1,51 Go | 6,7 fois plus petit |
 | Parquet, compression Zstandard | 1,15 Go | 8,8 fois plus petit |
 
-Les métadonnées des fichiers donnent la place de chaque colonne dans la version Snappy. Les identifiants (`tache` 382 Mio, `utilisateur` 357 Mio) et l'horodatage (328 Mio) en occupent les trois quarts : ce sont des nombres presque tous différents, qui se compressent mal. La colonne `categorie` ne pèse que 36 Mio pour 100 millions de valeurs, grâce au dictionnaire : 5 valeurs possibles, donc 3 bits par ligne avant compression. Même le `titre`, colonne la plus lourde du CSV, tombe à 159 Mio, parce que les 100 millions de titres n'en contiennent que 24 000 distincts.
+Les métadonnées des fichiers donnent la place de chaque colonne dans la version Snappy. Les identifiants (`tache` 382 Mio, `utilisateur` 357 Mio) et l'horodatage (328 Mio) en occupent les trois quarts : ce sont des nombres presque tous différents, qui se compressent mal. La colonne `categorie` ne pèse que 36 Mio pour 100 millions de valeurs, grâce au dictionnaire : 5 valeurs possibles, donc 3 bits par ligne avant compression. Même le `titre`, colonne la plus lourde du CSV, tombe à 159 Mio, parce que les 100 millions de titres n'en contiennent que 4 395 distincts (repris des 24 000 tâches de Listify, où les mêmes titres reviennent souvent).
 
 Mêmes requêtes, mêmes résultats :
 

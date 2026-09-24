@@ -141,7 +141,7 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: 'Bloc 3 : le ML à l\'échelle, surveillé et responsable',
           link: {type: 'doc', id: 'semestre3/bloc3/index'},
-          items: ['semestre3/bloc3/cours/ml-sur-kubernetes', 'semestre3/bloc3/tp/tp28-kserve', 'semestre3/bloc3/cours/surveiller-derive', 'semestre3/bloc3/tp/tp29-boucle-derive', 'semestre3/bloc3/cours/big-data-calcul-distribue'],
+          items: ['semestre3/bloc3/cours/ml-sur-kubernetes', 'semestre3/bloc3/tp/tp28-kserve', 'semestre3/bloc3/cours/surveiller-derive', 'semestre3/bloc3/tp/tp29-boucle-derive', 'semestre3/bloc3/cours/big-data-calcul-distribue', 'semestre3/bloc3/tp/tp30-spark-local'],
         },
       ],
     },

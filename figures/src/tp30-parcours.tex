@@ -1,0 +1,19 @@
+% TP 30 : le parcours du journal, du CSV aux prédictions (temps mesurés, 8 cœurs sauf mention)
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[db=Rule, fill=white, minimum width=30mm, minimum height=20mm, align=center] (csv) at (0,0) {\textbf{journal.csv}\\[.5mm]{\normalsize\color{Muted}10,09 Go}\\{\normalsize\color{Muted}100 M lignes}};
+  \node[box=Sea, text width=36mm, minimum height=20mm, align=center] (pq) at (58,0) {\textbf{Parquet}\sub{1,51 Go, 76 fichiers\\horodatage INT64}};
+  \node[box=Ocre, text width=36mm, minimum height=20mm, align=center] (part) at (116,0) {\textbf{partitionné}\sub{par mois : 18 répertoires\\par jour : 546}};
+  \draw[flow=Sea] (csv) -- node[elabel, above=1mm, fill=none]{étape 3} node[elabel, below=1mm, fill=none, text=Muted]{45 s} (pq);
+  \draw[flow=Ocre] (pq) -- node[elabel, above=1mm, fill=none]{étape 3} node[elabel, below=1mm, fill=none, text=Muted]{48 à 63 s} (part);
+  \node[box=Enc, text width=36mm, minimum height=20mm, align=center] (feat) at (0,-40) {\textbf{caractéristiques}\sub{25 M lignes\\(utilisateur, semaine)}};
+  \node[box=Enc, text width=36mm, minimum height=20mm, align=center] (join) at (58,-40) {\textbf{jointure}\sub{avec 500\,000\\utilisateurs}};
+  \node[box=Plum, text width=36mm, minimum height=20mm, align=center] (pred) at (116,-40) {\textbf{prédictions}\sub{100 M, modèle\\du TP 23}};
+  \draw[flow=Enc] (pq.south) -- ++(0,-6) -| node[elabel, pos=.75, left=1mm, fill=none, align=right]{étape 4\\{\color{Muted}119 s}} (feat.north);
+  \draw[flow=Enc] (pq.south) -- node[elabel, right=1mm, fill=none, align=left, pos=.55]{étape 5\\{\color{Muted}9 à 24 s}} (join.north);
+  \draw[flow=Plum] (pq.south) -- ++(0,-6) -| node[elabel, pos=.75, right=1mm, fill=none, align=left]{étape 6\\{\color{Muted}113 s, ou 14 s}} (pred.north);
+  \node[note, anchor=north west, text width=150mm] at (-16,-56) {temps mesurés lors de la préparation, conversion sur 22 cœurs et 4 Go de mémoire pour Spark, la suite sur 8 cœurs et 3 Go ; l'étape 2 lit le CSV tel quel (4 à 38 s selon la requête), l'étape 7 refait l'étape 4 avec DuckDB};
+\end{tikzpicture}
+\end{document}
