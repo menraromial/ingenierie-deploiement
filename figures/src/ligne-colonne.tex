@@ -1,0 +1,45 @@
+% Ch. 36 : rangement par lignes (CSV) et par colonnes (Parquet), et ce qu'une requête doit lire (mesuré)
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  % CSV
+  \node[ftitle, anchor=west] at (-2,20) {CSV : une ligne après l'autre};
+  \foreach \k/\t in {0/{"2026-03-02T08:14:05",287318,9812862,"consultation","travail",\dots},
+                     1/{"2026-03-02T08:14:07",42,25158785,"modification","admin",\dots},
+                     2/{"2026-03-02T08:14:09",323728,13890625,"creation","loisirs",\dots}} {
+    \node[box=Rule, fill=white, anchor=west, text width=86mm, minimum height=7mm, font=\ttfamily\scriptsize, align=left] at (0,12-\k*9) {\t};
+  }
+  \node[font=\sffamily\Large, text=Muted] at (43,-16) {\dots};
+  \node[note, anchor=north west, text width=88mm] at (-2,-22) {pour lire la catégorie, il faut parcourir chaque ligne en entier : les 9,4 Gio du fichier};
+  % Parquet
+  \node[ftitle, anchor=west] at (104,20) {Parquet : par groupes de lignes, puis par colonnes};
+  \foreach \g/\y in {1/12, 2/0} {
+    \node[font=\sffamily\small, text=Muted, anchor=east] at (108,\y) {groupe \g};
+    \foreach \c/\n/\w/\col in {0/horo./14/Enc, 1/util./14/Enc, 2/tâche/14/Enc, 3/act./9/Sea, 4/cat./9/Sea, 5/client/9/Sea, 6/durée/11/Ocre, 7/titre/12/Plum} {
+      \pgfmathsetmacro\x{110 + \c*13}
+      \node[box=\col, minimum width=12mm, minimum height=9mm, inner sep=0pt, font=\sffamily\scriptsize] at (\x+6,\y) {\n};
+    }
+  }
+  \node[font=\sffamily\small, text=Muted] at (160,-8) {\large\dots\ \small 76 groupes de 1,33 million de lignes};
+  \node[box=Ocre, anchor=west, minimum width=103mm, minimum height=8mm, font=\sffamily\small] at (110,-18) {pied de fichier : schéma, et pour chaque groupe et chaque colonne, min et max};
+  \node[note, anchor=north west, text width=104mm] at (108,-24) {une colonne se lit sans les autres ; un groupe dont le min et le max excluent le filtre ne se lit pas du tout};
+  % barres : octets lus, échelle logarithmique
+  \node[ftitle, anchor=west] at (-2,-40) {octets lus par Spark pour la même réponse (mesuré, échelle logarithmique)};
+  \foreach \v/\l in {1/1 Mio, 10/10 Mio, 100/100 Mio, 1000/1 Gio, 10000/10 Gio} {
+    \pgfmathsetmacro\x{60 + log10(\v)*34}
+    \draw[draw=Rule, line width=.3pt] (\x,-48) -- (\x,-92);
+    \node[font=\sffamily\small, text=Muted] at (\x,-95) {\l};
+  }
+  \foreach \k/\v/\lab/\col/\txt in {0/9626/{nombre par catégorie, CSV}/Brick/{9,4 Gio ; 19,9 s},
+                                    1/37.2/{nombre par catégorie, Parquet}/Sea/{37 Mio ; 1,4 s},
+                                    2/447.2/{un mois, Parquet INT96}/Ocre/{447 Mio ; 2,3 s},
+                                    3/26.6/{un mois, Parquet et statistiques}/Sea/{26,6 Mio ; 0,7 s}} {
+    \pgfmathsetmacro\l{log10(\v)*34}
+    \pgfmathsetmacro\y{-54 - \k*11}
+    \node[font=\sffamily\normalsize, anchor=east] at (58,\y) {\lab};
+    \fill[\col] (60,\y-3.5) rectangle ++(\l,7);
+    \node[font=\sffamily\normalsize, anchor=west] at (61+\l,\y) {\txt};
+  }
+\end{tikzpicture}
+\end{document}

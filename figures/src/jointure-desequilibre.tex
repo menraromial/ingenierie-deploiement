@@ -1,0 +1,35 @@
+% Ch. 36 : jointure par tri-fusion avec une clé déséquilibrée, et jointure par diffusion (mesuré)
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  % gauche : tri-fusion
+  \node[ftitle, anchor=west] at (-4,24) {jointure par tri-fusion : les deux tables passent par le shuffle};
+  \node[box=Enc, text width=40mm, minimum height=11mm, align=center] (j) at (16,10) {\textbf{journal}\sub{100 M lignes}};
+  \node[box=Sea, text width=40mm, minimum height=11mm, align=center] (u) at (64,10) {\textbf{utilisateurs}\sub{500\,000 lignes}};
+  \node[box=Plum, minimum width=86mm, minimum height=9mm, font=\sffamily\normalsize] (sh) at (40,-6) {shuffle par hachage de \texttt{utilisateur} : 816,6 Mio};
+  \draw[flow=Enc] (j) -- (j |- sh.north);
+  \draw[flow=Sea] (u) -- (u |- sh.north);
+  % 200 partitions : barres à l'échelle de la médiane (3,9 Mio) et du maximum (50,4 Mio)
+  \foreach \k in {0,...,13} {
+    \pgfmathsetmacro\x{2 + \k*5.6}
+    \fill[Enc!70] (\x,-58) rectangle ++(4,3.9*0.72);
+  }
+  \fill[Brick] (2+6*5.6,-58) rectangle ++(4,50.4*0.72);
+  \node[font=\sffamily\small, text=Brick, anchor=west, align=left] at (40,-25) {partition de l'utilisateur 42 :\\10,4 M lignes, 50,4 Mio, 5,6 s};
+  \node[font=\sffamily\small, text=Enc, anchor=north, align=center] at (40,-59) {les 199 autres : 453\,000 lignes, 3,9 Mio, 0,5 s (médiane)};
+  \draw[draw=Ink, line width=.6pt] (0,-58) -- (82,-58);
+  \node[box=Brick, text width=84mm, minimum height=9mm, align=center, font=\sffamily\normalsize] at (40,-76) {18,3 s : l'étape attend sa tâche la plus lente};
+  % droite : diffusion
+  \node[ftitle, anchor=west] at (108,24) {jointure par diffusion : la petite table va vers les données};
+  \node[box=Sea, text width=40mm, minimum height=11mm, align=center] (u2) at (150,10) {\textbf{utilisateurs}\sub{copiés dans chaque tâche}};
+  \foreach \k/\x in {1/118, 2/140, 3/162, 4/184} {
+    \node[box=Enc, text width=14mm, minimum height=16mm, align=center, font=\sffamily\small] (t\k) at (\x,-24) {tâche \k\\journal\\(sur place)};
+    \draw[flow=Sea] (u2.south) -- (t\k.north);
+  }
+  \node[font=\sffamily\Large, text=Muted] at (196,-24) {\dots};
+  \node[box=Sea, text width=84mm, minimum height=9mm, align=center, font=\sffamily\normalsize] at (152,-50) {shuffle : 3,8 Kio (le résultat final seulement)};
+  \node[box=Sea, text width=84mm, minimum height=9mm, align=center, font=\sffamily\normalsize] at (152,-76) {7,9 s : 25 tâches de 2,8 à 3,3 s};
+  \draw[draw=Rule, line width=.6pt] (100,28) -- (100,-82);
+\end{tikzpicture}
+\end{document}

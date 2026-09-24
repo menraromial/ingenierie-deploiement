@@ -45,7 +45,7 @@ Listify reste l'application déployée depuis le semestre 1. On lui ajoute un mo
 
 - [Ch. 34](bloc3/cours/34-ml-sur-kubernetes.md) : le ML sur Kubernetes (Kubeflow Pipelines, KServe), comparaison critique avec Airflow.
 - [Ch. 35](bloc3/cours/35-surveiller-derive.md) : surveiller un modèle, dérive des données et des concepts, performance différée (Evidently).
-- Ch. 36 : big data et calcul distribué (les 3V, MapReduce, Spark et le shuffle, Parquet contre CSV, lakehouse en panorama).
+- [Ch. 36](bloc3/cours/36-big-data-calcul-distribue.md) : big data et calcul distribué (les 3V, MapReduce, Spark et le shuffle, Parquet contre CSV, lakehouse en panorama).
 - Ch. 37 : les flux de données (Kafka, traitements en continu).
 - Ch. 38 : éthique et responsabilité de la mise en production d'IA (biais à l'échelle, équité, RGPD, model cards).
 - **TP 28 à 31** : KServe en découverte ([TP 28](bloc3/tp/tp28-kserve.md)), boucle de dérive complète avec réentraînement automatique ([TP 29](bloc3/tp/tp29-boucle-derive.md)), Spark en local sur plusieurs Go (TP 30), Kafka en mode KRaft (TP 31).

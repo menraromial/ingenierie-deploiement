@@ -1,0 +1,31 @@
+% Ch. 36 : un job Spark coupé en deux étapes par le shuffle (groupBy utilisateur, mesuré)
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \node[box=Enc, text width=150mm, minimum height=13mm, align=center] (drv) at (88,26) {\textbf{driver}\sub{traduit \texttt{groupBy("utilisateur").count()} en plan, le coupe en étapes aux shuffles, distribue les tâches}};
+  % étape 1
+  \node[dframe=Sea, minimum width=66mm, minimum height=76mm] (e1) at (18,-30) {};
+  \node[ftitle, text=Sea, anchor=south] at (18,9) {étape 1 : 26 tâches};
+  \foreach \k/\y in {1/0, 2/-14, 3/-28, 4/-50} {
+    \node[box=Rule, fill=white, text width=14mm, minimum height=9mm, font=\sffamily\small, align=center] (f\k) at (1,\y) {fichiers\\Parquet};
+    \node[box=Sea, text width=24mm, minimum height=9mm, font=\sffamily\small, align=center] (t\k) at (33,\y) {lire la colonne\\compter en local};
+    \draw[flow=Sea] (f\k) -- (t\k);
+  }
+  \node[font=\sffamily\Large, text=Muted] at (16,-39) {\dots};
+  % shuffle
+  \node[db=Plum, minimum width=30mm, minimum height=58mm, align=center, font=\sffamily\normalsize] (sh) at (88,-25) {\textbf{fichiers de}\\\textbf{shuffle}\\[1mm]disque local\\[1mm]106 Mio\\[1mm]200 partitions\\par hachage\\de l'utilisateur};
+  \foreach \k in {1,2,3,4} { \draw[flow=Plum] (t\k.east) -- (sh.west |- t\k.east); }
+  % étape 2
+  \node[dframe=Enc, minimum width=48mm, minimum height=76mm] (e2) at (150,-30) {};
+  \node[ftitle, text=Enc, anchor=south] at (150,9) {étape 2 : 22 tâches};
+  \foreach \k/\y in {1/0, 2/-14, 3/-28, 4/-50} {
+    \node[box=Enc, text width=32mm, minimum height=9mm, font=\sffamily\small, align=center] (u\k) at (150,\y) {additionner les\\comptes reçus};
+  }
+  \node[font=\sffamily\Large, text=Muted] at (150,-39) {\dots};
+  \foreach \k in {1,2,3,4} { \foreach \j in {1,2,3,4} { \draw[draw=Plum, line width=.5pt, -{Stealth[length=1.6mm]}] (sh.east |- t\k.east) -- (u\j.west); } }
+  \draw[dflow=Enc] (drv.south -| 18,0) -- (18,14);
+  \draw[dflow=Enc] (drv.south -| 150,0) -- (150,14);
+  \node[note, anchor=north west, text width=196mm] at (-16,-74) {à gauche, des dépendances \emph{étroites} : chaque tâche ne lit que son morceau de fichier. Au milieu, une dépendance \emph{large} : chaque tâche de l'étape 2 lit un peu de chaque tâche de l'étape 1, ce qui oblige à tout écrire sur disque et à attendre la fin de l'étape 1. Mesuré sur 100 millions d'événements : 7,3 s, 106 Mio de shuffle ; l'exécution adaptative a regroupé les 200 partitions en 22 tâches};
+\end{tikzpicture}
+\end{document}

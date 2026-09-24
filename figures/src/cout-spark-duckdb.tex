@@ -1,0 +1,24 @@
+% Ch. 36 : les mêmes requêtes sur la même machine, Spark local contre DuckDB (mesuré, 22 cœurs)
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \foreach \s in {0,5,...,20} {
+    \draw[draw=Rule, line width=.3pt] (\s*6,4) -- (\s*6,-80);
+    \node[font=\sffamily\small, text=Muted] at (\s*6,-84) {\s\ s};
+  }
+  \foreach \k/\lab/\sp/\dk/\spt/\dkt in {0/{nombre par catégorie, CSV}/19.9/5.2/{19,9 s}/{5,2 s},
+                                         1/{nombre par catégorie, Parquet}/1.4/0.1/{1,4 s}/{0,1 s},
+                                         2/{tâches distinctes (exact), Parquet}/20.1/1.4/{20,1 s}/{1,4 s},
+                                         3/{jointure avec les utilisateurs, Parquet}/18.3/0.8/{18,3 s (7,9 s par diffusion)}/{0,8 s}} {
+    \pgfmathsetmacro\y{-\k*20}
+    \node[font=\sffamily\normalsize, anchor=east] at (-3,\y-3) {\lab};
+    \fill[Ocre] (0,\y) rectangle ++(\sp*6,-5);
+    \node[font=\sffamily\small, anchor=west] at (\sp*6+1,\y-2.5) {Spark : \spt};
+    \fill[Enc] (0,\y-6.5) rectangle ++(\dk*6,-5);
+    \node[font=\sffamily\small, anchor=west] at (\dk*6+1,\y-9) {DuckDB : \dkt};
+  }
+  \node[box=Brick, anchor=west, text width=150mm, minimum height=9mm, align=left, font=\sffamily\normalsize] at (0,-96) {pandas, tout le CSV en mémoire : tué par le noyau après 64 s, au plafond de 6 Gio};
+  \node[note, anchor=north west, text width=200mm] at (-78,-104) {100 millions d'événements, une machine de 22 cœurs. Spark en mode local (\texttt{local[*]}), sans compter les 6 s de démarrage de la session ; DuckDB 1.5.5 sur les mêmes fichiers, 2,2 Gio de mémoire au plus};
+\end{tikzpicture}
+\end{document}
