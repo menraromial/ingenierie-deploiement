@@ -1,0 +1,21 @@
+% TP 29 : la boucle de dérive, fermée sans intervention humaine
+\documentclass[border=6pt]{standalone}
+\usepackage{coursfig}
+\begin{document}
+\begin{tikzpicture}[x=1mm,y=1mm]
+  \tikzset{e/.style={box=#1, text width=40mm, minimum height=16mm}}
+  \node[e=Sea] (svc) at (0,0) {\textbf{service}\sub{mots inconnus, confiance}};
+  \node[e=Plum] (prom) at (70,0) {\textbf{Prometheus}\sub{collecte toutes les 15 s}};
+  \node[e=Ocre] (surv) at (152,0) {\textbf{DAG de surveillance}\sub{toutes les 5 min : $> 2\,\%$ ?}};
+  \node[e=Ocre] (ent) at (152,-40) {\textbf{DAG d'entraînement}\sub{instantané, \texttt{dvc repro}, McNemar}};
+  \node[db=Enc, minimum width=40mm, minimum height=16mm] (reg) at (70,-40) {\textbf{registre}\sub{\texttt{@champion}}};
+  \node[e=Enc] (rr) at (0,-40) {\textbf{rollout restart}\sub{recharger le modèle}};
+  \draw[flow=Plum] (svc) -- node[elabel, above=1mm, fill=none]{/metrics} (prom);
+  \draw[flow=Plum] (prom) -- node[elabel, above=1mm, fill=none]{requête PromQL} (surv);
+  \draw[flow=Ocre] (surv) -- node[elabel, right=1mm, fill=none]{déclencher} (ent);
+  \draw[flow=Ocre] (ent) -- node[elabel, above=1mm, fill=none]{promouvoir} (reg);
+  \draw[flow=Enc] (reg) -- (rr);
+  \draw[flow=Sea] (rr) -- (svc);
+  \node[note, anchor=north west, text width=180mm] at (-20,-52) {mesuré : trafic récent lancé à 14 h 24 min 55 s ; à 14 h 30, la surveillance lit 5,08 \% de mots inconnus et déclenche ; 57 s plus tard, le nouveau modèle est servi};
+\end{tikzpicture}
+\end{document}
